@@ -142,9 +142,9 @@ public class Core extends JavaPlugin {
 		setConfigurationDefaultString("messages.usage", "&cKomennon käyttö: &4");
 		setConfigurationDefaultString("messages.no-permission", "&cTuota komentoa ei ole olemassa, tai sinulla ei ole oikeutta siihen. Saat apua kirjoittamalla komennon §4/apua§c.");
 		setConfigurationDefaultString("messages.players-only", "&cTätä komentoa ei voi käyttää konsolista!");
-		setConfigurationDefaultString("mysql.host", "-");
-		setConfigurationDefaultString("mysql.username", "-");
-		setConfigurationDefaultString("mysql.password", "-");
+		setConfigurationDefaultString("mysql.host", "host/database");
+		setConfigurationDefaultString("mysql.username", "username");
+		setConfigurationDefaultString("mysql.password", "password");
 		setConfigurationDefaultBoolean("maintenance-mode", true);
 		setConfigurationDefaultInt("time", 0);
 		setConfigurationDefaultInt("ticketcount", 0);
