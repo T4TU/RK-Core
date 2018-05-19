@@ -203,6 +203,11 @@ public class CoreListener implements Listener {
 						return;
 					}
 				}
+				for (String command : CoreUtils.getRegisteredStaffCommands()) {
+					if (message.equalsIgnoreCase(command) || message.startsWith(command + " ")) {
+						return;
+					}
+				}
 			}
 			player.sendMessage(CoreUtils.getNoPermissionString());
 			e.setCancelled(true);

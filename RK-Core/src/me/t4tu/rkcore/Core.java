@@ -66,6 +66,7 @@ public class Core extends JavaPlugin {
 		
 		registerCoreCommands(coreCommands);
 		registerPunishmentCommands(punishmentCommands);
+		addStaffCommands();
 		
 		coreListener.setMaintenanceMode(getConfig().getBoolean("maintenance-mode"));
 		
@@ -334,6 +335,13 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("ipunban", false);
 		commands.registerCommand("showlog", false);
 		commands.registerCommand("setjail", false);
+	}
+	
+	private void addStaffCommands() {
+		CoreUtils.getRegisteredStaffCommands().add("co");
+		CoreUtils.getRegisteredStaffCommands().add("core");
+		CoreUtils.getRegisteredStaffCommands().add("coreprotect");
+		CoreUtils.getRegisteredStaffCommands().add("/wand");
 	}
 	
 	private void loops() {

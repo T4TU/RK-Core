@@ -68,6 +68,7 @@ public class CoreUtils {
 	private static Core core;
 	private static List<String> registeredCommandsNoTabComplete = new ArrayList<String>();
 	private static List<String> registeredCommandsTabComplete = new ArrayList<String>();
+	private static List<String> registeredCommandsStaff = new ArrayList<String>();
 	private static List<String> adminPowers = new ArrayList<String>();
 	private static List<String> builderPowers = new ArrayList<String>();
 	private static Map<String, Integer> afkCounter = new HashMap<String, Integer>();
@@ -126,6 +127,10 @@ public class CoreUtils {
 	
 	public static List<String> getRegisteredCommandsWithTabCompletion() {
 		return registeredCommandsTabComplete;
+	}
+	
+	public static List<String> getRegisteredStaffCommands() {
+		return registeredCommandsStaff;
 	}
 	
 	public static List<String> getAdminPowers() {
