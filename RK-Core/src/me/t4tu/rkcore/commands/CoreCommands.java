@@ -35,6 +35,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -514,13 +515,29 @@ public class CoreCommands implements CommandExecutor {
 			if (CoreUtils.hasAdminPowers(sender)) {
 				if (args.length >= 1) {
 					if (args[0].equalsIgnoreCase("reload")) {
-						core.reloadConfig();
-						sender.sendMessage(tc2 + "Uudelleenladattiin config.yml!");
+						if (args.length >= 2) {
+							Plugin plugin = Bukkit.getPluginManager().getPlugin(args[1]);
+							if (plugin != null) {
+								plugin.reloadConfig();
+								sender.sendMessage(tc2 + "Uudelleenladattiin pluginin " + tc1 + plugin.getName() + tc2 + " config.yml!");
+							}
+							else {
+								sender.sendMessage(tc3 + "Tuntematon plugin!");
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/config reload <plugin>");
+						}
 					}
-					else if (args.length >= 2) {
+					else if (args.length >= 3) {
+						Plugin plugin = Bukkit.getPluginManager().getPlugin(args[0]);
+						if (plugin == null) {
+							sender.sendMessage(tc3 + "Tuntematon plugin!");
+							return true;
+						}
 						boolean cannotBeBoolean = false;
 						String value = "";
-						for (int i = 1; i < args.length; i++) {
+						for (int i = 2; i < args.length; i++) {
 							value = value + " " + args[i];
 						}
 						value = value.trim();
@@ -529,49 +546,49 @@ public class CoreCommands implements CommandExecutor {
 							value = value.substring(1, value.length() - 1);
 						}
 						if (value.equalsIgnoreCase("null")) {
-							core.getConfig().set(args[0], null);
-							core.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[0] + tc2 + " arvoksi " + tc1 + "null" + tc2 + " (null)");
+							plugin.getConfig().set(args[1], null);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "null" + tc2 + " (null)");
 							return true;
 						}
 						else if (value.equalsIgnoreCase("true") && !cannotBeBoolean) {
-							core.getConfig().set(args[0], true);
-							core.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[0] + tc2 + " arvoksi " + tc1 + "true" + tc2 + " (boolean)");
+							plugin.getConfig().set(args[1], true);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "true" + tc2 + " (boolean)");
 							return true;
 						}
 						else if (value.equalsIgnoreCase("false") && !cannotBeBoolean) {
-							core.getConfig().set(args[0], false);
-							core.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[0] + tc2 + " arvoksi " + tc1 + "false" + tc2 + " (boolean)");
+							plugin.getConfig().set(args[1], false);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "false" + tc2 + " (boolean)");
 							return true;
 						}
 						try {
 							int i = Integer.parseInt(value);
-							core.getConfig().set(args[0], i);
-							core.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[0] + tc2 + " arvoksi " + tc1 + i + tc2 + " (int)");
+							plugin.getConfig().set(args[1], i);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + i + tc2 + " (int)");
 						}
 						catch (NumberFormatException e) {
 							try {
 								double d = Double.parseDouble(value);
-								core.getConfig().set(args[0], d);
-								core.saveConfig();
-								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[0] + tc2 + " arvoksi " + tc1 + d + tc2 + " (double)");
+								plugin.getConfig().set(args[1], d);
+								plugin.saveConfig();
+								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + d + tc2 + " (double)");
 							}
 							catch (NumberFormatException e2) {
-								core.getConfig().set(args[0], value);
-								core.saveConfig();
-								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[0] + tc2 + " arvoksi '" + tc1 + value + tc2 + "' (String)");
+								plugin.getConfig().set(args[1], value);
+								plugin.saveConfig();
+								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi '" + tc1 + value + tc2 + "' (String)");
 							}
 						}
 					}
 					else {
-						sender.sendMessage(usage + "/config <polku> <arvo>");
+						sender.sendMessage(usage + "/config <plugin> <polku> <arvo>");
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/config <polku/reload>");
+					sender.sendMessage(usage + "/config <plugin> <polku> <arvo>" + tc3 + " tai " + tc4 + "/config reload <plugin>");
 				}
 			}
 			else {
