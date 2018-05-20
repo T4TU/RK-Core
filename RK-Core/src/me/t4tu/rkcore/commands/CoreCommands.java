@@ -2217,6 +2217,8 @@ public class CoreCommands implements CommandExecutor {
 						status = status.trim();
 						MySQLUtils.set("UPDATE player_stats SET status=? WHERE name=?", status, player.getName());
 						MySQLResult newStatusData = MySQLUtils.get("SELECT status FROM player_stats WHERE name=?", player.getName());
+						core.getConfig().set("users." + player.getName() + ".status", newStatusData.getString(0, "status"));
+						core.saveConfig();
 						player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 						player.sendMessage(tc2 + "Päivitettiin tilaviesti: §o" + newStatusData.getString(0, "status"));
 						List<String> friends = CoreUtils.getFriendsUuids(player.getName());
