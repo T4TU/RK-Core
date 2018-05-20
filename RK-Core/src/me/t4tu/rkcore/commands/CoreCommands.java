@@ -928,6 +928,15 @@ public class CoreCommands implements CommandExecutor {
 								else if (prefix.equals("pääarkkitehti")) {
 									prefix = "&7[«&4Pääarkkitehti&7»]";
 								}
+								else if (prefix.equals("pääarkkitehti")) {
+									prefix = "&7[«&4Pääarkkitehti&7»]";
+								}
+								else if (prefix.equals("pääarkkitehti")) {
+									prefix = "&7[«&4Pääarkkitehti&7»]";
+								}
+								else if (prefix.equals("pääsuunnittelija")) {
+									prefix = "&7[«&4Pääsuunnittelija&7»]";
+								}
 								else if (prefix.equals("pääkehittäjä")) {
 									prefix = "&7[«&4Pääkehittäjä&7»]";
 								}
