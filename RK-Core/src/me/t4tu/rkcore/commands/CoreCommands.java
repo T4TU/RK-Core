@@ -1837,7 +1837,7 @@ public class CoreCommands implements CommandExecutor {
 					message = ChatColor.translateAlternateColorCodes('&', message.trim());
 					for (Player p : Bukkit.getOnlinePlayers()) {
 						if (CoreUtils.hasRank(p, "valvoja")) {
-							player.sendMessage("§7[§aHenkilökunta§7] " + player.getName() + "§a: " + message);
+							p.sendMessage("§7[§aHenkilökunta§7] " + player.getName() + "§a: " + message);
 						}
 					}
 				}
@@ -1863,7 +1863,7 @@ public class CoreCommands implements CommandExecutor {
 					message = ChatColor.translateAlternateColorCodes('&', message.trim());
 					for (Player p : Bukkit.getOnlinePlayers()) {
 						if (CoreUtils.hasRank(p, "valvoja")) {
-							player.sendMessage("§7[§eYlläpito§7] " + player.getName() + "§e: " + message);
+							p.sendMessage("§7[§eYlläpito§7] " + player.getName() + "§e: " + message);
 						}
 					}
 				}
