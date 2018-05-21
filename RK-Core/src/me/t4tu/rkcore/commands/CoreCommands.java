@@ -2294,11 +2294,18 @@ public class CoreCommands implements CommandExecutor {
 		// spawn, hub, lobby
 		
 		if (cmd.getName().equalsIgnoreCase("spawn") || cmd.getName().equalsIgnoreCase("hub") || cmd.getName().equalsIgnoreCase("lobby")) {
-			if (core.getConfig().get("spawn") == null) {
+			if (!core.getConfig().contains("spawn")) {
 				player.sendMessage(tc3 + "Spawn-pistettä ei ole vielä asetettu!");
 				return true;
 			}
-			Location spawn = (Location) core.getConfig().get("spawn");
+			Location spawn;
+			String world = core.getConfig().getString("spawn.world");
+			double x = core.getConfig().getDouble("spawn.x");
+			double y = core.getConfig().getDouble("spawn.y");
+			double z = core.getConfig().getDouble("spawn.z");
+			float pitch = (float) core.getConfig().getDouble("spawn.pitch");
+			float yaw = (float) core.getConfig().getDouble("spawn.yaw");
+			spawn = new Location(Bukkit.getWorld(world), x, y, z, yaw, pitch);
 			CoreUtils.teleport(player, spawn);
 			return true;
 		}
@@ -2307,7 +2314,12 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("asetaspawn") || cmd.getName().equalsIgnoreCase("setspawn")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				core.getConfig().set("spawn", player.getLocation());
+				core.getConfig().set("spawn.world", player.getLocation().getWorld().getName());
+				core.getConfig().set("spawn.x", player.getLocation().getX());
+				core.getConfig().set("spawn.y", player.getLocation().getY());
+				core.getConfig().set("spawn.z", player.getLocation().getZ());
+				core.getConfig().set("spawn.pitch", player.getLocation().getPitch());
+				core.getConfig().set("spawn.yaw", player.getLocation().getYaw());
 				core.saveConfig();
 				player.sendMessage(tc2 + "Asetettiin spawn-piste nykyiseen sijaintiisi!");
 			}
@@ -2494,10 +2506,18 @@ public class CoreCommands implements CommandExecutor {
 							warp = warp + " " + word;
 						}
 						warp = warp.trim().replace(" ", "_").toLowerCase();
-						Location warpLocation = (Location) core.getConfig().get("warps." + warp + ".location");
-						if (warpLocation != null) {
-							MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3 FROM player_stats WHERE name=?", 
-									player.getName());
+						Location location;
+						if (core.getConfig().contains("warps." + warp + ".location")) {
+							
+							String world = core.getConfig().getString("warps." + warp + ".location.world");
+							double x = core.getConfig().getDouble("warps." + warp + ".location.x");
+							double y = core.getConfig().getDouble("warps." + warp + ".location.y");
+							double z = core.getConfig().getDouble("warps." + warp + ".location.z");
+							float pitch = (float) core.getConfig().getDouble("warps." + warp + ".location.pitch");
+							float yaw = (float) core.getConfig().getDouble("warps." + warp + ".location.yaw");
+							location = new Location(Bukkit.getWorld(world), x, y, z, yaw, pitch);
+							
+							MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3 FROM player_stats WHERE name=?", player.getName());
 							if (visitedData != null) {
 								if (warp.equalsIgnoreCase("port_rotfield") && !visitedData.getBoolean(0, "visited_1")) {
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
@@ -2518,7 +2538,8 @@ public class CoreCommands implements CommandExecutor {
 									return;
 								}
 							}
-							CoreUtils.teleport(player, warpLocation);
+							
+							CoreUtils.teleport(player, location);
 						}
 						else {
 							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
@@ -2639,7 +2660,12 @@ public class CoreCommands implements CommandExecutor {
 					warp = warp.trim().replace(" ", "_").toLowerCase();
 					try {
 						int slot = Integer.parseInt(args[0]);
-						core.getConfig().set("warps." + warp + ".location", player.getLocation());
+						core.getConfig().set("warps." + warp + ".location.world", player.getLocation().getWorld().getName());
+						core.getConfig().set("warps." + warp + ".location.x", player.getLocation().getX());
+						core.getConfig().set("warps." + warp + ".location.y", player.getLocation().getY());
+						core.getConfig().set("warps." + warp + ".location.z", player.getLocation().getZ());
+						core.getConfig().set("warps." + warp + ".location.pitch", player.getLocation().getPitch());
+						core.getConfig().set("warps." + warp + ".location.yaw", player.getLocation().getYaw());
 						core.getConfig().set("warps." + warp + ".slot", slot);
 						core.getConfig().set("warps." + warp + ".item", player.getInventory().getItemInMainHand());
 						core.saveConfig();
@@ -2698,9 +2724,16 @@ public class CoreCommands implements CommandExecutor {
 						swarp = swarp + " " + word;
 					}
 					swarp = swarp.trim().replace(" ", "_").toLowerCase();
-					Location swarpLocation = (Location) core.getConfig().get("swarps." + swarp);
-					if (swarpLocation != null) {
-						player.teleport(swarpLocation);
+					Location location;
+					if (core.getConfig().contains("swarps." + swarp)) {
+						String world = core.getConfig().getString("swarps." + swarp + ".world");
+						double x = core.getConfig().getDouble("swarps." + swarp + ".x");
+						double y = core.getConfig().getDouble("swarps." + swarp + ".y");
+						double z = core.getConfig().getDouble("swarps." + swarp + ".z");
+						float pitch = (float) core.getConfig().getDouble("swarps." + swarp + ".pitch");
+						float yaw = (float) core.getConfig().getDouble("swarps." + swarp + ".yaw");
+						location = new Location(Bukkit.getWorld(world), x, y, z, yaw, pitch);
+						player.teleport(location);
 					}
 					else {
 						player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
@@ -2746,7 +2779,12 @@ public class CoreCommands implements CommandExecutor {
 						swarp = swarp + " " + word;
 					}
 					swarp = swarp.trim().replace(" ", "_").toLowerCase();
-					core.getConfig().set("swarps." + swarp, player.getLocation());
+					core.getConfig().set("swarps." + swarp + ".world", player.getLocation().getWorld().getName());
+					core.getConfig().set("swarps." + swarp + ".x", player.getLocation().getX());
+					core.getConfig().set("swarps." + swarp + ".y", player.getLocation().getY());
+					core.getConfig().set("swarps." + swarp + ".z", player.getLocation().getZ());
+					core.getConfig().set("swarps." + swarp + ".pitch", player.getLocation().getPitch());
+					core.getConfig().set("swarps." + swarp + ".yaw", player.getLocation().getYaw());
 					core.saveConfig();
 					player.sendMessage(tc2 + "Asetettiin swarp-piste " + tc1 + swarp + tc2 + " nykyiseen sijaintiisi!");
 				}

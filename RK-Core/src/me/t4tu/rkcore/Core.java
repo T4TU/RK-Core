@@ -364,11 +364,6 @@ public class Core extends JavaPlugin {
 		new BukkitRunnable() {
 			public void run() {
 				
-				// aika configiin
-				
-				getConfig().set("time", ingameTime);
-				saveConfig();
-				
 				// vangitut pelajaat
 				
 				for (Player player : Bukkit.getOnlinePlayers()) {
@@ -531,6 +526,16 @@ public class Core extends JavaPlugin {
 				}
 			}
 		}.runTaskTimer(this, 20, 2);
+		
+		new BukkitRunnable() {
+			public void run() {
+				
+				// aika configiin
+				
+				getConfig().set("time", ingameTime);
+				saveConfig();
+			}
+		}.runTaskTimer(this, 36000, 36000);
 	}
 	
 	private void createWorlds() {
