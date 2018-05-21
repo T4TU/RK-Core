@@ -417,10 +417,9 @@ public class CoreListener implements Listener {
 					}
 				}
 				
-				// asetetaan pelaajan tiedot, jos ensimmäinen liittymiskerta TODO laita defaultit tietokantaan
+				// asetetaan pelaajan tiedot, jos ensimmäinen liittymiskerta
 				
 				if (!MySQLUtils.contains("SELECT * FROM player_info WHERE uuid=?", uuid)) {
-					// pelaajan ensimmäinen liittymiskerta
 					MySQLUtils.set("INSERT INTO player_info (name, uuid, ip, last_seen) "
 							+ "VALUES (?, ?, ?, " + System.currentTimeMillis() + ")", name, uuid, ip);
 					int uniqueJoins = MySQLUtils.get("SELECT count FROM global").getInt(0, "count") + 1;
@@ -429,13 +428,11 @@ public class CoreListener implements Listener {
 				}
 				
 				if (!MySQLUtils.contains("SELECT * FROM player_stats WHERE uuid=?", uuid)) {
-					// pelaajan ensimmäinen liittymiskerta
 					MySQLUtils.set("INSERT INTO player_stats (name, uuid, money, friends) VALUES "
 							+ "(?, ?, 0, ?)", name, uuid, "");
 				}
 				
 				if (!MySQLUtils.contains("SELECT * FROM player_homes WHERE uuid=?", uuid)) {
-					// pelaajan ensimmäinen liittymiskerta
 					MySQLUtils.set("INSERT INTO player_homes (name, uuid) VALUES (?, ?)", name, uuid);
 				}
 				
@@ -449,6 +446,10 @@ public class CoreListener implements Listener {
 				
 				if (!MySQLUtils.contains("SELECT * FROM player_cosmetics WHERE uuid=?", uuid)) {
 					MySQLUtils.set("INSERT INTO player_cosmetics (uuid) VALUES (?)", uuid);
+				}
+				
+				if (!MySQLUtils.contains("SELECT * FROM player_story WHERE uuid=?", uuid)) {
+					MySQLUtils.set("INSERT INTO player_story (uuid) VALUES (?)", uuid);
 				}
 				
 				// asetetaan tiedot configiin
