@@ -173,6 +173,7 @@ public class CoreUtils {
 	}
 	
 	public static void setAfkCounter(Player player, int count) {
+		
 		int current = 0;
 		
 		if (afkCounter.containsKey(player.getName())) {

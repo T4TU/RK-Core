@@ -209,7 +209,6 @@ public class CoreCommands implements CommandExecutor {
 								core.getConfig().set("users." + name + ".chat_color", infoData.getString(0, "chat_color"));
 								core.getConfig().set("users." + name + ".rank", infoData.getString(0, "rank"));
 								core.getConfig().set("users." + name + ".status", statsData.getString(0, "status"));
-								core.getConfig().set("users." + name + ".seconds", infoData.getLong(0, "seconds"));
 								core.saveConfig();
 								SettingsUtils.reloadSettings(target);
 								CoreUtils.updatePermissions(target);
@@ -250,7 +249,10 @@ public class CoreCommands implements CommandExecutor {
 								String chatPrefix = infoData.getStringNotNull(0, "chat_prefix");
 								String chatColor = infoData.getStringNotNull(0, "chat_color");
 								String rank = infoData.getStringNotNull(0, "rank");
-								int seconds = infoData.getInt(0, "seconds");
+								long seconds = infoData.getLong(0, "seconds");
+								if (core.getOntimes().containsKey(uuid)) {
+									seconds += core.getOntimes().get(uuid);
+								}
 								String secondsString = CoreUtils.getHoursAndMinsFromMillis(seconds * 1000);
 								long lastSeen = infoData.getLong(0, "last_seen");
 								String lastSeenString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
@@ -1691,6 +1693,9 @@ public class CoreCommands implements CommandExecutor {
 							String status = statsData.getStringNotNull(0, "status");
 							long seconds = infoData.getLong(0, "seconds");
 							long lastSeen = infoData.getLong(0, "last_seen");
+							if (core.getOntimes().containsKey(uuid)) {
+								seconds += core.getOntimes().get(uuid);
+							}
 							String timePlayed = CoreUtils.getHoursAndMinsFromMillis(seconds * 1000);
 							SimpleDateFormat f = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 							String lastTimeOnline = f.format(new Date(lastSeen + CoreUtils.TIME_OFFSET));

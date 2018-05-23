@@ -460,7 +460,6 @@ public class CoreListener implements Listener {
 				core.getConfig().set("users." + name + ".chat_color", infoData.getString(0, "chat_color"));
 				core.getConfig().set("users." + name + ".rank", infoData.getString(0, "rank"));
 				core.getConfig().set("users." + name + ".status", statsData.getString(0, "status"));
-				core.getConfig().set("users." + name + ".seconds", infoData.getLong(0, "seconds"));
 				core.saveConfig();
 				
 				// pelaajaennätys ja -määrä

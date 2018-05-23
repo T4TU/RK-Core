@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -22,6 +24,7 @@ import me.t4tu.rkcore.listeners.CoreListener;
 import me.t4tu.rkcore.punishments.PunishmentCommands;
 import me.t4tu.rkcore.tutorials.Tutorial;
 import me.t4tu.rkcore.utils.CoreUtils;
+import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.ReflectionUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
@@ -36,6 +39,7 @@ public class Core extends JavaPlugin {
 	private PunishmentCommands punishmentCommands;
 	private Tutorial tutorial;
 	private List<InventoryGUI> guis = new ArrayList<InventoryGUI>();
+	private Map<String, Long> ontimes = new HashMap<String, Long>();
 	private long ingameTime;
 	private boolean timeHalted;
 	
@@ -84,6 +88,16 @@ public class Core extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		
+		for (String uuid : ontimes.keySet()) {
+			MySQLResult infoData = MySQLUtils.get("SELECT seconds FROM player_info WHERE uuid=?", uuid);
+			if (infoData != null) {
+				long seconds = infoData.getLong(0, "seconds");
+				seconds += ontimes.get(uuid);
+				MySQLUtils.set("UPDATE player_info SET seconds=? WHERE uuid=?", "" + seconds, uuid);
+			}
+		}
+		ontimes.clear();
+		
 		MySQLUtils.closeConnection();
 		
 		for (String name : coreCommands.getPermissions().keySet()) {
@@ -121,6 +135,10 @@ public class Core extends JavaPlugin {
 	
 	public List<InventoryGUI> getInventoryGuis() {
 		return guis;
+	}
+	
+	public Map<String, Long> getOntimes() {
+		return ontimes;
 	}
 	
 	public long getIngameTime() {
@@ -429,6 +447,16 @@ public class Core extends JavaPlugin {
 						}
 						CoreUtils.setAfkCounter(player, current + 1);
 					}
+					
+					// ontime
+					
+					if (CoreUtils.getAfkCounter().get(player.getName()) != -1) {
+						long seconds = 0;
+						if (ontimes.containsKey(player.getUniqueId().toString())) {
+							seconds = ontimes.get(player.getUniqueId().toString());
+						}
+						ontimes.put(player.getUniqueId().toString(), seconds + 1);
+					}
 				}
 			}
 		}.runTaskTimer(this, 0, 20);
@@ -474,6 +502,23 @@ public class Core extends JavaPlugin {
 				MySQLUtils.set("UPDATE global SET count=" + Bukkit.getOnlinePlayers().size());
 			}
 		}.runTaskTimerAsynchronously(this, 100, 100);
+		
+		new BukkitRunnable() {
+			public void run() {
+				
+				// ontime
+				
+				for (String uuid : ontimes.keySet()) {
+					MySQLResult infoData = MySQLUtils.get("SELECT seconds FROM player_info WHERE uuid=?", uuid);
+					if (infoData != null) {
+						long seconds = infoData.getLong(0, "seconds");
+						seconds += ontimes.get(uuid);
+						MySQLUtils.set("UPDATE player_info SET seconds=? WHERE uuid=?", "" + seconds, uuid);
+					}
+				}
+				ontimes.clear();
+			}
+		}.runTaskTimerAsynchronously(this, 1200, 1200);
 		
 		new BukkitRunnable() {
 			public void run() {
