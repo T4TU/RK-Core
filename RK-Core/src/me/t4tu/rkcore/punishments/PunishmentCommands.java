@@ -1102,13 +1102,7 @@ public class PunishmentCommands implements CommandExecutor {
 			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
 				if (sender instanceof Player) {
 					Player player = (Player) sender;
-					core.getConfig().set("jail.world", player.getLocation().getWorld().getName());
-					core.getConfig().set("jail.x", player.getLocation().getX());
-					core.getConfig().set("jail.y", player.getLocation().getY());
-					core.getConfig().set("jail.z", player.getLocation().getZ());
-					core.getConfig().set("jail.pitch", player.getLocation().getPitch());
-					core.getConfig().set("jail.yaw", player.getLocation().getYaw());
-					core.saveConfig();
+					CoreUtils.setLocation(core, "jail", player.getLocation());
 					sender.sendMessage(tc2 + "Asetettiin vankilan sijainti nykyiseen sijaintiisi!");
 				}
 				else {
@@ -1125,17 +1119,8 @@ public class PunishmentCommands implements CommandExecutor {
 	}
 	
 	public void teleportToJail(Player player, String reason, long expires) {
-		Location location;
-		if (core.getConfig().contains("jail")) {
-			String world = core.getConfig().getString("jail.world");
-			double x = core.getConfig().getDouble("jail.x");
-			double y = core.getConfig().getDouble("jail.y");
-			double z = core.getConfig().getDouble("jail.z");
-			float pitch = (float) core.getConfig().getDouble("jail.pitch");
-			float yaw = (float) core.getConfig().getDouble("jail.yaw");
-			location = new Location(Bukkit.getWorld(world), x, y, z, yaw, pitch);
-		}
-		else {
+		Location location = CoreUtils.loadLocation(core, "jail");
+		if (location == null) {
 			location = player.getLocation();
 		}
 		player.teleport(location);
@@ -1161,7 +1146,7 @@ public class PunishmentCommands implements CommandExecutor {
 	}
 	
 	public void releaseFromJail(Player player) {
-		Location location = (Location) core.getConfig().get("spawn");
+		Location location = CoreUtils.loadLocation(core, "spawn");
 		if (location == null) {
 			location = player.getLocation();
 		}

@@ -914,25 +914,11 @@ public class CoreListener implements Listener {
 	@EventHandler
 	public void onPlayerRespawn(PlayerRespawnEvent e) {
 		if (core.getConfig().getBoolean("users." + e.getPlayer().getName() + ".jail.jailed") && core.getConfig().contains("jail")) {
-			Location location;
-			String world = core.getConfig().getString("jail.world");
-			double x = core.getConfig().getDouble("jail.x");
-			double y = core.getConfig().getDouble("jail.y");
-			double z = core.getConfig().getDouble("jail.z");
-			float pitch = (float) core.getConfig().getDouble("jail.pitch");
-			float yaw = (float) core.getConfig().getDouble("jail.yaw");
-			location = new Location(Bukkit.getWorld(world), x, y, z, yaw, pitch);
+			Location location = CoreUtils.loadLocation(core, "jail");
 			e.setRespawnLocation(location);
 		}
 		else if (core.getConfig().contains("spawn")) {
-			Location spawn;
-			String world = core.getConfig().getString("spawn.world");
-			double x = core.getConfig().getDouble("spawn.x");
-			double y = core.getConfig().getDouble("spawn.y");
-			double z = core.getConfig().getDouble("spawn.z");
-			float pitch = (float) core.getConfig().getDouble("spawn.pitch");
-			float yaw = (float) core.getConfig().getDouble("spawn.yaw");
-			spawn = new Location(Bukkit.getWorld(world), x, y, z, yaw, pitch);
+			Location spawn = CoreUtils.loadLocation(core, "spawn");
 			e.setRespawnLocation(spawn);
 		}
 		else {

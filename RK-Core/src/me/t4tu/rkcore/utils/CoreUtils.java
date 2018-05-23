@@ -23,6 +23,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftMetaBook;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
@@ -33,6 +34,7 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -901,6 +903,33 @@ public class CoreUtils {
 				}
 			}
 		}.runTaskTimer(core, 0, 2);
+	}
+	
+	public static Location loadLocation(Plugin plugin, String path) {
+		FileConfiguration config = plugin.getConfig();
+		try {
+			String world = config.getString(path + ".world");
+			double x = config.getDouble(path + ".x");
+			double y = config.getDouble(path + ".y");
+			double z = config.getDouble(path + ".z");
+			double yaw = config.getDouble(path + ".yaw");
+			double pitch = config.getDouble(path + ".pitch");
+			return new Location(Bukkit.getWorld(world), x, y, z, (float) yaw, (float) pitch);
+		}
+		catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public static void setLocation(Plugin plugin, String path, Location location) {
+		FileConfiguration config = plugin.getConfig();
+		config.set(path + ".world", location.getWorld().getName());
+		config.set(path + ".x", location.getX());
+		config.set(path + ".y", location.getY());
+		config.set(path + ".z", location.getZ());
+		config.set(path + ".yaw", location.getYaw());
+		config.set(path + ".pitch", location.getPitch());
+		plugin.saveConfig();
 	}
 	
 	public static long getMillisecondsFromStartOfDay(long millis) {
