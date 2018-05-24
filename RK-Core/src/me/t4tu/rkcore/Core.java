@@ -111,6 +111,7 @@ public class Core extends JavaPlugin {
 		}
 		
 		getConfig().set("time", ingameTime);
+		saveConfig();
 	}
 	
 	public CoreListener getCoreListener() {
