@@ -7,6 +7,7 @@ import java.util.ListIterator;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -41,6 +42,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -709,6 +711,47 @@ public class CoreListener implements Listener {
 				}
 			}
 		}.runTaskAsynchronously(core);
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onGamemodeChange
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onGamemodeChange(PlayerGameModeChangeEvent e) {
+		Player player = e.getPlayer();
+		if ((player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE) && (e.getNewGameMode() == GameMode.CREATIVE || e.getNewGameMode() == GameMode.SPECTATOR)) {
+			if (core.getConfig().contains("inventories." + player.getUniqueId().toString())) {
+				core.reloadConfig();
+				@SuppressWarnings("unchecked")
+				ItemStack[] contents = ((List<ItemStack>) core.getConfig().get("inventories." + player.getUniqueId().toString())).toArray(new ItemStack[0]).clone();
+				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
+				core.saveConfig();
+				player.getInventory().setContents(contents);
+			}
+			else {
+				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
+				core.saveConfig();
+				player.getInventory().clear();
+			}
+		}
+		else if ((player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) && (e.getNewGameMode() == GameMode.SURVIVAL || e.getNewGameMode() == GameMode.ADVENTURE)) {
+			if (core.getConfig().contains("inventories." + player.getUniqueId().toString())) {
+				core.reloadConfig();
+				@SuppressWarnings("unchecked")
+				ItemStack[] contents = ((List<ItemStack>) core.getConfig().get("inventories." + player.getUniqueId().toString())).toArray(new ItemStack[0]).clone();
+				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
+				core.saveConfig();
+				player.getInventory().setContents(contents);
+			}
+			else {
+				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
+				core.saveConfig();
+				player.getInventory().clear();
+			}
+		}
 	}
 	
 	///////////////////////////////////////////////////////////////

@@ -104,6 +104,8 @@ commands:
   clear:
   ci:
   invsee:
+  enderchest:
+  echest:
   tp:
   tpo:
   tphere:

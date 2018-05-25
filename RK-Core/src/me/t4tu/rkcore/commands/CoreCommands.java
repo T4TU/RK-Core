@@ -3049,8 +3049,13 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("clear") || cmd.getName().equalsIgnoreCase("ci")) {
 			if (CoreUtils.hasRank(player, "arkkitehti") || CoreUtils.hasRank(player, "valvoja")) {
-				player.getInventory().clear();
-				player.sendMessage(tc2 + "Tyhjennettiin tavaraluettelosi!");
+				if (player.getGameMode() == GameMode.CREATIVE) {
+					player.getInventory().clear();
+					player.sendMessage(tc2 + "Tyhjennettiin tavaraluettelosi!");
+				}
+				else {
+					player.sendMessage(tc3 + "Vahinkojen välttämiseksi tätä komentoa voi käyttää ainoastaan creative-tilassa!");
+				}
 			}
 			else {
 				player.sendMessage(noPermission);
@@ -3058,7 +3063,7 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
-		// insvee
+		// invsee
 		
 		if (cmd.getName().equalsIgnoreCase("invsee")) {
 			if (CoreUtils.hasRank(player, "valvoja")) {
@@ -3078,6 +3083,29 @@ public class CoreCommands implements CommandExecutor {
 				}
 				else {
 					player.sendMessage(usage + "/invsee <pelaaja>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// enderchest, echest
+		
+		if (cmd.getName().equalsIgnoreCase("enderchest") || cmd.getName().equalsIgnoreCase("echest")) {
+			if (CoreUtils.hasRank(player, "valvoja")) {
+				if (args.length >= 1) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						player.openInventory(target.getEnderChest());
+					}
+					else {
+						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/enderchest <pelaaja>");
 				}
 			}
 			else {
