@@ -60,7 +60,7 @@ import net.minecraft.server.v1_12_R1.IChatBaseComponent.ChatSerializer;
 
 public class CoreUtils {
 	
-	public static final long TIME_OFFSET = 0; // TODO 10800000
+	public static final long TIME_OFFSET = 10800000;
 	public static final double INGAME_TIME_SPEED_MULTIPLIER = 36;
 	public static final int SECONDS_TO_HOME_1 = 0; // 0 tuntia
 	public static final int SECONDS_TO_HOME_2 = 18000; // 5 tuntia
@@ -1291,6 +1291,7 @@ public class CoreUtils {
 					connection.setDoOutput(true);
 					connection.setRequestMethod("POST");
 					connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+					connection.setRequestProperty("User-Agent", "RK (2.0)");
 					connection.getOutputStream().write(out);
 					connection.getResponseCode();
 				}
@@ -1317,6 +1318,7 @@ public class CoreUtils {
 					connection.setDoOutput(true);
 					connection.setRequestMethod("POST");
 					connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+					connection.setRequestProperty("User-Agent", "RK (2.0)");
 					connection.getOutputStream().write(out);
 					connection.getResponseCode();
 				}

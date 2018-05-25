@@ -72,6 +72,7 @@ public class CoreCommands implements CommandExecutor {
 	private List<String> spyPlayers;
 	private List<String> commandSpyPlayers;
 	private List<String> teleportingPlayers;
+	private List<String> creativeBypassPlayers;
 	private List<String> powerTools;
 	private Map<String, String> mailWritingPlayers;
 	private Map<String, PermissionAttachment> permissions;
@@ -88,6 +89,7 @@ public class CoreCommands implements CommandExecutor {
 		spyPlayers = new ArrayList<String>();
 		commandSpyPlayers = new ArrayList<String>();
 		teleportingPlayers = new ArrayList<String>();
+		creativeBypassPlayers = new ArrayList<String>();
 		powerTools = new ArrayList<String>();
 		mailWritingPlayers = new HashMap<String, String>();
 		permissions = new HashMap<String, PermissionAttachment>();
@@ -129,6 +131,10 @@ public class CoreCommands implements CommandExecutor {
 	
 	public List<String> getTeleportingPlayers() {
 		return teleportingPlayers;
+	}
+	
+	public List<String> getCreativeBypassPlayers() {
+		return creativeBypassPlayers;
 	}
 	
 	public List<String> getPowerTools() {
@@ -3054,7 +3060,16 @@ public class CoreCommands implements CommandExecutor {
 					player.sendMessage(tc2 + "Tyhjennettiin tavaraluettelosi!");
 				}
 				else {
-					player.sendMessage(tc3 + "Vahinkojen välttämiseksi tätä komentoa voi käyttää ainoastaan creative-tilassa!");
+					if (args.length >= 1 && args[0].equalsIgnoreCase("confirm")) {
+						player.getInventory().clear();
+						player.sendMessage(tc2 + "Tyhjennettiin tavaraluettelosi!");
+					}
+					else {
+						TextComponent text = new TextComponent("Olet survival-tilassa! Varmista tavaraluettelon tyhjennys klikkaamalla tästä!");
+						text.setColor(ChatColor.getByChar(tc3.charAt(1)));
+						text.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/clear confirm"));
+						player.spigot().sendMessage(text);
+					}
 				}
 			}
 			else {
@@ -3106,6 +3121,25 @@ public class CoreCommands implements CommandExecutor {
 				}
 				else {
 					player.sendMessage(usage + "/enderchest <pelaaja>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// creativebypass
+		
+		if (cmd.getName().equalsIgnoreCase("creativebypass")) {
+			if (CoreUtils.hasRank(player, "valvoja")) {
+				if (creativeBypassPlayers.contains(player.getName())) {
+					creativeBypassPlayers.remove(player.getName());
+					player.sendMessage(tc2 + "Et voi enää pudottaa creative-esineitä!");
+				}
+				else {
+					creativeBypassPlayers.add(player.getName());
+					player.sendMessage(tc2 + "Voit nyt pudottaa creative-esineitä!");
 				}
 			}
 			else {

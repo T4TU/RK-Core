@@ -292,6 +292,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("invsee", false);
 		commands.registerCommand("enderchest", false);
 		commands.registerCommand("echest", false);
+		commands.registerCommand("creativebypass", false);
 		commands.registerCommand("tp", false);
 		commands.registerCommand("tpo", false);
 		commands.registerCommand("tphere", false);

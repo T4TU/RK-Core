@@ -106,6 +106,7 @@ commands:
   invsee:
   enderchest:
   echest:
+  creativebypass:
   tp:
   tpo:
   tphere:

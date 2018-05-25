@@ -42,6 +42,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -682,6 +683,7 @@ public class CoreListener implements Listener {
 				core.getCoreCommands().getGodPlayers().remove(player.getName());
 				core.getCoreCommands().getSpyPlayers().remove(player.getName());
 				core.getCoreCommands().getCommandSpyPlayers().remove(player.getName());
+				core.getCoreCommands().getCreativeBypassPlayers().remove(player.getName());
 				core.getCoreCommands().getMailWritingPlayers().remove(player.getName());
 				CoreUtils.getBuilderPowers().remove(player.getName());
 				CoreUtils.getAdminPowers().remove(player.getName());
@@ -751,6 +753,20 @@ public class CoreListener implements Listener {
 				core.saveConfig();
 				player.getInventory().clear();
 			}
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onItemDrop
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onItemDrop(PlayerDropItemEvent e) {
+		Player player = e.getPlayer();
+		if (player.getGameMode() == GameMode.CREATIVE && !core.getCoreCommands().getCreativeBypassPlayers().contains(player.getName())) {
+			e.setCancelled(true);
 		}
 	}
 	
@@ -985,6 +1001,10 @@ public class CoreListener implements Listener {
 		if (CoreUtils.hasRank(player, "arkkitehti") || CoreUtils.hasRank(player, "valvoja")) {
 			core.getConfig().set("users." + player.getName() + ".back", player.getLocation());
 			core.saveConfig();
+		}
+		
+		if (player.getGameMode() == GameMode.CREATIVE) {
+			e.setKeepInventory(true);
 		}
 		
 		List<String> deathNotes = new ArrayList<String>();
