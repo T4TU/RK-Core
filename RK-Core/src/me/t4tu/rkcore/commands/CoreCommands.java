@@ -3148,6 +3148,42 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// swapinventories
+		
+		if (cmd.getName().equalsIgnoreCase("swapinventories")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						if (core.getConfig().contains("inventories." + target.getUniqueId().toString())) {
+							core.reloadConfig();
+							@SuppressWarnings("unchecked")
+							ItemStack[] contents = ((List<ItemStack>) core.getConfig().get("inventories." + target.getUniqueId().toString())).toArray(new ItemStack[0]).clone();
+							core.getConfig().set("inventories." + target.getUniqueId().toString(), target.getInventory().getContents().clone());
+							core.saveConfig();
+							target.getInventory().setContents(contents);
+						}
+						else {
+							core.getConfig().set("inventories." + target.getUniqueId().toString(), target.getInventory().getContents().clone());
+							core.saveConfig();
+							target.getInventory().clear();
+						}
+						player.sendMessage(tc2 + "Vaihdettiin pelaajan " + tc1 + target.getName() + tc2 + " survival- ja creative-tavaraluettelot päittäin!");
+					}
+					else {
+						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/swapinventories <pelaaja>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
 		// tp, tpo
 		
 		if (cmd.getName().equalsIgnoreCase("tp") || cmd.getName().equalsIgnoreCase("tpo")) {

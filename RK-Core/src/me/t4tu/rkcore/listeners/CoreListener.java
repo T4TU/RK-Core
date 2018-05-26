@@ -724,22 +724,8 @@ public class CoreListener implements Listener {
 	@EventHandler
 	public void onGamemodeChange(PlayerGameModeChangeEvent e) {
 		Player player = e.getPlayer();
-		if ((player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE) && (e.getNewGameMode() == GameMode.CREATIVE || e.getNewGameMode() == GameMode.SPECTATOR)) {
-			if (core.getConfig().contains("inventories." + player.getUniqueId().toString())) {
-				core.reloadConfig();
-				@SuppressWarnings("unchecked")
-				ItemStack[] contents = ((List<ItemStack>) core.getConfig().get("inventories." + player.getUniqueId().toString())).toArray(new ItemStack[0]).clone();
-				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
-				core.saveConfig();
-				player.getInventory().setContents(contents);
-			}
-			else {
-				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
-				core.saveConfig();
-				player.getInventory().clear();
-			}
-		}
-		else if ((player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) && (e.getNewGameMode() == GameMode.SURVIVAL || e.getNewGameMode() == GameMode.ADVENTURE)) {
+		if (((player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE) && (e.getNewGameMode() == GameMode.CREATIVE || e.getNewGameMode() == GameMode.SPECTATOR)) || 
+				((player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) && (e.getNewGameMode() == GameMode.SURVIVAL || e.getNewGameMode() == GameMode.ADVENTURE))) {
 			if (core.getConfig().contains("inventories." + player.getUniqueId().toString())) {
 				core.reloadConfig();
 				@SuppressWarnings("unchecked")
