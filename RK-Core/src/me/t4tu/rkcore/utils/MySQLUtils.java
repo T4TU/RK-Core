@@ -44,7 +44,7 @@ public class MySQLUtils {
 		String username = CoreUtils.getMySqlUsername();
 		String password = CoreUtils.getMySqlPassword();
 		try {
-			connection = DriverManager.getConnection("jdbc:mysql://" + host, username, password);
+			connection = DriverManager.getConnection("jdbc:mysql://" + host + "?useSSL=false", username, password);
 			return true;
 		}
 		catch (SQLException e) {

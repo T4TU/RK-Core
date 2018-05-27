@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import me.t4tu.rkcore.Core;
 
@@ -76,8 +77,12 @@ public class InventoryGUI implements Listener {
 		if (e.getInventory().equals(inventory)) {
 			e.setCancelled(true);
 			for (InventoryGUIItem item : actions.keySet()) {
-				if (e.getCurrentItem() != null && e.getCurrentItem().equals(item.getItem())) {
-					actions.get(item).onClickAsync();
+				if (e.getCurrentItem() != null && e.getCurrentItem().equals(item.getItem()) && actions.get(item) != null) {
+					new BukkitRunnable() {
+						public void run() {
+							actions.get(item).onClickAsync();
+						}
+					}.runTaskAsynchronously(core);
 					actions.get(item).onClick();
 				}
 			}
