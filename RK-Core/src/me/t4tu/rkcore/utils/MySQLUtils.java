@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import me.t4tu.rkcore.Core;
@@ -21,6 +22,7 @@ public class MySQLUtils {
 	private static Connection connection;
 	private static int queriesPerMinute = -1;
 	private static int queriesCount = 0;
+	private static boolean b = false;
 	
 	public static void setCore(Core plugin) {
 		core = plugin;
@@ -103,6 +105,10 @@ public class MySQLUtils {
 				resultRows.add(resultColumns);
 			}
 			preparedStatement.close();
+			if (b) {
+				b = false;
+				Bukkit.getConsoleSender().sendMessage("Ongelma näyttäisi ratkenneen yhdistämällä uudelleen!");
+			}
 			if (!resultRows.isEmpty()) {
 				return new MySQLResult(resultRows);
 			}
@@ -112,7 +118,17 @@ public class MySQLUtils {
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
-			return null;
+			if (!b) {
+				b = true;
+				Bukkit.getConsoleSender().sendMessage("MySQL-virhe! Yritetään yhdistää tietokantaan uudelleen...");
+				closeConnection();
+				openConnection();
+				return get(query, strings);
+			}
+			else {
+				Bukkit.getConsoleSender().sendMessage("Ongelma ei ratkennut yhdistämällä uudelleen...");
+				return null;
+			}
 		}
 	}
 	
@@ -131,11 +147,25 @@ public class MySQLUtils {
 			}
 			int i = preparedStatement.executeUpdate();
 			preparedStatement.close();
+			if (b) {
+				b = false;
+				Bukkit.getConsoleSender().sendMessage("Ongelma näyttäisi ratkenneen yhdistämällä uudelleen!");
+			}
 			return i;
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
-			return 0;
+			if (!b) {
+				b = true;
+				Bukkit.getConsoleSender().sendMessage("MySQL-virhe! Yritetään yhdistää tietokantaan uudelleen...");
+				closeConnection();
+				openConnection();
+				return set(query, strings);
+			}
+			else {
+				Bukkit.getConsoleSender().sendMessage("Ongelma ei ratkennut yhdistämällä uudelleen...");
+				return 0;
+			}
 		}
 	}
 	
