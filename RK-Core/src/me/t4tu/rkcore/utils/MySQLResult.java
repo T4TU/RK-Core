@@ -82,6 +82,25 @@ public class MySQLResult {
 		}
 	}
 	
+	public double getDouble(int row, String column) {
+		Map<String, String> data = getRow(row);
+		if (data != null) {
+			if (data.containsKey(column)) {
+				try {
+					return Double.parseDouble(data.get(column));
+				} catch (NumberFormatException e) {
+					return 0;
+				}
+			}
+			else {
+				return 0;
+			}
+		}
+		else {
+			return 0;
+		}
+	}
+	
 	public long getLong(int row, String column) {
 		Map<String, String> data = getRow(row);
 		if (data != null) {
