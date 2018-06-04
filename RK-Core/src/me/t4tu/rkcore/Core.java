@@ -2,7 +2,6 @@ package me.t4tu.rkcore;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +37,6 @@ public class Core extends JavaPlugin {
 	private CoreCommands coreCommands;
 	private PunishmentCommands punishmentCommands;
 	private Tutorial tutorial;
-	private List<InventoryGUI> guis = new ArrayList<InventoryGUI>();
 	private Map<String, Long> ontimes = new HashMap<String, Long>();
 	private long ingameTime;
 	private boolean timeHalted;
@@ -106,10 +104,6 @@ public class Core extends JavaPlugin {
 			}
 		}
 		
-		for (InventoryGUI gui : guis) {
-			gui.destroy();
-		}
-		
 		getConfig().set("time", ingameTime);
 		saveConfig();
 	}
@@ -132,10 +126,6 @@ public class Core extends JavaPlugin {
 	
 	public Tutorial getTutorial() {
 		return tutorial;
-	}
-	
-	public List<InventoryGUI> getInventoryGuis() {
-		return guis;
 	}
 	
 	public Map<String, Long> getOntimes() {

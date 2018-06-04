@@ -2357,10 +2357,12 @@ public class CoreCommands implements CommandExecutor {
 						
 						InventoryGUI gui = new InventoryGUI(27, "Kotipisteet");
 						
+						gui.open(player);
+						
 						gui.addItem(CoreUtils.getHomeItem(player, 1), 10, new InventoryGUIAction() {
 							public void onClickAsync() {}
 							public void onClick() {
-								player.closeInventory();
+								gui.close(player);
 								player.performCommand("koti 1");
 							}
 						});
@@ -2368,7 +2370,7 @@ public class CoreCommands implements CommandExecutor {
 						gui.addItem(CoreUtils.getHomeItem(player, 2), 12, new InventoryGUIAction() {
 							public void onClickAsync() {}
 							public void onClick() {
-								player.closeInventory();
+								gui.close(player);
 								player.performCommand("koti 2");
 							}
 						});
@@ -2376,7 +2378,7 @@ public class CoreCommands implements CommandExecutor {
 						gui.addItem(CoreUtils.getHomeItem(player, 3), 14, new InventoryGUIAction() {
 							public void onClickAsync() {}
 							public void onClick() {
-								player.closeInventory();
+								gui.close(player);
 								player.performCommand("koti 3");
 							}
 						});
@@ -2384,12 +2386,10 @@ public class CoreCommands implements CommandExecutor {
 						gui.addItem(CoreUtils.getHomeItem(player, 4), 16, new InventoryGUIAction() {
 							public void onClickAsync() {}
 							public void onClick() {
-								player.closeInventory();
+								gui.close(player);
 								player.performCommand("koti 4");
 							}
 						});
-						
-						gui.open(player);
 					}
 				}
 			}.runTaskAsynchronously(core);
@@ -2536,6 +2536,7 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else {
+						
 						InventoryGUI gui = new InventoryGUI(45, "Valitse määränpääsi...");
 						
 						gui.addItem(CoreUtils.getItem(Material.EYE_OF_ENDER, "§aFort Royal (Spawn)", Arrays.asList("" , 
@@ -2718,6 +2719,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
+					
 					InventoryGUI swarpGui = new InventoryGUI(27, "Henkilökunnan warp-pisteet");
 					
 					if (core.getConfig().getConfigurationSection("swarps") != null) {

@@ -1,8 +1,6 @@
 package me.t4tu.rkcore.inventories;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -22,14 +20,11 @@ public class InventoryGUI implements Listener {
 	
 	private Map<InventoryGUIItem, InventoryGUIAction> actions;
 	private Inventory inventory;
-	private List<String> viewers;
 	
 	public InventoryGUI(int inventorySize, String inventoryTitle) {
 		actions = new HashMap<InventoryGUIItem, InventoryGUIAction>();
 		inventory = Bukkit.createInventory(null, inventorySize, inventoryTitle);
-		viewers = new ArrayList<String>();
 		Bukkit.getPluginManager().registerEvents(this, core);
-		core.getInventoryGuis().add(this);
 	}
 	
 	public void addItem(InventoryGUIItem item, InventoryGUIAction action) {
@@ -48,28 +43,12 @@ public class InventoryGUI implements Listener {
 	
 	public void open(Player player) {
 		player.openInventory(inventory);
-		viewers.add(player.getUniqueId().toString());
 	}
 	
 	public void close(Player player) {
-		String uuid = player.getUniqueId().toString();
-		if (viewers.contains(uuid)) {
-			if (player.getOpenInventory() != null && player.getOpenInventory().getTitle() != null && 
-					player.getOpenInventory().getTitle().equals(inventory.getTitle())) {
-				player.closeInventory();
-			}
+		if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory() != null && player.getOpenInventory().getTopInventory().equals(inventory)) {
+			player.closeInventory();
 		}
-		viewers.remove(uuid);
-	}
-	
-	public void destroy() {
-		for (Player player : Bukkit.getOnlinePlayers()) {
-			close(player);
-		}
-		actions.clear();
-		viewers.clear();
-		inventory.clear();
-		inventory = null;
 	}
 	
 	@EventHandler
