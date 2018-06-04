@@ -86,14 +86,15 @@ public class Tutorial implements Listener {
 					if (i > 0 && i < 200) {
 						Location location = guide.getLocation().add(0.1, 0, 0);
 						guide.teleport(location);
+						player.setGameMode(GameMode.SPECTATOR);
 						player.setSpectatorTarget(guide);
 					}
 					if (i == 10) {
-						player.sendTitle("", "§7Saammeko esitellä...", 20, 40, 20);
+						player.sendTitle("", "§aSaammeko esitellä...", 20, 40, 20);
 					}
 					if (i == 100) {
-						player.sendTitle("§a§lRoyal Kingdom", "§7Suomalainen Survival-palvelin", 20, 40, 20);
-						player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 0.1f);
+						player.sendTitle("§a§lRoyal Kingdom", "", 20, 40, 20);
+						player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 100, 0.1f);
 					}
 					if (i >= 200 + 100 * tutorialStages.size()) {
 						guide.remove();
@@ -112,6 +113,7 @@ public class Tutorial implements Listener {
 						guide.remove();
 						player.teleport(stage.getLocation());
 						guide = spawnGuideAt(stage.getLocation());
+						player.setGameMode(GameMode.SPECTATOR);
 						player.setSpectatorTarget(guide);
 						player.sendTitle(stage.getTitle(), stage.getSubtitle(), 10, 70, 10);
 						c++;
