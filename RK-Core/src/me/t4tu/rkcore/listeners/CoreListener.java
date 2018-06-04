@@ -42,6 +42,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -711,6 +712,19 @@ public class CoreListener implements Listener {
 				}
 			}
 		}.runTaskAsynchronously(core);
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onPlayerDropItem
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onPlayerDropItem(PlayerDropItemEvent e) {
+		if (e.getPlayer().getName().equals("evokki0075") && e.getPlayer().getGameMode() == GameMode.CREATIVE && core.getCoreCommands().isEvokkiModeEnabled()) {
+			e.getItemDrop().remove();
+		}
 	}
 	
 	///////////////////////////////////////////////////////////////

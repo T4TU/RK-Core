@@ -79,6 +79,7 @@ public class CoreCommands implements CommandExecutor {
 	private Block b1;
 	private Block b2;
 	private int autoRestartTaskId;
+	private boolean evokkiModeEnabled;
 	
 	public CoreCommands(Core core) {
 		this.core = core;
@@ -95,6 +96,7 @@ public class CoreCommands implements CommandExecutor {
 		b1 = null;
 		b2 = null;
 		autoRestartTaskId = -1;
+		evokkiModeEnabled = true;
 	}
 	
 	public void registerCommand(String command, boolean tabCompletion) {
@@ -157,6 +159,10 @@ public class CoreCommands implements CommandExecutor {
 	
 	public void setBlockTwo(Block b2) {
 		this.b2 = b2;
+	}
+	
+	public boolean isEvokkiModeEnabled() {
+		return evokkiModeEnabled;
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -3151,6 +3157,25 @@ public class CoreCommands implements CommandExecutor {
 				}
 				else {
 					player.sendMessage(usage + "/swapinventories <pelaaja>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// evokkimoodi
+		
+		if (cmd.getName().equalsIgnoreCase("evokkimoodi")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (evokkiModeEnabled) {
+					evokkiModeEnabled = false;
+					player.sendMessage(tc2 + "Evokkimoodi pois päältä!");
+				}
+				else {
+					evokkiModeEnabled = true;
+					player.sendMessage(tc2 + "Evokkimoodi päällä!");
 				}
 			}
 			else {

@@ -294,6 +294,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("echest", false);
 		commands.registerCommand("creativebypass", false);
 		commands.registerCommand("swapinventories", false);
+		commands.registerCommand("evokkimoodi", false);
 		commands.registerCommand("tp", false);
 		commands.registerCommand("tpo", false);
 		commands.registerCommand("tphere", false);
