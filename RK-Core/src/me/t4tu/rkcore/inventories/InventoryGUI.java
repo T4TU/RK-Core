@@ -80,10 +80,20 @@ public class InventoryGUI implements Listener {
 				if (e.getCurrentItem() != null && e.getCurrentItem().equals(item.getItem()) && actions.get(item) != null) {
 					new BukkitRunnable() {
 						public void run() {
-							actions.get(item).onClickAsync();
+							if (actions.get(item) instanceof InventoryGUIEventAction) {
+								((InventoryGUIEventAction) actions.get(item)).onClickAsync(e);
+							}
+							else {
+								actions.get(item).onClickAsync();
+							}
 						}
 					}.runTaskAsynchronously(core);
-					actions.get(item).onClick();
+					if (actions.get(item) instanceof InventoryGUIEventAction) {
+						((InventoryGUIEventAction) actions.get(item)).onClick(e);
+					}
+					else {
+						actions.get(item).onClick();
+					}
 				}
 			}
 		}

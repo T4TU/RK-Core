@@ -915,7 +915,6 @@ public class CoreListener implements Listener {
 							if (ticks != 0) {
 								victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, ticks, 0));
 								victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, ticks, 0));
-								victim.sendTitle("", "§cSinut on tainnutettu...", 10, ticks - 40, 10);
 								victim.sendMessage("§c§oSinua iskettiin takaraivoon, ja tainnut hetkeksi...");
 								victim.playSound(victim.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1, 2);
 								player.sendMessage("§7§oIskit vastustajaasi takaraivoon ja tainnutit hänet hetkeksi...");
@@ -1301,7 +1300,7 @@ public class CoreListener implements Listener {
 			"§7<victim>§7 ei kestänyt liekkien kuumuutta.<>FIRE_TICK", 
 			"§7<victim>§7 kärventyi elävältä.<>FIRE_TICK", 
 			"§7<victim>§7 päätti ottaa pienen laavakylvyn.<>LAVA", 
-			"§7<victim>§7 päätti ottaa kylpeä laavassa.<>LAVA", 
+			"§7<victim>§7 päätti kylpeä laavassa.<>LAVA", 
 			"§7<victim>§7 sai ihmeellisen päähänpiston kylpeä laavassa.<>LAVA", 
 			"§7<victim>§7 lätsähti päin seinää.<>FLY_INTO_WALL", 
 			"§7<victim>§7 poltti jalkansa tanssiessaan magmakuution päällä.<>HOT_FLOOR", 
