@@ -539,7 +539,7 @@ public class CoreUtils {
 	
 	public static String getPrefixDescription(String prefix) {
 		if (prefix.equalsIgnoreCase("§7[«§4Ylläpitäjä§7»] ") || prefix.equalsIgnoreCase("§7[«§4Pääarkkitehti§7»] ") || 
-				prefix.equalsIgnoreCase("§7[«§4Pääkehittäjä§7»] ")) {
+				prefix.equalsIgnoreCase("§7[«§4Pääsuunnittelija§7»] ") || prefix.equalsIgnoreCase("§7[«§4Pääkehittäjä§7»] ")) {
 			return "§4Kuvaus tulossa";
 		}
 		else if (prefix.equalsIgnoreCase("§7[«§cModeraattori§7»] ")) {
