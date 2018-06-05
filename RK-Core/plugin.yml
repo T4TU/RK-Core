@@ -76,6 +76,7 @@ commands:
     lobby:
     asetaspawn:
     setspawn:
+    setstartpoint:
     koti:
     home:
     asetakoti:

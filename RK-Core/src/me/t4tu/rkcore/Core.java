@@ -252,6 +252,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("lobby", true);
 		commands.registerCommand("asetaspawn", false);
 		commands.registerCommand("setspawn", false);
+		commands.registerCommand("setstartpoint", false);
 		commands.registerCommand("koti", true);
 		commands.registerCommand("home", true);
 		commands.registerCommand("asetakoti", true);
