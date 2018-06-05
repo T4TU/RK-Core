@@ -1747,8 +1747,7 @@ public class CoreCommands implements CommandExecutor {
 								public void onClick() { }
 							});
 							
-							gui.addItem(CoreUtils.getItem(Material.BARRIER, "§cSulje valikko", 
-									Arrays.asList("", "§7Sulje tämä valikko klikkaamalla tästä."), 1), 49, new InventoryGUIAction() {
+							gui.addItem(CoreUtils.getItem(Material.BARRIER, "§cSulje valikko", null, 1), 49, new InventoryGUIAction() {
 								public void onClickAsync() { }
 								public void onClick() {
 									gui.close(player);
@@ -1763,7 +1762,7 @@ public class CoreCommands implements CommandExecutor {
 								adminLore.add("§aUUID: §7" + uuid);
 								adminLore.add("§aIP: §7" + ip);
 								adminLore.add("");
-								adminLore.add("§7Näytä huomautukset klikkaamalla!");
+								adminLore.add("§7 » Näytä huomautukset klikkaamalla!");
 								gui.addItem(CoreUtils.getItem(Material.PAPER, "§aYlläpitotiedot", adminLore, 1), 11, new InventoryGUIAction() {
 									public void onClickAsync() { }
 									public void onClick() {
@@ -1775,7 +1774,7 @@ public class CoreCommands implements CommandExecutor {
 							else if (CoreUtils.hasRank(player, "valvoja")) {
 								List<String> adminLore = new ArrayList<String>();
 								adminLore.add("");
-								adminLore.add("§7Näytä huomautukset klikkaamalla!");
+								adminLore.add("§7 » Näytä huomautukset klikkaamalla!");
 								gui.addItem(CoreUtils.getItem(Material.PAPER, "§aHuomautukset", adminLore, 1), 11, new InventoryGUIAction() {
 									public void onClickAsync() { }
 									public void onClick() {
@@ -1788,7 +1787,7 @@ public class CoreCommands implements CommandExecutor {
 							if (CoreUtils.hasRank(player, "valvoja")) {
 								List<String> moderatorLore = new ArrayList<String>();
 								moderatorLore.add("");
-								moderatorLore.add("§7Näytä tiedot klikkaamalla!");
+								moderatorLore.add("§7 » Näytä tiedot klikkaamalla!");
 								gui.addItem(CoreUtils.getItem(Material.BOOK_AND_QUILL, "§aRangaistustiedot", moderatorLore, 1), 15, 
 										new InventoryGUIAction() {
 									public void onClickAsync() { }
@@ -2523,20 +2522,17 @@ public class CoreCommands implements CommandExecutor {
 							if (visitedData != null) {
 								if (warp.equalsIgnoreCase("port_rotfield") && !visitedData.getBoolean(0, "visited_1")) {
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Sinun täytyy olla vieraillut tässä kaupungissa vähintään kerran aikaisemmin "
-											+ "ennen kuin voit teleportata sinne.");
+									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä!");
 									return;
 								}
 								if (warp.equalsIgnoreCase("lorem_ipsum") && !visitedData.getBoolean(0, "visited_2")) { // TODO
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Sinun täytyy olla vieraillut tässä kaupungissa vähintään kerran aikaisemmin "
-											+ "ennen kuin voit teleportata sinne.");
+									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä!");
 									return;
 								}
 								if (warp.equalsIgnoreCase("dolor_sit_amet") && !visitedData.getBoolean(0, "visited_3")) { // TODO
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Sinun täytyy olla vieraillut tässä kaupungissa vähintään kerran aikaisemmin "
-											+ "ennen kuin voit teleportata sinne.");
+									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä!");
 									return;
 								}
 							}
@@ -2599,15 +2595,14 @@ public class CoreCommands implements CommandExecutor {
 						
 						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix1 + "Port Rotfield", Arrays.asList("" , 
 								"§7§oPort Rotfield on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu laajoista", 
-								"§7§opelloistaan ja suuresta satamastaan,", "§7§ojoka tekee Port Rotfieldistä oivallisen", 
-								"§7§okaupankäynnin keskuksen.", "", actionText1), 1), 29, new InventoryGUIAction() {
+								"§7§opelloistaan ja suuresta satamastaan.", "", actionText1), 1), 29, new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
 								gui.close(player);
 								player.performCommand("matkusta port_rotfield");
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix2 + "Lorem ipsum", Arrays.asList("" , 
+						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix2 + "???", Arrays.asList("" , 
 								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
 								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText2), 1), 31, 
 								new InventoryGUIAction() {
@@ -2617,9 +2612,8 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("matkusta lorem_ipsum"); // TODO
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix3 + "Dolor sit amet", Arrays.asList("" , 
-								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
-								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText3), 1), 33, 
+						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix3 + "???", Arrays.asList("" , 
+								"§7§oTulossa pian...", "", actionText3), 1), 33, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
@@ -6258,8 +6252,7 @@ public class CoreCommands implements CommandExecutor {
 					
 					InventoryGUI settingsGui = new InventoryGUI(54, "Asetukset");
 					
-					settingsGui.addItem(CoreUtils.getItem(Material.ARROW, "§cTakaisin päävalikkoon", 
-							Arrays.asList("", "§7Palaa takaisin päävalikkoon klikkaamalla tästä."), 1), 49, new InventoryGUIAction() {
+					settingsGui.addItem(CoreUtils.getItem(Material.ARROW, "§c« Takaisin päävalikkoon", null, 1), 49, new InventoryGUIAction() {
 						public void onClickAsync() { }
 						public void onClick() {
 							player.performCommand("asetukset");
@@ -6334,8 +6327,7 @@ public class CoreCommands implements CommandExecutor {
 						player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
 					}
 				});
-				settingsGui.addItem(CoreUtils.getItem(Material.BARRIER, "§cSulje valikko", 
-						Arrays.asList("", "§7Sulje tämä valikko klikkaamalla tästä."), 1), 49, new InventoryGUIAction() {
+				settingsGui.addItem(CoreUtils.getItem(Material.BARRIER, "§cSulje valikko", null, 1), 49, new InventoryGUIAction() {
 					public void onClickAsync() { }
 					public void onClick() {
 						player.closeInventory();
