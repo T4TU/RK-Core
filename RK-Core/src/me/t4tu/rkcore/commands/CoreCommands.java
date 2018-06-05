@@ -2327,6 +2327,19 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// setstartpoint
+		
+		if (cmd.getName().equalsIgnoreCase("setstartpoint")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				CoreUtils.setLocation(core, "startpoint", player.getLocation());
+				player.sendMessage(tc2 + "Asetettiin uusien pelaajien aloituspiste nykyiseen sijaintiisi!");
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
 		// koti, home
 		
 		if (cmd.getName().equalsIgnoreCase("koti") || cmd.getName().equalsIgnoreCase("home")) {
@@ -4135,7 +4148,10 @@ public class CoreCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("tutorial")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
 				if (args.length >= 1) {
-					if (args[0].equalsIgnoreCase("title")) {
+					if (args[0].equalsIgnoreCase("start")) {
+						core.getTutorial().startTutorial(player);
+					}
+					else if (args[0].equalsIgnoreCase("title")) {
 						if (args.length >= 3) {
 							String text = "";
 							for (int i = 2; i < args.length; i++) {
@@ -4185,12 +4201,15 @@ public class CoreCommands implements CommandExecutor {
 						player.sendMessage(tc2 + "Uudelleenladattiin tutoriaali!");
 					}
 					else {
-						player.sendMessage(usage + "/tutorial <title/subtitle/location/startpoint/reload>");
+						player.sendMessage(usage + "/tutorial <start/title/subtitle/location/startpoint/reload>");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/tutorial <title/subtitle/location/startpoint/reload>");
+					player.sendMessage(usage + "/tutorial <start/title/subtitle/location/startpoint/reload>");
 				}
+			}
+			else if (args.length >= 1 && args[0].equalsIgnoreCase("start")) {
+				core.getTutorial().startTutorial(player);
 			}
 			else {
 				player.sendMessage(noPermission);

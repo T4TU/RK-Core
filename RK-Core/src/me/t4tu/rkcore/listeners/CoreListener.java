@@ -114,12 +114,6 @@ public class CoreListener implements Listener {
 		Player player = e.getPlayer();
 		String message = e.getMessage().substring(1).toLowerCase();
 		
-		if (message.equalsIgnoreCase("test")) { // TODO
-			core.getTutorial().startTutorial(player);
-			e.setCancelled(true);
-			return;
-		}
-		
 		if (core.getConfig().getBoolean("users." + player.getName() + ".jail.jailed")) {
 			player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 			player.sendMessage(CoreUtils.getErrorBaseColor() + "Et voi käyttää komentoja olessassi vankilasssa!");
@@ -530,7 +524,7 @@ public class CoreListener implements Listener {
 				
 				if (finishedTutorial) {
 					
-					// tervetuloviesti (2 sekunnin viiveellä)
+					// tervetuloviesti (sekunnin viiveellä)
 					
 					new BukkitRunnable() {
 						public void run() {
@@ -620,7 +614,10 @@ public class CoreListener implements Listener {
 					}.runTaskLaterAsynchronously(core, 120);
 				}
 				else {
-					core.getTutorial().startTutorial(player);
+					Location startpoint = CoreUtils.loadLocation(core, "startpoint");
+					if (startpoint != null) {
+						player.teleport(startpoint);
+					}
 				}
 				
 				new BukkitRunnable() {
