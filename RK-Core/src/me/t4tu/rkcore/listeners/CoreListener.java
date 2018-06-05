@@ -528,7 +528,7 @@ public class CoreListener implements Listener {
 					
 					new BukkitRunnable() {
 						public void run() {
-							player.sendTitle("§a§lRoyal Kingdom", "§7Tervetuloa takaisin, " + name, 30, 40, 30);
+							player.sendTitle("§a§lRoyal Kingdom", "§7Tervetuloa takaisin, " + name, 20, 40, 20);
 						}
 					}.runTaskLaterAsynchronously(core, 20);
 					
