@@ -1005,6 +1005,7 @@ public class CoreListener implements Listener {
 		if (player.getGameMode() == GameMode.CREATIVE) {
 			e.setKeepInventory(true);
 			e.setKeepLevel(true);
+			e.setDroppedExp(0);
 		}
 		
 		List<String> deathNotes = new ArrayList<String>();
