@@ -154,13 +154,19 @@ public class ChatListener implements Listener {
 		String chatName = chatColor + name;
 		String chatStatus = core.getConfig().getString("users." + name + ".status");
 		if (CoreUtils.hasRank(player, "valvoja")) {
-			chatMessage = ChatColor.translateAlternateColorCodes('&', chatMessage);
+			chatMessage = ChatColor.translateAlternateColorCodes('&', chatMessage.replace("<bold>", "§l").replace("<italics>", "§o").replace("<underline>", "§n").replace("<strikethrough>", "§m")
+					.replace("<reset>", "§r").replace("<b>", "§l").replace("<i>", "§o").replace("<u>", "§n").replace("<s>", "§m").replace("<r>", "§r"));
+		}
+		if (CoreUtils.hasRank(player, "ritari")) {
+			chatMessage = chatMessage.replace("&l", "§l").replace("&o", "§o").replace("&n", "§n").replace("&m", "§m").replace("&r", "§r")
+					.replace("<bold>", "§l").replace("<italics>", "§o").replace("<underline>", "§n").replace("<strikethrough>", "§m").replace("<reset>", "§r")
+					.replace("<b>", "§l").replace("<i>", "§o").replace("<u>", "§n").replace("<s>", "§m").replace("<r>", "§r");
 		}
 		if (core.getConfig().contains("users." + name + ".chat_nick")) {
 			chatName = chatColor + ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("users." + name + ".chat_nick"));
 		}
 		
-		// rakennetaan viesti TODO
+		// rakennetaan viesti
 		
 		List<String> notes = core.getConfig().getStringList("users." + name + ".notes");
 		String notesInfo = "§c§lHuomautukset:";
