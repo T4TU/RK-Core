@@ -43,6 +43,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -52,6 +53,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.material.MaterialData;
 import org.bukkit.material.Stairs;
 import org.bukkit.potion.PotionEffect;
@@ -821,6 +823,23 @@ public class CoreListener implements Listener {
 			e.setLine(1, ChatColor.translateAlternateColorCodes('&', e.getLine(1)));
 			e.setLine(2, ChatColor.translateAlternateColorCodes('&', e.getLine(2)));
 			e.setLine(3, ChatColor.translateAlternateColorCodes('&', e.getLine(3)));
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onPlayerEditBook
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onPlayerEditBook(PlayerEditBookEvent e) {
+		if (e.isSigning() && CoreUtils.hasRank(e.getPlayer(), "ritari")) {
+			BookMeta meta = e.getNewBookMeta();
+			for (int i = 1; i <= meta.getPageCount(); i++) {
+				meta.setPage(i, ChatColor.translateAlternateColorCodes('&', meta.getPage(i)));
+			}
+			e.setNewBookMeta(meta);
 		}
 	}
 	

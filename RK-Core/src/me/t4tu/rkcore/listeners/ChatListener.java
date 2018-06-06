@@ -54,7 +54,6 @@ public class ChatListener implements Listener {
 		String tc1 = CoreUtils.getHighlightColor();
 		String tc2 = CoreUtils.getBaseColor();
 		String tc3 = CoreUtils.getErrorBaseColor();
-		String tc4 = CoreUtils.getErrorHighlightColor();
 		
 		Player player = e.getPlayer();
 		String name = player.getName();
@@ -228,9 +227,8 @@ public class ChatListener implements Listener {
 				if (SettingsUtils.getSetting(p, "play_sound_mentioned")) {
 					p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
 				}
-				if (CoreUtils.getAfkCounter().containsKey(p.getName()) && CoreUtils.getAfkCounter().get(p.getName()) == -1) {
-					player.sendMessage(tc3 + "Huomioithan, että viestissä mainitsemasi pelaaja (" + tc4 + p.getName() + tc3 + ") on AFK-tilassa "
-							+ "eikä siksi voi välttämättä vastata viestiisi.");
+				if (CoreUtils.getAfkCounter().containsKey(p.getName()) && CoreUtils.getAfkCounter().get(p.getName()) == -1 && SettingsUtils.getSetting(player, "show_afk_chat_notification")) {
+					player.sendMessage(tc3 + "Huomautus: " + p.getName() + " on AFK-tilassa!");
 				}
 			}
 		}

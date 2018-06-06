@@ -6338,16 +6338,17 @@ public class CoreCommands implements CommandExecutor {
 	
 	private List<String> chatSettings = Arrays.asList(
 			"Näytä pelaajien chat-viestit§show_chat§10", 
-			"Soita ääni, kun nimeni mainitaan chatissa§play_sound_mentioned§12", 
-			"Vastaanota yksityisviestejä pelaajilta§show_msg§14", 
-			"Soita ääni, kun saan yksityisviestin§play_sound_msg§16", 
-			"Vastaanota kaveripyyntöjä pelaajilta§show_friend_requests§28", 
-			"Soita ääni, kun kaverini liittyy palvelimelle§play_sound_friends§30", 
-			"Vastaanota kiltapyyntöjä pelaajilta§show_guild_requests§32", 
-			"Näytä viesti, kun minulta ostetaan tuotteita§show_bought_items§34", 
+			"Soita ääni, kun nimeni mainitaan chatissa§play_sound_mentioned§11", 
+			"Vastaanota yksityisviestejä pelaajilta§show_msg§12", 
+			"Soita ääni, kun saan yksityisviestin§play_sound_msg§13", 
+			"Vastaanota kaveripyyntöjä pelaajilta§show_friend_requests§14", 
+			"Soita ääni, kun kaverini liittyy palvelimelle§play_sound_friends§15", 
+			"Vastaanota kiltapyyntöjä pelaajilta§show_guild_requests§16", 
+			"Näytä viesti, kun minulta ostetaan tuotteita§show_bought_items§19", 
 			"Näytä pelaajien kuolinilmoitukset§show_death_messages§20", 
-			"Näytä muiden pelaajien AFK-ilmoitukset§show_afk§22", 
-			"Näytä kavereideni tilaviestien päivitykset§show_friend_status§24"
+			"Näytä muiden pelaajien AFK-ilmoitukset§show_afk§21", 
+			"Huomauta, jos chat-viestissä mainitsemani pelaaja on AFK§show_afk_chat_notification§22", 
+			"Näytä kavereideni tilaviestien päivitykset§show_friend_status§23"
 			);
 	
 	private List<String> profileSettings = Arrays.asList(
@@ -6356,7 +6357,7 @@ public class CoreCommands implements CommandExecutor {
 	
 	private List<String> miscSettings = Arrays.asList(
 			"Istu tuoleille, kun klikkaan niitä§use_chairs§10", 
-			"Näytä tietoa lukituista kohteistani, kun klikkaan niitä§show_lock_info§12"
+			"Näytä tietoa lukituista kohteistani, kun klikkaan niitä§show_lock_info§11"
 			);
 	
 	private List<String> banPunishments = Arrays.asList(

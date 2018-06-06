@@ -176,6 +176,8 @@ public class CoreUtils {
 	
 	public static void setAfkCounter(Player player, int count) {
 		
+		String tc2 = getBaseColor();
+		
 		int current = 0;
 		
 		if (afkCounter.containsKey(player.getName())) {
@@ -185,18 +187,22 @@ public class CoreUtils {
 		if (count == -1 && current != -1) {
 			for (Player p : Bukkit.getOnlinePlayers()) {
 				if (SettingsUtils.getSetting(p, "show_afk")) {
-					p.sendMessage("§e" + player.getName() + " on nyt AFK-tilassa.");
+					p.sendMessage(tc2 + player.getName() + " on nyt AFK-tilassa.");
 				}
 			}
-			player.sendMessage(getBaseColor() + "Olet nyt AFK-tilassa!");
+			if (!SettingsUtils.getSetting(player, "show_afk")) {
+				player.sendMessage(tc2 + "Olet nyt AFK-tilassa!");
+			}
 		}
 		else if (count != -1 && current == -1) {
 			for (Player p : Bukkit.getOnlinePlayers()) {
 				if (SettingsUtils.getSetting(p, "show_afk")) {
-					p.sendMessage("§e" + player.getName() + " ei ole enää AFK-tilassa.");
+					p.sendMessage(tc2 + player.getName() + " ei ole enää AFK-tilassa.");
 				}
 			}
-			player.sendMessage(getBaseColor() + "Et ole enää AFK-tilassa!");
+			if (!SettingsUtils.getSetting(player, "show_afk")) {
+				player.sendMessage(tc2 + "Et ole enää AFK-tilassa!");
+			}
 		}
 		
 		afkCounter.put(player.getName(), count);
