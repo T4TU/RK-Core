@@ -796,7 +796,7 @@ public class CoreListener implements Listener {
 					}
 				}
 			}
-		}.runTaskLater(core, 200);
+		}.runTaskLater(core, 300);
 	}
 	
 	///////////////////////////////////////////////////////////////
