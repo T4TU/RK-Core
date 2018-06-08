@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -3671,13 +3672,9 @@ public class CoreCommands implements CommandExecutor {
 				if (args.length >= 2) {
 					if (args[0].equalsIgnoreCase("aseta")) {
 						if (b1 != null && b2 != null) {
-							core.getConfig().set("portti." + args[1] + ".world", player.getWorld().getName());
-							core.getConfig().set("portti." + args[1] + ".x1", b1.getLocation().getBlockX());
-							core.getConfig().set("portti." + args[1] + ".y1", b1.getLocation().getBlockY());
-							core.getConfig().set("portti." + args[1] + ".z1", b1.getLocation().getBlockZ());
-							core.getConfig().set("portti." + args[1] + ".x2", b2.getLocation().getBlockX());
-							core.getConfig().set("portti." + args[1] + ".y2", b2.getLocation().getBlockY());
-							core.getConfig().set("portti." + args[1] + ".z2", b2.getLocation().getBlockZ());
+							CoreUtils.setLocation(core, "gates." + args[1] + ".location-1", b1.getLocation());
+							CoreUtils.setLocation(core, "gates." + args[1] + ".location-2", b2.getLocation());
+							core.getConfig().set("gates." + args[1] + ".status", 1);
 							core.saveConfig();
 							b1 = null;
 							b2 = null;
@@ -3688,100 +3685,118 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else if (args[0].equalsIgnoreCase("poista")) {
-						core.getConfig().set("portti." + args[1], null);
+						if (core.getConfig().get("gates." + args[1]) == null) {
+							player.sendMessage(tc3 + "Ei löydetty porttia kyseisellä ID:llä!");
+							return true;
+						}
+						core.getConfig().set("gates." + args[1], null);
 						core.saveConfig();
 						player.sendMessage(tc2 + "Poistettiin portti " + tc1 + "#" + args[1] + tc2 + "!");
 					}
+					else if (args[0].equalsIgnoreCase("lisäänappi")) {
+						if (core.getConfig().get("gates." + args[1]) == null) {
+							player.sendMessage(tc3 + "Ei löydetty porttia kyseisellä ID:llä!");
+							return true;
+						}
+						Block block = player.getTargetBlock(null, 5);
+						if (block != null && (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON)) {
+							int i = new Random().nextInt(10000);
+							CoreUtils.setLocation(core, "gates." + args[1] + ".buttons." + i, block.getLocation());
+							player.sendMessage(tc2 + "Lisättiin nappi porttiin " + tc1 + "#" + args[1] + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Katso kohti sitä nappia, jonka haluat lisätä!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("poistanapit")) {
+						if (core.getConfig().get("gates." + args[1]) == null) {
+							player.sendMessage(tc3 + "Ei löydetty porttia kyseisellä ID:llä!");
+							return true;
+						}
+						core.getConfig().set("gates." + args[1] + ".buttons", null);
+						core.saveConfig();
+						player.sendMessage(tc2 + "Poistettiin kaikki napit portista " + tc1 + "#" + args[1] + tc2 + "!");
+					}
 					else if (args[0].equalsIgnoreCase("avaa")) {
-						if (core.getConfig().get("portti." + args[1]) == null) {
+						if (core.getConfig().get("gates." + args[1]) == null) {
 							player.sendMessage(tc3 + "Ei löydetty porttia kyseisellä ID:llä!");
 							return true;
 						}
 						player.sendMessage(tc2 + "Avataan portti " + tc1 + "#" + args[1] + tc2 + "!");
-						String world = core.getConfig().getString("portti." + args[1] + ".world");
-						int x1 = core.getConfig().getInt("portti." + args[1] + ".x1");
-						int y1 = core.getConfig().getInt("portti." + args[1] + ".y1");
-						int z1 = core.getConfig().getInt("portti." + args[1] + ".z1");
-						int x2 = core.getConfig().getInt("portti." + args[1] + ".x2");
-						int y2 = core.getConfig().getInt("portti." + args[1] + ".y2");
-						int z2 = core.getConfig().getInt("portti." + args[1] + ".z2");
-						int a = 0;
-						int b = 0;
-						int c = 0;
-						for (int i = x1; i <= x2; i++) {
-							a = i;
-							for (int i2 = y1; i2 <= y2; i2++) {
-								b = i2;
-								for (int i3 = z1; i3 <= z2; i3++) {
-									c = i3;
-									int d = a;
-									int e = b;
-									int f = c;
-									new BukkitRunnable() {
-										public void run() {
-											Location location = new Location(Bukkit.getWorld(world), d, e, f);
-											if (location.getBlock().getType() == Material.FENCE) {
-												location.getBlock().setType(Material.AIR);
-												location.getWorld().playSound(location, Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+						Location l1 = CoreUtils.loadLocation(core, "gates." + args[1] + ".location-1");
+						Location l2 = CoreUtils.loadLocation(core, "gates." + args[1] + ".location-2");
+						if (l1.getWorld() == l2.getWorld() && l1.getBlockX() <= l2.getBlockX() && l1.getBlockY() <= l2.getBlockY() && l1.getBlockZ() <= l2.getBlockZ()) {
+							core.getConfig().set("gates." + args[1] + ".status", 2);
+							core.saveConfig();
+							new BukkitRunnable() {
+								int y = l1.getBlockY();
+								public void run() {
+									for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
+										for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
+											Block block = l1.getWorld().getBlockAt(x, y, z);
+											if (block != null && block.getType() == Material.FENCE) {
+												block.setType(Material.AIR);
+												block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
 											}
 										}
-									}.runTaskLater(core, 15 * (b - y1));
+									}
+									if (y >= l2.getBlockY()) {
+										cancel();
+										core.getConfig().set("gates." + args[1] + ".status", 1);
+										core.saveConfig();
+									}
+									else {
+										y++;
+									}
 								}
-							}
+							}.runTaskTimer(core, 15, 15);
 						}
 					}
 					else if (args[0].equalsIgnoreCase("sulje")) {
-						if (core.getConfig().get("portti." + args[1]) == null) {
+						if (core.getConfig().get("gates." + args[1]) == null) {
 							player.sendMessage(tc3 + "Ei löydetty porttia kyseisellä ID:llä!");
 							return true;
 						}
 						player.sendMessage(tc2 + "Suljetaan portti " + tc1 + "#" + args[1] + tc2 + "!");
-						String world = core.getConfig().getString("portti." + args[1] + ".world");
-						int x1 = core.getConfig().getInt("portti." + args[1] + ".x1");
-						int y1 = core.getConfig().getInt("portti." + args[1] + ".y1");
-						int z1 = core.getConfig().getInt("portti." + args[1] + ".z1");
-						int x2 = core.getConfig().getInt("portti." + args[1] + ".x2");
-						int y2 = core.getConfig().getInt("portti." + args[1] + ".y2");
-						int z2 = core.getConfig().getInt("portti." + args[1] + ".z2");
-						int a = 0;
-						int b = 0;
-						int c = 0;
-						for (int i = x1; i <= x2; i++) {
-							a = i;
-							for (int i2 = y2; i2 >= y1; i2--) {
-								b = i2;
-								for (int i3 = z1; i3 <= z2; i3++) {
-									c = i3;
-									int d = a;
-									int e = b;
-									int f = c;
-									new BukkitRunnable() {
-										public void run() {
-											Location location = new Location(Bukkit.getWorld(world), d, e, f);
-											if (location.getBlock().getType() == Material.AIR) {
-												location.getBlock().setType(Material.FENCE);
-												location.getWorld().playSound(location, Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+						Location l1 = CoreUtils.loadLocation(core, "gates." + args[1] + ".location-1");
+						Location l2 = CoreUtils.loadLocation(core, "gates." + args[1] + ".location-2");
+						if (l1.getWorld() == l2.getWorld() && l1.getBlockX() <= l2.getBlockX() && l1.getBlockY() <= l2.getBlockY() && l1.getBlockZ() <= l2.getBlockZ()) {
+							core.getConfig().set("gates." + args[1] + ".status", 2);
+							core.saveConfig();
+							new BukkitRunnable() {
+								int y = l2.getBlockY();
+								public void run() {
+									for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
+										for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
+											Block block = l1.getWorld().getBlockAt(x, y, z);
+											if (block != null && block.getType() == Material.AIR) {
+												block.setType(Material.FENCE);
+												block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
 											}
 										}
-									}.runTaskLater(core, 15 * (y2 - b));
+									}
+									if (y <= l1.getBlockY()) {
+										cancel();
+										core.getConfig().set("gates." + args[1] + ".status", 0);
+										core.saveConfig();
+									}
+									else {
+										y--;
+									}
 								}
-							}
+							}.runTaskTimer(core, 15, 15);
 						}
 					}
 					else if (args[0].endsWith("tp")) {
-						if (core.getConfig().get("portti." + args[1]) == null) {
+						if (core.getConfig().get("gates." + args[1]) == null) {
 							player.sendMessage(tc3 + "Ei löydetty porttia kyseisellä ID:llä!");
 							return true;
 						}
-						String world = core.getConfig().getString("portti." + args[1] + ".world");
-						int x1 = core.getConfig().getInt("portti." + args[1] + ".x1");
-						int y1 = core.getConfig().getInt("portti." + args[1] + ".y1");
-						int z1 = core.getConfig().getInt("portti." + args[1] + ".z1");
-						player.teleport(new Location(Bukkit.getWorld(world), x1, y1, z1));
+						player.teleport(CoreUtils.loadLocation(core, "gates." + args[1] + ".location-1"));
 						player.sendMessage(tc2 + "Sinut teleportattiin portin " + tc1 + "#" + args[1] + tc2 + " luokse!");
 					}
 					else {
-						player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/tp> <ID>\n" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
+						player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp> <ID>" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
 					}
 				}
 				else {
@@ -3804,10 +3819,10 @@ public class CoreCommands implements CommandExecutor {
 							player.sendMessage("");
 							player.sendMessage(tc2 + "§m----------" + tc1 + " Portit " + tc2 + "§m----------");
 							player.sendMessage("");
-							if (core.getConfig().getConfigurationSection("portti") != null && 
-									!core.getConfig().getConfigurationSection("portti").getKeys(false).isEmpty()) {
-								for (String s : core.getConfig().getConfigurationSection("portti").getKeys(false)) {
-									String world = core.getConfig().getString("portti." + s + ".world");
+							if (core.getConfig().getConfigurationSection("gates") != null && 
+									!core.getConfig().getConfigurationSection("gates").getKeys(false).isEmpty()) {
+								for (String s : core.getConfig().getConfigurationSection("gates").getKeys(false)) {
+									String world = core.getConfig().getString("gates." + s + ".location-1.world");
 									TextComponent t = new TextComponent(tc2 + " - " + tc1 + "#" + s + tc2 + " maailmassa '" + world + "' " + 
 											tc1 + "[Teleporttaa klikkaamalla]");
 									t.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/portti tp " + s));
@@ -3821,11 +3836,11 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/tp> <ID>\n" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
+							player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp> <ID>" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
 						}
 					}
 					else {
-						player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/tp> <ID>\n" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
+						player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp> <ID>" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
 					}
 				}
 			}

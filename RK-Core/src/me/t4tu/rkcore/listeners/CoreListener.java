@@ -1191,6 +1191,7 @@ public class CoreListener implements Listener {
 					ItemStack heldItem = player.getInventory().getItemInMainHand();
 					if (owner.equalsIgnoreCase(player.getName()) && item.equalsIgnoreCase(heldItem.getType() + "")) {
 						player.performCommand(command);
+						e.setCancelled(true);
 					}
 				}
 				catch (ArrayIndexOutOfBoundsException ex) {
@@ -1210,6 +1211,82 @@ public class CoreListener implements Listener {
 				else if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
 					core.getCoreCommands().setBlockTwo(e.getClickedBlock());
 					player.sendMessage(tc2 + "Asetettiin porttityökalun piste " + tc1 + "2" + tc2 + "!");
+				}
+			}
+		}
+		
+		// portin nappi
+		
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			Block block = e.getClickedBlock();
+			if (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON) {
+				if (core.getConfig().getConfigurationSection("gates") != null) {
+					for (String s : core.getConfig().getConfigurationSection("gates").getKeys(false)) {
+						if (core.getConfig().getConfigurationSection("gates." + s + ".buttons") != null) {
+							for (String s2 : core.getConfig().getConfigurationSection("gates." + s + ".buttons").getKeys(false)) {
+								Location location = CoreUtils.loadLocation(core, "gates." + s + ".buttons." + s2);
+								if (block.getLocation().equals(location)) {
+									Location l1 = CoreUtils.loadLocation(core, "gates." + s + ".location-1");
+									Location l2 = CoreUtils.loadLocation(core, "gates." + s + ".location-2");
+									int status = core.getConfig().getInt("gates." + s + ".status");
+									if (l1.getWorld() == l2.getWorld() && l1.getBlockX() <= l2.getBlockX() && l1.getBlockY() <= l2.getBlockY() && l1.getBlockZ() <= l2.getBlockZ()) {
+										if (status == 0) {
+											core.getConfig().set("gates." + s + ".status", 2);
+											core.saveConfig();
+											new BukkitRunnable() {
+												int y = l1.getBlockY();
+												public void run() {
+													for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
+														for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
+															Block block = l1.getWorld().getBlockAt(x, y, z);
+															if (block != null && block.getType() == Material.FENCE) {
+																block.setType(Material.AIR);
+																block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+															}
+														}
+													}
+													if (y >= l2.getBlockY()) {
+														cancel();
+														core.getConfig().set("gates." + s + ".status", 1);
+														core.saveConfig();
+													}
+													else {
+														y++;
+													}
+												}
+											}.runTaskTimer(core, 15, 15);
+										}
+										else if (status == 1) {
+											core.getConfig().set("gates." + s + ".status", 2);
+											core.saveConfig();
+											new BukkitRunnable() {
+												int y = l2.getBlockY();
+												public void run() {
+													for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
+														for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
+															Block block = l1.getWorld().getBlockAt(x, y, z);
+															if (block != null && block.getType() == Material.AIR) {
+																block.setType(Material.FENCE);
+																block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+															}
+														}
+													}
+													if (y <= l1.getBlockY()) {
+														cancel();
+														core.getConfig().set("gates." + s + ".status", 0);
+														core.saveConfig();
+													}
+													else {
+														y--;
+													}
+												}
+											}.runTaskTimer(core, 15, 15);
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}
