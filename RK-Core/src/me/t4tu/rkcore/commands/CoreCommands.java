@@ -4241,7 +4241,7 @@ public class CoreCommands implements CommandExecutor {
 							List<String> ban = Arrays.asList("", "§7Ei ole");
 							List<String> jail = Arrays.asList("", "§7Ei ole");
 							List<String> mute = Arrays.asList("", "§7Ei ole");
-							List<String> history = Arrays.asList("", "§7Näytä klikkaamalla");
+							List<String> history = Arrays.asList("", "§7 » Näytä historia klikkaamalla");
 							
 							MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
 							if (banData != null) {
