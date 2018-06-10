@@ -739,8 +739,17 @@ public class CoreListener implements Listener {
 				((player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) && (e.getNewGameMode() == GameMode.SURVIVAL || e.getNewGameMode() == GameMode.ADVENTURE))) {
 			if (core.getConfig().contains("inventories." + player.getUniqueId().toString())) {
 				core.reloadConfig();
-				@SuppressWarnings("unchecked")
-				ItemStack[] contents = ((List<ItemStack>) core.getConfig().get("inventories." + player.getUniqueId().toString())).toArray(new ItemStack[0]).clone();
+				int size = player.getInventory().getContents().length;
+				ItemStack[] contents = new ItemStack[size];
+				for (int i = 0; i < size; i++) {
+					ItemStack item = (ItemStack) core.getConfig().getList("inventories." + player.getUniqueId().toString()).get(i);
+					if (item != null) {
+						contents[i] = item.clone();
+					}
+					else {
+						contents[i] = null;
+					}
+				}
 				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
 				core.saveConfig();
 				player.getInventory().setContents(contents);

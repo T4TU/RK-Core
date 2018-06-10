@@ -3039,7 +3039,7 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
-		// back
+		// top
 		
 		if (cmd.getName().equalsIgnoreCase("top")) {
 			if (CoreUtils.hasRank(player, "arkkitehti") || CoreUtils.hasRank(player, "valvoja")) {
@@ -3124,7 +3124,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/enderchest <pelaaja>");
+					player.performCommand("enderchest " + player.getName());
 				}
 			}
 			else {
@@ -3160,7 +3160,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/swapinventories <pelaaja>");
+					player.performCommand("swapinventories " + player.getName());
 				}
 			}
 			else {
