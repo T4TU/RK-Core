@@ -28,6 +28,7 @@ import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftMetaBook;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
@@ -708,7 +709,6 @@ public class CoreUtils {
 	
 	public static boolean hasEnoughRoom(Player p, ItemStack i, int a) {
 		i = i.clone();
-		i.setAmount(1);
 		int counter = 0;
 		for (ItemStack is : p.getInventory().getStorageContents()) {
 			if (isNotAir(is)) {
@@ -720,8 +720,62 @@ public class CoreUtils {
 				counter = counter + i.getMaxStackSize();
 			}
 		}
-		i = null;
 		return counter >= a;
+	}
+	
+	public static boolean hasEnoughRoom(Player p, ItemStack i, int a, ItemStack i2, int a2) {
+		Inventory inventory = Bukkit.createInventory(null, 36);
+		ItemStack[] contents = p.getInventory().getStorageContents().clone();
+		inventory.setContents(contents);
+		int c = 0;
+		for (ItemStack stack : contents) {
+			if (isNotAir(stack) && stack.isSimilar(i)) {
+				c += stack.getAmount();
+			}
+		}
+		int c2 = 0;
+		for (ItemStack stack : contents) {
+			if (isNotAir(stack) && stack.isSimilar(i2)) {
+				c2 += stack.getAmount();
+			}
+		}
+		i = i.clone();
+		i.setAmount(a);
+		inventory.addItem(i);
+		i2 = i2.clone();
+		i2.setAmount(a2);
+		inventory.addItem(i2);
+		contents = inventory.getContents();
+		int nc = 0;
+		for (ItemStack stack : contents) {
+			if (isNotAir(stack) && stack.isSimilar(i)) {
+				nc += stack.getAmount();
+			}
+		}
+		int nc2 = 0;
+		for (ItemStack stack : contents) {
+			if (isNotAir(stack) && stack.isSimilar(i2)) {
+				nc2 += stack.getAmount();
+			}
+		}
+		return nc - c == a && nc2 - c2 == a2;
+	}
+	
+	public static void removeItems(Inventory inventory, ItemStack item, int amount) {
+		ItemStack[] contents = inventory.getContents();
+		for (ItemStack stack : contents) {
+			if (CoreUtils.isNotAir(stack) && stack.isSimilar(item) && amount > 0) {
+				if (stack.getAmount() - amount >= 0) {
+					stack.setAmount(stack.getAmount() - amount);
+					amount = 0;
+				}
+				else {
+					amount -= stack.getAmount();
+					stack.setAmount(0);
+				}
+			}
+		}
+		inventory.setContents(contents);
 	}
 	
 	public static ItemStack getItem(Material m, String s, List<String> l, int i) {
