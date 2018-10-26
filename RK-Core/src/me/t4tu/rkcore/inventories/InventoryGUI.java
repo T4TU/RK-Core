@@ -73,6 +73,7 @@ public class InventoryGUI implements Listener {
 					else {
 						actions.get(item).onClick();
 					}
+					return;
 				}
 			}
 		}
