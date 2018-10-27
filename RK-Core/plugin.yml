@@ -107,7 +107,6 @@ commands:
     invsee:
     enderchest:
     echest:
-    creativebypass:
     swapinventories:
     evokkimoodi:
     tp:
@@ -130,6 +129,7 @@ commands:
     world:
     holo:
     tutorial:
+    tardis:
     rankaise:
     h:
     huomautus:

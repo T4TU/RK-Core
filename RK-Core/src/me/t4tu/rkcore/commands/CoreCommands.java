@@ -23,6 +23,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
+import org.bukkit.block.Banner;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -74,6 +75,7 @@ public class CoreCommands implements CommandExecutor {
 	private List<String> commandSpyPlayers;
 	private List<String> teleportingPlayers;
 	private List<String> powerTools;
+	private List<Location> tardisBlocks;
 	private Map<String, String> mailWritingPlayers;
 	private Map<String, PermissionAttachment> permissions;
 	private Map<String, ArmorStand> selectedHolograms;
@@ -81,6 +83,7 @@ public class CoreCommands implements CommandExecutor {
 	private Block b2;
 	private int autoRestartTaskId;
 	private boolean evokkiModeEnabled;
+	private boolean canTardisMove;
 	
 	public CoreCommands(Core core) {
 		this.core = core;
@@ -91,6 +94,7 @@ public class CoreCommands implements CommandExecutor {
 		commandSpyPlayers = new ArrayList<String>();
 		teleportingPlayers = new ArrayList<String>();
 		powerTools = new ArrayList<String>();
+		tardisBlocks = new ArrayList<Location>();
 		mailWritingPlayers = new HashMap<String, String>();
 		permissions = new HashMap<String, PermissionAttachment>();
 		selectedHolograms = new HashMap<String, ArmorStand>();
@@ -98,6 +102,7 @@ public class CoreCommands implements CommandExecutor {
 		b2 = null;
 		autoRestartTaskId = -1;
 		evokkiModeEnabled = true;
+		canTardisMove = true;
 	}
 	
 	public void registerCommand(String command, boolean tabCompletion) {
@@ -138,6 +143,10 @@ public class CoreCommands implements CommandExecutor {
 		return powerTools;
 	}
 	
+	public List<Location> getTardisBlocks() {
+		return tardisBlocks;
+	}
+	
 	public Map<String, String> getMailWritingPlayers() {
 		return mailWritingPlayers;
 	}
@@ -166,8 +175,11 @@ public class CoreCommands implements CommandExecutor {
 		return evokkiModeEnabled;
 	}
 	
+	public boolean canTardisMove() {
+		return canTardisMove;
+	}
+	
 	@SuppressWarnings("deprecation")
-	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
 		String tc1 = CoreUtils.getHighlightColor();
@@ -4220,6 +4232,246 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// tardis
+		
+		if (cmd.getName().equalsIgnoreCase("tardis")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("spawn")) {
+						if (!canTardisMove) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi spawnata juuri nyt!");
+							return true;
+						}
+						final Location modelLocation = CoreUtils.loadLocation(core, "tardis.model-location");
+						if (modelLocation == null) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "in mallin sijaintia ei ole asetettu!");
+							return true;
+						}
+						final Location newLocation;
+						if (args.length >= 5) {
+							try {
+								World world = Bukkit.getWorld(args[1]);
+								double x = Double.parseDouble(args[2]);
+								double y = Double.parseDouble(args[3]);
+								double z = Double.parseDouble(args[4]);
+								if (world != null) {
+									newLocation = new Location(world, x, y, z).getBlock().getLocation().add(0.5, 0, 0.5);
+								}
+								else {
+									player.sendMessage(tc3 + "Virheellinen maailman nimi!");
+									return true;
+								}
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheellinen sijainti!");
+								return true;
+							}
+						}
+						else if (args.length >= 4) {
+							try {
+								World world = player.getWorld();
+								double x = Double.parseDouble(args[1]);
+								double y = Double.parseDouble(args[2]);
+								double z = Double.parseDouble(args[3]);
+								newLocation = new Location(world, x, y, z).getBlock().getLocation().add(0.5, 0, 0.5);
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheellinen sijainti!");
+								return true;
+							}
+						}
+						else if (args.length >= 3) {
+							try {
+								World world = player.getWorld();
+								double x = Double.parseDouble(args[1]);
+								double z = Double.parseDouble(args[2]);
+								double y = world.getHighestBlockYAt((int) x, (int) z);
+								newLocation = new Location(world, x, y, z).getBlock().getLocation().add(0.5, 0, 0.5);
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheellinen sijainti!");
+								return true;
+							}
+						}
+						else if (args.length >= 2) {
+							String swarp = args[1].toLowerCase();
+							Location swarpLocation = CoreUtils.loadLocation(core, "swarps." + swarp);
+							if (swarpLocation != null) {
+								newLocation = swarpLocation.getBlock().getLocation().add(0.5, 0, 0.5);
+							}
+							else {
+								player.sendMessage(tc3 + "Virheellinen sijainti!");
+								return true;
+							}
+						}
+						else {
+							newLocation = player.getLocation().getBlock().getLocation().add(0.5, 0, 0.5);
+						}
+						for (int x = -1; x <= 1; x++) {
+							for (int y = 0; y <= 2; y++) {
+								for (int z = -1; z <= 1; z++) {
+									newLocation.add(x, y, z);
+									if (newLocation.getBlock() == null || newLocation.getBlock().getType() != Material.AIR) {
+										player.sendMessage(tc3 + "Ei tarpeeksi tilaa §9§lTARDIS" + tc3 + "ille!");
+										return true;
+									}
+									newLocation.subtract(x, y, z);
+								}
+							}
+						}
+						final Location currentLocation = CoreUtils.loadLocation(core, "tardis.current-location");
+						final Location centerLocation = CoreUtils.loadLocation(core, "tardis.center-location");
+						canTardisMove = false;
+						player.sendMessage(tc2 + "Spawnataan §9§lTARDIS" + tc2 + "...");
+						new BukkitRunnable() {
+							int i = 0;
+							public void run() {
+								i++;
+								if (i >= 16) {
+									cancel();
+									for (int x = -1; x <= 1; x++) {
+										for (int y = 0; y <= 2; y++) {
+											for (int z = -1; z <= 1; z++) {
+												if (currentLocation != null) {
+													currentLocation.add(x, y, z);
+													currentLocation.getBlock().setType(Material.AIR, false);
+													currentLocation.subtract(x, y, z);
+												}
+												modelLocation.add(x, y, z);
+												newLocation.add(x, y, z);
+												Block modelBlock = modelLocation.getBlock();
+												Block newBlock = newLocation.getBlock();
+												newBlock.setType(modelBlock.getType(), false);
+												newBlock.setData(modelBlock.getData(), false);
+												if (modelBlock.getState() instanceof Banner) {
+													Banner modelBanner = (Banner) modelBlock.getState();
+													Banner newBanner = (Banner) newBlock.getState();
+													newBanner.setBaseColor(modelBanner.getBaseColor());
+													newBanner.setPatterns(modelBanner.getPatterns());
+													newBanner.update(false, false);
+												}
+												modelLocation.subtract(x, y, z);
+												newLocation.subtract(x, y, z);
+											}
+										}
+									}
+									newLocation.getWorld().playSound(newLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+									if (currentLocation != null) {
+										currentLocation.getWorld().playSound(currentLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+									}
+									if (centerLocation != null) {
+										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+									}
+									canTardisMove = true;
+									CoreUtils.setLocation(core, "tardis.current-location", newLocation);
+									updateTardisBlocks();
+								}
+								else {
+									newLocation.add(0, 1.5, 0);
+									newLocation.getWorld().spawnParticle(Particle.CRIT, newLocation, 20, 0.5, 0.75, 0.5, 0);
+									newLocation.getWorld().spawnParticle(Particle.CRIT_MAGIC, newLocation, 20, 0.5, 0.75, 0.5, 0);
+									newLocation.getWorld().playSound(newLocation, Sound.BLOCK_FIRE_EXTINGUISH, 0.1f, 1);
+									newLocation.subtract(0, 1.5, 0);
+									if (currentLocation != null) {
+										currentLocation.add(0, 1.5, 0);
+										currentLocation.getWorld().spawnParticle(Particle.CRIT, currentLocation, 20, 0.5, 0.75, 0.5, 0);
+										currentLocation.getWorld().spawnParticle(Particle.CRIT_MAGIC, currentLocation, 20, 0.5, 0.75, 0.5, 0);
+										currentLocation.getWorld().playSound(currentLocation, Sound.BLOCK_FIRE_EXTINGUISH, 0.1f, 1);
+										currentLocation.subtract(0, 1.5, 0);
+									}
+									if (centerLocation != null) {
+										centerLocation.getWorld().playSound(centerLocation, Sound.BLOCK_FIRE_EXTINGUISH, 0.1f, 1);
+									}
+								}
+							}
+						}.runTaskTimer(core, 5, 5);
+					}
+					else if (args[0].equalsIgnoreCase("despawn")) {
+						if (!canTardisMove) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi despawnata juuri nyt!");
+							return true;
+						}
+						final Location currentLocation = CoreUtils.loadLocation(core, "tardis.current-location");
+						if (currentLocation == null) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei ole tällä hetkellä spawnattuna!");
+							return true;
+						}
+						final Location centerLocation = CoreUtils.loadLocation(core, "tardis.center-location");
+						canTardisMove = false;
+						player.sendMessage(tc2 + "Despawnataan §9§lTARDIS" + tc2 + "...");
+						new BukkitRunnable() {
+							int i = 0;
+							public void run() {
+								i++;
+								if (i >= 16) {
+									cancel();
+									for (int x = -1; x <= 1; x++) {
+										for (int y = 0; y <= 2; y++) {
+											for (int z = -1; z <= 1; z++) {
+												currentLocation.add(x, y, z);
+												currentLocation.getBlock().setType(Material.AIR, false);
+												currentLocation.subtract(x, y, z);
+											}
+										}
+									}
+									currentLocation.getWorld().playSound(currentLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+									if (centerLocation != null) {
+										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+									}
+									canTardisMove = true;
+									core.getConfig().set("tardis.current-location", null);
+									core.saveConfig();
+									updateTardisBlocks();
+								}
+								else {
+									currentLocation.add(0, 1.5, 0);
+									currentLocation.getWorld().spawnParticle(Particle.CRIT, currentLocation, 20, 0.5, 0.75, 0.5, 0);
+									currentLocation.getWorld().spawnParticle(Particle.CRIT_MAGIC, currentLocation, 20, 0.5, 0.75, 0.5, 0);
+									currentLocation.getWorld().playSound(currentLocation, Sound.BLOCK_FIRE_EXTINGUISH, 0.1f, 1);
+									currentLocation.subtract(0, 1.5, 0);
+									if (centerLocation != null) {
+										centerLocation.getWorld().playSound(centerLocation, Sound.BLOCK_FIRE_EXTINGUISH, 0.1f, 1);
+									}
+								}
+							}
+						}.runTaskTimer(core, 5, 5);
+					}
+					else if (args[0].equalsIgnoreCase("tp")) {
+						Location location = CoreUtils.loadLocation(core, "tardis.interior-location");
+						if (location != null) {
+							player.teleport(location);
+							player.sendMessage(tc2 + "Teleportattiin §9§lTARDIS" + tc2 + "iin!");
+						}
+						else {
+							player.sendMessage("§9§lTARDIS" + tc3 + "in sisustan sijaintia ei ole asetettu!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("set-model-location")) {
+						CoreUtils.setLocation(core, "tardis.model-location", player.getLocation());
+						player.sendMessage(tc2 + "Asetettiin §9§lTARDIS" + tc2 + "in mallin sijainti nykyiseen sijaintiisi!");
+					}
+					else if (args[0].equalsIgnoreCase("set-interior-location")) {
+						CoreUtils.setLocation(core, "tardis.interior-location", player.getLocation());
+						player.sendMessage(tc2 + "Asetettiin §9§lTARDIS" + tc2 + "in sisustan sijainti nykyiseen sijaintiisi!");
+					}
+					else if (args[0].equalsIgnoreCase("set-center-location")) {
+						CoreUtils.setLocation(core, "tardis.center-location", player.getLocation());
+						player.sendMessage(tc2 + "Asetettiin §9§lTARDIS" + tc2 + "in keskustan sijainti nykyiseen sijaintiisi!");
+					}
+					else {
+						player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location>");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
 		// rankaise, h
 		
 		if (cmd.getName().equalsIgnoreCase("rankaise") || cmd.getName().equalsIgnoreCase("h")) {
@@ -6349,6 +6601,22 @@ public class CoreCommands implements CommandExecutor {
 		}
 		
 		return true;
+	}
+	
+	public void updateTardisBlocks() {
+		tardisBlocks.clear();
+		Location location = CoreUtils.loadLocation(core, "tardis.current-location");
+		if (location != null) {
+			for (int x = -1; x <= 1; x++) {
+				for (int y = 0; y <= 2; y++) {
+					for (int z = -1; z <= 1; z++) {
+						location.add(x, y, z);
+						tardisBlocks.add(location.clone());
+						location.subtract(x, y, z);
+					}
+				}
+			}
+		}
 	}
 	
 	private List<String> chatSettings = Arrays.asList(

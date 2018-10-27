@@ -52,6 +52,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.material.MaterialData;
@@ -1151,6 +1152,13 @@ public class CoreListener implements Listener {
 		if (core.getConfig().getBoolean("users." + e.getPlayer().getName() + ".jail.jailed")) {
 			e.setCancelled(true);
 		}
+		for (Location location : core.getCoreCommands().getTardisBlocks()) {
+			Location blockLocation = e.getBlockPlaced().getLocation();
+			blockLocation.add(0.5, 0, 0.5);
+			if (location.equals(blockLocation)) {
+				e.setCancelled(true);
+			}
+		}
 	}
 	
 	///////////////////////////////////////////////////////////////
@@ -1210,7 +1218,7 @@ public class CoreListener implements Listener {
 		
 		// portti
 		
-		if (CoreUtils.getDisplayName(e.getItem()).equals("§6Porttityökalu") && CoreUtils.hasRank(e.getPlayer(), "ylläpitäjä")) {
+		if (CoreUtils.getDisplayName(e.getItem()).equals("§6Porttityökalu") && CoreUtils.hasRank(e.getPlayer(), "ylläpitäjä") && e.getHand() == EquipmentSlot.HAND) {
 			e.setCancelled(true);
 			if (e.getClickedBlock() != null) {
 				if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
@@ -1226,7 +1234,7 @@ public class CoreListener implements Listener {
 		
 		// portin nappi
 		
-		if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
 			if (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON) {
 				if (core.getConfig().getConfigurationSection("gates") != null) {
@@ -1302,7 +1310,7 @@ public class CoreListener implements Listener {
 		
 		// tuolit
 		
-		if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
 			List<Material> stairBlocks = Arrays.asList(Material.WOOD_STAIRS, Material.BIRCH_WOOD_STAIRS, Material.SPRUCE_WOOD_STAIRS, 
 					Material.JUNGLE_WOOD_STAIRS, Material.ACACIA_STAIRS, Material.DARK_OAK_STAIRS, Material.QUARTZ_STAIRS);
@@ -1329,6 +1337,50 @@ public class CoreListener implements Listener {
 					a.setGravity(false);
 					a.setSilent(true);
 					a.addPassenger(player);
+				}
+			}
+		}
+		
+		// TARDIS
+		
+		if ((e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK)) {
+			Location clickedLocation = e.getClickedBlock().getLocation().add(0.5, 0, 0.5);
+			for (Location location : core.getCoreCommands().getTardisBlocks()) {
+				if (location.equals(clickedLocation)) {
+					e.setCancelled(true);
+					if ((CoreUtils.hasRank(player, "ylläpitäjä") || CoreUtils.getDisplayName(e.getItem()).equals("§9§lTARDIS§bin avain")) && core.getCoreCommands().canTardisMove()) {
+						Location interiorLocation = CoreUtils.loadLocation(core, "tardis.interior-location");
+						if (interiorLocation != null) {
+							player.teleport(interiorLocation);
+							player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.2f, 1);
+						}
+						else {
+							player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 0.5f, 2);
+						}
+					}
+					else {
+						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 0.2f, 2);
+					}
+				}
+			}
+		}
+		
+		if ((e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK)) {
+			if (e.getClickedBlock().getType() == Material.IRON_DOOR_BLOCK) {
+				Location location = CoreUtils.loadLocation(core, "tardis.interior-location");
+				if (location != null && location.distance(e.getClickedBlock().getLocation()) < 4) {
+					e.setCancelled(true);
+					Location currentLocation = CoreUtils.loadLocation(core, "tardis.current-location");
+					if (currentLocation != null && core.getCoreCommands().canTardisMove()) {
+						currentLocation.add(1, 0, 0);
+						currentLocation.setPitch(0);
+						currentLocation.setYaw(270);
+						player.teleport(currentLocation);
+						player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.2f, 1);
+					}
+					else {
+						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 0.5f, 2);
+					}
 				}
 			}
 		}

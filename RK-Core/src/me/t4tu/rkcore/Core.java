@@ -81,6 +81,8 @@ public class Core extends JavaPlugin {
 		loops();
 		
 		createWorlds();
+		
+		coreCommands.updateTardisBlocks();
 	}
 	
 	@Override
@@ -283,7 +285,6 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("invsee", false);
 		commands.registerCommand("enderchest", false);
 		commands.registerCommand("echest", false);
-		commands.registerCommand("creativebypass", false);
 		commands.registerCommand("swapinventories", false);
 		commands.registerCommand("evokkimoodi", false);
 		commands.registerCommand("tp", false);
@@ -306,6 +307,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("world", false);
 		commands.registerCommand("holo", false);
 		commands.registerCommand("tutorial", false);
+		commands.registerCommand("tardis", false);
 		commands.registerCommand("rankaise", false);
 		commands.registerCommand("h", false);
 		commands.registerCommand("huomautus", false);
