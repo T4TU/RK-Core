@@ -2,6 +2,7 @@ package me.t4tu.rkcore.listeners;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
@@ -16,6 +17,7 @@ import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Arrow;
@@ -44,6 +46,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
@@ -57,7 +60,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.material.MaterialData;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.material.Stairs;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -161,11 +164,13 @@ public class CoreListener implements Listener {
 			if (CoreUtils.getBuilderPowers().contains(player.getName())) {
 				CoreUtils.getBuilderPowers().remove(player.getName());
 				player.sendMessage(tc2 + "Rakennusoikeudet: §cdeaktivoitu");
+				player.updateCommands();
 				// TODO
 			}
 			else {
 				CoreUtils.getBuilderPowers().add(player.getName());
 				player.sendMessage(tc2 + "Rakennusoikeudet: §aaktivoitu");
+				player.updateCommands();
 				// TODO
 			}
 			e.setCancelled(true);
@@ -176,11 +181,13 @@ public class CoreListener implements Listener {
 			if (CoreUtils.getAdminPowers().contains(player.getName())) {
 				CoreUtils.getAdminPowers().remove(player.getName());
 				player.sendMessage(tc2 + "Ylläpito-oikeudet: §cdeaktivoitu");
+				player.updateCommands();
 				// TODO
 			}
 			else {
 				CoreUtils.getAdminPowers().add(player.getName());
 				player.sendMessage(tc2 + "Ylläpito-oikeudet: §aaktivoitu");
+				player.updateCommands();
 				// TODO
 			}
 			e.setCancelled(true);
@@ -213,6 +220,34 @@ public class CoreListener implements Listener {
 			}
 			player.sendMessage(CoreUtils.getNoPermissionString());
 			e.setCancelled(true);
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onPlayerCommandSend
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onPlayerCommandSend(PlayerCommandSendEvent e) {
+		Player player = e.getPlayer();
+		if (!CoreUtils.hasAdminPowers(player) && !CoreUtils.hasBuilderPowers(player)) {
+			Iterator<String> iterator = e.getCommands().iterator();
+			while (iterator.hasNext()) {
+				String command = iterator.next();
+				if (CoreUtils.hasRank(player, "valvoja") || CoreUtils.hasRank(player, "arkkitehti")) {
+					if (!CoreUtils.getRegisteredCommandsWithTabCompletion().contains(command) && !CoreUtils.getRegisteredCommands().contains(command) &&
+							!CoreUtils.getRegisteredStaffCommands().contains(command)) {
+						iterator.remove();
+					}
+				}
+				else {
+					if (!CoreUtils.getRegisteredCommandsWithTabCompletion().contains(command)) {
+						iterator.remove();
+					}
+				}
+			}
 		}
 	}
 	
@@ -482,7 +517,7 @@ public class CoreListener implements Listener {
 					if (friends.contains(p.getUniqueId().toString())) {
 						friendPrefix = "§l";
 						if (SettingsUtils.getSetting(p, "play_sound_friends")) {
-							p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BASS, 1, 2);
+							p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1, 2);
 						}
 					}
 					if (firstTimeJoining) {
@@ -632,8 +667,6 @@ public class CoreListener implements Listener {
 						}
 					}
 				}.runTaskLater(core, 140);
-				
-				// TODO tab & header, äänestykset yms.
 			}
 		}.runTaskAsynchronously(core);
 	}
@@ -679,7 +712,7 @@ public class CoreListener implements Listener {
 				core.getConfig().set("users." + name, null);
 				core.saveConfig();
 				
-				// TODO poista mail/afk yms.
+				// poista mail/afk yms.
 				
 				core.getCoreCommands().getVanishedPlayers().remove(player.getName());
 				core.getCoreCommands().getGodPlayers().remove(player.getName());
@@ -909,7 +942,7 @@ public class CoreListener implements Listener {
 				if (!e.isCancelled()) {
 					float a = (float) ((LivingEntity) e.getEntity()).getEyeHeight(false);
 					Location location = e.getEntity().getLocation().add(0, a - 0.1f, 0);
-					MaterialData data = new MaterialData(Material.REDSTONE_BLOCK);
+					BlockData data = Material.REDSTONE_BLOCK.createBlockData();
 					location.getWorld().spawnParticle(Particle.BLOCK_DUST, location, 10, 0.2f, 0.3f, 0.2f, 0.05f, data);
 				}
 			}
@@ -1226,7 +1259,7 @@ public class CoreListener implements Listener {
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
-			if (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON) {
+			if (block.getType() == Material.OAK_BUTTON || block.getType() == Material.STONE_BUTTON) {
 				if (core.getConfig().getConfigurationSection("gates") != null) {
 					for (String s : core.getConfig().getConfigurationSection("gates").getKeys(false)) {
 						if (core.getConfig().getConfigurationSection("gates." + s + ".buttons") != null) {
@@ -1246,7 +1279,7 @@ public class CoreListener implements Listener {
 													for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
 														for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 															Block block = l1.getWorld().getBlockAt(x, y, z);
-															if (block != null && block.getType() == Material.FENCE) {
+															if (block != null && block.getType() == Material.OAK_FENCE) {
 																block.setType(Material.AIR);
 																block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
 															}
@@ -1273,7 +1306,7 @@ public class CoreListener implements Listener {
 														for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 															Block block = l1.getWorld().getBlockAt(x, y, z);
 															if (block != null && block.getType() == Material.AIR) {
-																block.setType(Material.FENCE);
+																block.setType(Material.OAK_FENCE);
 																block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
 															}
 														}
@@ -1302,9 +1335,11 @@ public class CoreListener implements Listener {
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
-			List<Material> stairBlocks = Arrays.asList(Material.WOOD_STAIRS, Material.BIRCH_WOOD_STAIRS, Material.SPRUCE_WOOD_STAIRS, 
-					Material.JUNGLE_WOOD_STAIRS, Material.ACACIA_STAIRS, Material.DARK_OAK_STAIRS, Material.QUARTZ_STAIRS);
-			List<Material> sideBlocks = Arrays.asList(Material.WALL_SIGN, Material.TRAP_DOOR, Material.IRON_TRAPDOOR, Material.FENCE_GATE);
+			List<Material> stairBlocks = Arrays.asList(Material.OAK_STAIRS, Material.BIRCH_STAIRS, Material.SPRUCE_STAIRS, 
+					Material.JUNGLE_STAIRS, Material.ACACIA_STAIRS, Material.DARK_OAK_STAIRS, Material.QUARTZ_STAIRS);
+			List<Material> sideBlocks = Arrays.asList(Material.WALL_SIGN, Material.OAK_TRAPDOOR, Material.BIRCH_TRAPDOOR, Material.SPRUCE_TRAPDOOR,
+					Material.JUNGLE_TRAPDOOR, Material.ACACIA_TRAPDOOR, Material.DARK_OAK_TRAPDOOR, Material.IRON_TRAPDOOR, Material.OAK_FENCE_GATE,
+					Material.BIRCH_FENCE_GATE, Material.SPRUCE_FENCE_GATE, Material.JUNGLE_FENCE_GATE, Material.ACACIA_FENCE_GATE, Material.DARK_OAK_FENCE_GATE);
 			if (stairBlocks.contains(block.getType())) {
 				boolean c = false;
 				Stairs stairs = (Stairs) block.getState().getData();
@@ -1368,7 +1403,7 @@ public class CoreListener implements Listener {
 											core.getConfig().set("stables." + id + ".uuid", player.getUniqueId().toString());
 											CoreUtils.saveHorse(core, "stables." + id + ".horse", abstractHorse);
 											abstractHorse.remove();
-											player.getInventory().addItem(new ItemStack(Material.LEASH));
+											player.getInventory().addItem(new ItemStack(Material.LEAD));
 											player.playSound(player.getLocation(), Sound.ENTITY_HORSE_ARMOR, 1, 1);
 											player.sendMessage(tc2 + "Asetettiin hevonen talliin!");
 										}
@@ -1401,18 +1436,18 @@ public class CoreListener implements Listener {
 							player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.2f, 1);
 						}
 						else {
-							player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 0.5f, 2);
+							player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
 						}
 					}
 					else {
-						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 0.2f, 2);
+						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.2f, 2);
 					}
 				}
 			}
 		}
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
-			if (e.getClickedBlock().getType() == Material.IRON_DOOR_BLOCK) {
+			if (e.getClickedBlock().getType() == Material.IRON_DOOR) {
 				Location location = CoreUtils.loadLocation(core, "tardis.interior-location");
 				if (location != null && location.distance(e.getClickedBlock().getLocation()) < 4) {
 					e.setCancelled(true);
@@ -1425,7 +1460,7 @@ public class CoreListener implements Listener {
 						player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.2f, 1);
 					}
 					else {
-						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 0.5f, 2);
+						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
 					}
 				}
 			}
@@ -1450,8 +1485,9 @@ public class CoreListener implements Listener {
 		if (clickedEntity instanceof ItemFrame) {
 			ItemFrame frame = (ItemFrame) clickedEntity;
 			ItemStack item = frame.getItem();
-			if (CoreUtils.isNotAir(item) && item.getType() == Material.MAP) {
-				if (item.getDurability() == 0) { // TODO seinäkalenteri-mapin data
+			if (CoreUtils.isNotAir(item) && item.getType() == Material.MAP && item.hasItemMeta()) {
+				MapMeta meta = (MapMeta) item.getItemMeta();
+				if (meta.hasMapId() && meta.getMapId() == 0) { // TODO seinäkalenteri-mapin data
 					e.setCancelled(true);
 					if (!calendarCooldown.contains(player.getName())) {
 						
@@ -1532,29 +1568,29 @@ public class CoreListener implements Listener {
 			);
 	
 	private List<Material> stunningItems1 = Arrays.asList(
-			Material.WOOD_SWORD, 
+			Material.WOODEN_SWORD, 
 			Material.STONE_SWORD, 
-			Material.WOOD_AXE, 
+			Material.WOODEN_AXE, 
 			Material.STONE_AXE, 
-			Material.WOOD_PICKAXE, 
+			Material.WOODEN_PICKAXE, 
 			Material.STONE_PICKAXE, 
-			Material.WOOD_SPADE, 
-			Material.STONE_SPADE, 
-			Material.WOOD_HOE, 
+			Material.WOODEN_SHOVEL, 
+			Material.STONE_SHOVEL, 
+			Material.WOODEN_HOE, 
 			Material.STONE_HOE, 
 			Material.STICK
 			);
 	
 	private List<Material> stunningItems2 = Arrays.asList(
-			Material.GOLD_SWORD, 
+			Material.GOLDEN_SWORD, 
 			Material.IRON_SWORD, 
-			Material.GOLD_AXE, 
+			Material.GOLDEN_AXE, 
 			Material.IRON_AXE, 
-			Material.GOLD_PICKAXE, 
+			Material.GOLDEN_PICKAXE, 
 			Material.IRON_PICKAXE, 
-			Material.GOLD_SPADE, 
-			Material.IRON_SPADE, 
-			Material.GOLD_HOE, 
+			Material.GOLDEN_SHOVEL, 
+			Material.IRON_SHOVEL, 
+			Material.GOLDEN_HOE, 
 			Material.IRON_HOE
 			);
 	
@@ -1562,7 +1598,7 @@ public class CoreListener implements Listener {
 			Material.DIAMOND_SWORD, 
 			Material.DIAMOND_AXE, 
 			Material.DIAMOND_PICKAXE, 
-			Material.DIAMOND_SPADE, 
+			Material.DIAMOND_SHOVEL, 
 			Material.DIAMOND_HOE, 
 			Material.BLAZE_ROD
 			);

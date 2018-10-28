@@ -26,7 +26,7 @@ import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftMetaBook;
+import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftMetaBook;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.Donkey;
@@ -53,6 +53,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.utility.MinecraftReflection;
+import com.comphenix.protocol.wrappers.MinecraftKey;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -65,8 +66,8 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
-import net.minecraft.server.v1_12_R1.IChatBaseComponent;
-import net.minecraft.server.v1_12_R1.IChatBaseComponent.ChatSerializer;
+import net.minecraft.server.v1_13_R2.IChatBaseComponent;
+import net.minecraft.server.v1_13_R2.IChatBaseComponent.ChatSerializer;
 
 public class CoreUtils {
 	
@@ -378,21 +379,26 @@ public class CoreUtils {
 	
 	public static ItemStack getHomeItem(Player player, int home) {
 		
-		ItemStack item = new ItemStack(Material.BED);
-		ItemMeta meta = item.getItemMeta();
+		Material material;
 		
 		if (home == 1) {
-			item.setDurability((short) 0);
+			material = Material.WHITE_BED;
 		}
 		else if (home == 2) {
-			item.setDurability((short) 14);
+			material = Material.RED_BED;
 		}
 		else if (home == 3) {
-			item.setDurability((short) 13);
+			material = Material.GREEN_BED;
 		}
 		else if (home == 4) {
-			item.setDurability((short) 11);
+			material = Material.BLUE_BED;
 		}
+		else {
+			material = Material.PINK_BED;
+		}
+		
+		ItemStack item = new ItemStack(material);
+		ItemMeta meta = item.getItemMeta();
 		
 		Location location = getHome(player.getName(), home);
 		
@@ -798,18 +804,20 @@ public class CoreUtils {
 		return is;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static ItemStack getItem(Material m, String s, List<String> l, int i, int d) {
 		ItemStack is = new ItemStack(m); {
 			ItemMeta im = is.getItemMeta();
 			im.setDisplayName(s);
 			im.setLore(l);
 			is.setItemMeta(im);
-			is.setDurability((short)d);
+			is.setDurability((short) d);
 			is.setAmount(i);
 		}
 		return is;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static ItemStack getItem(Material m, String s, List<String> l, int i, int d, boolean e, boolean h) {
 		ItemStack is = new ItemStack(m); {
 			ItemMeta im = is.getItemMeta();
@@ -827,7 +835,7 @@ public class CoreUtils {
 				im.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
 			}
 			is.setItemMeta(im);
-			is.setDurability((short)d);
+			is.setDurability((short) d);
 			is.setAmount(i);
 		}
 		return is;
@@ -835,14 +843,13 @@ public class CoreUtils {
 	
 	@SuppressWarnings("deprecation")
 	public static ItemStack getSkull(String s, List<String> l, String p) {
-		ItemStack is = new ItemStack(Material.SKULL_ITEM); {
-			is.setDurability((short)3);
-			SkullMeta im = (SkullMeta)is.getItemMeta();
+		ItemStack is = new ItemStack(Material.PLAYER_HEAD);
+			is.setDurability((short) 3);
+			SkullMeta im = (SkullMeta) is.getItemMeta();
 			im.setDisplayName(s);
 			im.setLore(l);
 			im.setOwner(p);
 			is.setItemMeta(im);
-		}
 		return is;
 	}
 	
@@ -888,7 +895,7 @@ public class CoreUtils {
 			bf.setByte(0, (byte) 0);
 			bf.writerIndex(1);
 			pc.getModifier().write(1, MinecraftReflection.getPacketDataSerializer(bf));
-			pc.getStrings().write(0, "MC|BOpen");
+			pc.getMinecraftKeys().write(0, new MinecraftKey("book_open"));
 			ProtocolLibrary.getProtocolManager().sendServerPacket(p, pc);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -907,7 +914,7 @@ public class CoreUtils {
 			bf.setByte(0, (byte) 0);
 			bf.writerIndex(1);
 			pc.getModifier().write(1, MinecraftReflection.getPacketDataSerializer(bf));
-			pc.getStrings().write(0, "MC|BOpen");
+			pc.getMinecraftKeys().write(0, new MinecraftKey("book_open"));
 			ProtocolLibrary.getProtocolManager().sendServerPacket(p, pc);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -964,7 +971,7 @@ public class CoreUtils {
 				if (i >= 80) {
 					core.getCoreCommands().getTeleportingPlayers().remove(player.getName());
 					player.teleport(location);
-					player.playSound(player.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1, 0.1f);
+					player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 0.1f);
 					player.removePotionEffect(PotionEffectType.CONFUSION);
 					player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 30, 0, true, false));
 					player.sendTitle("", getBar("§a", "§7", 32, i, 80, "┃"), 0, 1, 5);

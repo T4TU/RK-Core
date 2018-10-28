@@ -486,8 +486,8 @@ public class Core extends JavaPlugin {
 					
 					// kello
 					
-					if (player.getInventory().getItemInMainHand().getType() == Material.WATCH || 
-							player.getInventory().getItemInOffHand().getType() == Material.WATCH) {
+					if (player.getInventory().getItemInMainHand().getType() == Material.CLOCK || 
+							player.getInventory().getItemInOffHand().getType() == Material.CLOCK) {
 						TextComponent component = new TextComponent(CoreUtils.getFriendlyTimeString(ingameTime));
 						player.spigot().sendMessage(ChatMessageType.ACTION_BAR, component);
 					}
@@ -567,8 +567,7 @@ public class Core extends JavaPlugin {
 				}
 				
 				for (Player player : Bukkit.getOnlinePlayers()) {
-					ReflectionUtils.sendTabHeaderFooterPacket(player, "{\"text\":\"§f\n" + s + "\n\"}", 
-							"{\"text\":\"§f\n§a RoyalKingdom.net9.fi \n\"}"); // TODO
+					player.setPlayerListHeaderFooter(s, "§a RoyalKingdom.net9.fi ");
 				}
 			}
 		}.runTaskTimer(this, 20, 2);

@@ -1,11 +1,11 @@
 package me.t4tu.rkcore.utils;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
+import org.bukkit.ChatColor;
+import org.bukkit.craftbukkit.v1_13_R2.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
@@ -13,14 +13,12 @@ import org.bukkit.scoreboard.Team.Option;
 import org.bukkit.scoreboard.Team.OptionStatus;
 
 import net.md_5.bungee.api.ChatMessageType;
-import net.minecraft.server.v1_12_R1.PacketPlayOutScoreboardTeam;
-import net.minecraft.server.v1_12_R1.ScoreboardTeam;
+import net.minecraft.server.v1_13_R2.PacketPlayOutScoreboardTeam;
+import net.minecraft.server.v1_13_R2.ScoreboardTeam;
 
 public class ReflectionUtils {
 	
-	private static Field aField;
-	private static Field bField;
-	private static net.minecraft.server.v1_12_R1.Scoreboard board = new net.minecraft.server.v1_12_R1.Scoreboard();
+	private static net.minecraft.server.v1_13_R2.Scoreboard board = new net.minecraft.server.v1_13_R2.Scoreboard();
 	public static ScoreboardTeam vankilassa = new ScoreboardTeam(board, "5vankilassa");
 	public static ScoreboardTeam def = new ScoreboardTeam(board, "6default");
 	public static ScoreboardTeam ritari = new ScoreboardTeam(board, "5ritari");
@@ -40,48 +38,56 @@ public class ReflectionUtils {
 			t0 = scoreboard.registerNewTeam("5vankilassa");
 		}
 		t0.setPrefix("§4§l ✖ §8§m");
+		t0.setColor(ChatColor.GRAY);
 		
 		Team t1 = scoreboard.getTeam("6default");
 		if (t1 == null) {
 			t1 = scoreboard.registerNewTeam("6default");
 		}
 		t1.setPrefix("§7 ");
+		t1.setColor(ChatColor.GRAY);
 		
 		Team t2 = scoreboard.getTeam("5ritari");
 		if (t2 == null) {
 			t2 = scoreboard.registerNewTeam("5ritari");
 		}
 		t2.setPrefix("§2§l ▶ §7");
+		t2.setColor(ChatColor.GRAY);
 		
 		Team t3 = scoreboard.getTeam("4aatelinen");
 		if (t3 == null) {
 			t3 = scoreboard.registerNewTeam("4aatelinen");
 		}
 		t3.setPrefix("§6§l ▶ §7");
+		t3.setColor(ChatColor.GRAY);
 		
 		Team t4 = scoreboard.getTeam("3arkkitehti");
 		if (t4 == null) {
 			t4 = scoreboard.registerNewTeam("3arkkitehti");
 		}
 		t4.setPrefix("§e ✸ §7");
+		t4.setColor(ChatColor.GRAY);
 		
 		Team t5 = scoreboard.getTeam("2valvoja");
 		if (t5 == null) {
 			t5 = scoreboard.registerNewTeam("2valvoja");
 		}
 		t5.setPrefix("§c ✸ §7");
+		t5.setColor(ChatColor.GRAY);
 		
 		Team t6 = scoreboard.getTeam("1moderaattori");
 		if (t6 == null) {
 			t6 = scoreboard.registerNewTeam("1moderaattori");
 		}
 		t6.setPrefix("§c ✸ §7");
+		t6.setColor(ChatColor.GRAY);
 		
 		Team t7 = scoreboard.getTeam("0ylläpitäjä");
 		if (t7 == null) {
 			t7 = scoreboard.registerNewTeam("0ylläpitäjä");
 		}
 		t7.setPrefix("§4 ✸ §7");
+		t7.setColor(ChatColor.GRAY);
 		
 		Team t8 = scoreboard.getTeam("upsidedown");
 		if (t8 == null) {
@@ -107,38 +113,7 @@ public class ReflectionUtils {
 		try {
 			Object chat = getNMSClass("IChatBaseComponent").getDeclaredClasses()[0].getMethod("a", String.class).invoke(null, s);
 			con = getNMSClass("PacketPlayOutChat").getConstructor(getNMSClass("IChatBaseComponent"), getNMSClass("ChatMessageType"));
-			Object packet = con.newInstance(chat, net.minecraft.server.v1_12_R1.ChatMessageType.valueOf(type.toString().replace("ACTION_BAR", "GAME_INFO")));
-			sendPacket(p, packet);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public static void sendTabHeaderFooterPacket(Player p, String s, String s2) {
-		Constructor<?> con;
-		try {
-			Object c = getNMSClass("IChatBaseComponent").getDeclaredClasses()[0].getMethod("a", String.class).invoke(null, s);
-			Object c2 = getNMSClass("IChatBaseComponent").getDeclaredClasses()[0].getMethod("a", String.class).invoke(null, s2);
-			con = getNMSClass("PacketPlayOutPlayerListHeaderFooter").getConstructor();
-			Object packet = con.newInstance();
-			try {
-				if (aField == null) {
-					aField = packet.getClass().getDeclaredField("a");
-					aField.setAccessible(true);
-				}
-				aField.set(packet, c);
-			} catch (NoSuchFieldException | IllegalAccessException e) {
-				e.printStackTrace();
-			}
-			try {
-				if (bField == null) {
-					bField = packet.getClass().getDeclaredField("b");
-					bField.setAccessible(true);
-				}
-				bField.set(packet, c2);
-			} catch (NoSuchFieldException | IllegalAccessException e) {
-				e.printStackTrace();
-			}
+			Object packet = con.newInstance(chat, net.minecraft.server.v1_13_R2.ChatMessageType.valueOf(type.toString().replace("ACTION_BAR", "GAME_INFO")));
 			sendPacket(p, packet);
 		} catch (Exception e) {
 			e.printStackTrace();

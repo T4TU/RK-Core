@@ -234,6 +234,7 @@ public class CoreCommands implements CommandExecutor {
 								CoreUtils.updatePermissions(target);
 								CoreUtils.updateNotes(target);
 								CoreUtils.updateTabForAll();
+								target.updateCommands();
 								sender.sendMessage(tc2 + "Päivitettiin pelaajan " + tc1 + name + tc2 + " tiedot!");
 							}
 						}.runTaskAsynchronously(core);
@@ -504,7 +505,7 @@ public class CoreCommands implements CommandExecutor {
 							autoRestartTaskId = getTaskId();
 							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen 1 minuutin kuluttua!");
 							for (Player player : Bukkit.getOnlinePlayers()) {
-								player.playSound(player.getLocation(), Sound.ENTITY_ENDERDRAGON_GROWL, 1, 2);
+								player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1, 2);
 							}
 						}
 						if (i == 30) {
@@ -970,6 +971,7 @@ public class CoreCommands implements CommandExecutor {
 									core.getConfig().set("users." + player.getName() + ".rank", newInfoData.getString(0, "rank"));
 									core.saveConfig();
 									CoreUtils.updateTabForAll();
+									player.updateCommands();
 								}
 								String newPrefix = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_prefix"));
 								String newColor = ChatColor.translateAlternateColorCodes('&', newInfoData.getString(0, "chat_color"));
@@ -1133,21 +1135,8 @@ public class CoreCommands implements CommandExecutor {
 						item.setType(materialByName);
 					}
 					else {
-						try {
-							int i = Integer.parseInt(args[1]);
-							Material materialById = Material.getMaterial(i);
-							if (materialById != null) {
-								item.setType(materialById);
-							}
-							else {
-								sender.sendMessage(tc3 + "Tuntematon esine!");
-								return true;
-							}
-						}
-						catch (NumberFormatException e) {
-							sender.sendMessage(tc3 + "Tuntematon esine!");
-							return true;
-						}
+						sender.sendMessage(tc3 + "Tuntematon esine!");
+						return true;
 					}
 					
 					if (args.length >= 3) {
@@ -1750,7 +1739,7 @@ public class CoreCommands implements CommandExecutor {
 								public void onClick() { }
 							});
 							
-							gui.addItem(CoreUtils.getItem(Material.TOTEM, "§aTilastot", comingSoon, 1), 33, new InventoryGUIAction() {
+							gui.addItem(CoreUtils.getItem(Material.TOTEM_OF_UNDYING, "§aTilastot", comingSoon, 1), 33, new InventoryGUIAction() {
 								public void onClickAsync() { }
 								public void onClick() { }
 							});
@@ -1759,7 +1748,7 @@ public class CoreCommands implements CommandExecutor {
 								public void onClickAsync() { }
 								public void onClick() {
 									gui.close(player);
-									player.playSound(player.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1, 1);
+									player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
 								}
 							});
 							
@@ -1796,7 +1785,7 @@ public class CoreCommands implements CommandExecutor {
 								List<String> moderatorLore = new ArrayList<String>();
 								moderatorLore.add("");
 								moderatorLore.add("§7 » Näytä tiedot klikkaamalla!");
-								gui.addItem(CoreUtils.getItem(Material.BOOK_AND_QUILL, "§aRangaistustiedot", moderatorLore, 1), 15, 
+								gui.addItem(CoreUtils.getItem(Material.WRITABLE_BOOK, "§aRangaistustiedot", moderatorLore, 1), 15, 
 										new InventoryGUIAction() {
 									public void onClickAsync() { }
 									public void onClick() {
@@ -1913,8 +1902,8 @@ public class CoreCommands implements CommandExecutor {
 				for (Player p : Bukkit.getOnlinePlayers()) {
 					if (CoreUtils.hasRank(p, "valvoja")) {
 						p.sendMessage("§7[§cApua§7] " + player.getName() + "§c: " + message);
-						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_XYLOPHONE, 10, 0.1f);
-						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_GUITAR, 10, 2);
+						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_XYLOPHONE, 10, 0.1f);
+						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_GUITAR, 10, 2);
 						if (player.canSee(p)) {
 							staffOnline = true;
 						}
@@ -2556,7 +2545,7 @@ public class CoreCommands implements CommandExecutor {
 						
 						InventoryGUI gui = new InventoryGUI(45, "Valitse määränpääsi...");
 						
-						gui.addItem(CoreUtils.getItem(Material.EYE_OF_ENDER, "§aFort Royal (Spawn)", Arrays.asList("" , 
+						gui.addItem(CoreUtils.getItem(Material.ENDER_EYE, "§aFort Royal (Spawn)", Arrays.asList("" , 
 								"§7§oFort Royal on kuningaskunnan", "§7§okeskus. Korkeiden muurien takana", 
 								"§7§okohoaa vielä korkeampi linna, jonka", "§7§osuojissa itse kuningas asustaa.", "", 
 								"§a » Teleporttaa klikkaamalla!"), 1), 12, new InventoryGUIAction() {
@@ -2566,7 +2555,7 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("spawn");
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.BED, "§aKotipisteet", Arrays.asList("" , 
+						gui.addItem(CoreUtils.getItem(Material.RED_BED, "§aKotipisteet", Arrays.asList("" , 
 								"§7§oVoit asettaa itsellesi kotipisteitä,", "§7§ojoihin voit teleportata helposti", 
 								"§7§omistä päin maailmaa tahansa.", "", "§a » Avaa valikko klikkaamalla!"), 1, 14), 
 								14, new InventoryGUIAction() {
@@ -2601,7 +2590,7 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						
-						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix1 + "Port Rotfield", Arrays.asList("" , 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix1 + "Port Rotfield", Arrays.asList("" , 
 								"§7§oPort Rotfield on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu laajoista", 
 								"§7§opelloistaan ja suuresta satamastaan.", "", actionText1), 1), 29, new InventoryGUIAction() {
 							public void onClickAsync() { }
@@ -2610,7 +2599,7 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("matkusta port_rotfield");
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix2 + "???", Arrays.asList("" , 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix2 + "???", Arrays.asList("" , 
 								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
 								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText2), 1), 31, 
 								new InventoryGUIAction() {
@@ -2620,7 +2609,7 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("matkusta lorem_ipsum"); // TODO
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.EMPTY_MAP, colorPrefix3 + "???", Arrays.asList("" , 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix3 + "???", Arrays.asList("" , 
 								"§7§oTulossa pian...", "", actionText3), 1), 33, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
@@ -2740,7 +2729,7 @@ public class CoreCommands implements CommandExecutor {
 					if (core.getConfig().getConfigurationSection("swarps") != null) {
 						int slot = 0;
 						for (String warp : core.getConfig().getConfigurationSection("swarps").getKeys(false)) {
-							ItemStack item = CoreUtils.getItem(Material.EYE_OF_ENDER, tc1 + warp, null, 1);
+							ItemStack item = CoreUtils.getItem(Material.ENDER_EYE, tc1 + warp, null, 1);
 							if (slot < swarpGui.getInventory().getSize()) {
 								swarpGui.addItem(item, slot, new InventoryGUIAction() {
 									public void onClickAsync() { }
@@ -2882,7 +2871,7 @@ public class CoreCommands implements CommandExecutor {
 						player.getLocation().getZ(), 30, 0, 0.5, 0, 0.1);
 				player.getWorld().spawnParticle(Particle.DRAGON_BREATH, player.getLocation().getX(), player.getLocation().getY() + 1, 
 						player.getLocation().getZ(), 30, 0, 0.5, 0, 0.1);
-				player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERDRAGON_FLAP, 10, 2);
+				player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 10, 2);
 			}
 			else {
 				player.sendMessage(noPermission);
@@ -3708,7 +3697,7 @@ public class CoreCommands implements CommandExecutor {
 							return true;
 						}
 						Block block = player.getTargetBlock(null, 5);
-						if (block != null && (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON)) {
+						if (block != null && (block.getType() == Material.OAK_BUTTON || block.getType() == Material.STONE_BUTTON)) {
 							int i = new Random().nextInt(10000);
 							CoreUtils.setLocation(core, "gates." + args[1] + ".buttons." + i, block.getLocation());
 							player.sendMessage(tc2 + "Lisättiin nappi porttiin " + tc1 + "#" + args[1] + tc2 + "!");
@@ -3743,7 +3732,7 @@ public class CoreCommands implements CommandExecutor {
 									for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
 										for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 											Block block = l1.getWorld().getBlockAt(x, y, z);
-											if (block != null && block.getType() == Material.FENCE) {
+											if (block != null && block.getType() == Material.OAK_FENCE) {
 												block.setType(Material.AIR);
 												block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
 											}
@@ -3779,7 +3768,7 @@ public class CoreCommands implements CommandExecutor {
 										for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 											Block block = l1.getWorld().getBlockAt(x, y, z);
 											if (block != null && block.getType() == Material.AIR) {
-												block.setType(Material.FENCE);
+												block.setType(Material.OAK_FENCE);
 												block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
 											}
 										}
@@ -4439,7 +4428,7 @@ public class CoreCommands implements CommandExecutor {
 												Block modelBlock = modelLocation.getBlock();
 												Block newBlock = newLocation.getBlock();
 												newBlock.setType(modelBlock.getType(), false);
-												newBlock.setData(modelBlock.getData(), false);
+												newBlock.setBlockData(modelBlock.getBlockData(), false);
 												if (modelBlock.getState() instanceof Banner) {
 													Banner modelBanner = (Banner) modelBlock.getState();
 													Banner newBanner = (Banner) newBlock.getState();
@@ -4452,12 +4441,12 @@ public class CoreCommands implements CommandExecutor {
 											}
 										}
 									}
-									newLocation.getWorld().playSound(newLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+									newLocation.getWorld().playSound(newLocation, Sound.ENTITY_ARMOR_STAND_BREAK, 1, 0.1f);
 									if (currentLocation != null) {
-										currentLocation.getWorld().playSound(currentLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+										currentLocation.getWorld().playSound(currentLocation, Sound.ENTITY_ARMOR_STAND_BREAK, 1, 0.1f);
 									}
 									if (centerLocation != null) {
-										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMOR_STAND_BREAK, 1, 0.1f);
 									}
 									canTardisMove = true;
 									CoreUtils.setLocation(core, "tardis.current-location", newLocation);
@@ -4511,9 +4500,9 @@ public class CoreCommands implements CommandExecutor {
 											}
 										}
 									}
-									currentLocation.getWorld().playSound(currentLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+									currentLocation.getWorld().playSound(currentLocation, Sound.ENTITY_ARMOR_STAND_BREAK, 1, 0.1f);
 									if (centerLocation != null) {
-										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMORSTAND_BREAK, 1, 0.1f);
+										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMOR_STAND_BREAK, 1, 0.1f);
 									}
 									canTardisMove = true;
 									core.getConfig().set("tardis.current-location", null);
@@ -4676,7 +4665,7 @@ public class CoreCommands implements CommandExecutor {
 									String description = punishment.split("§")[0];
 									String command = punishment.split("§")[1].replace("<user>", name);
 									List<String> lore = Arrays.asList("", "§7/" + command);
-									gui.addItem(CoreUtils.getItem(Material.STAINED_GLASS_PANE, "§c" + description, lore, 1, 14), banCounter, 
+									gui.addItem(CoreUtils.getItem(Material.RED_STAINED_GLASS_PANE, "§c" + description, lore, 1), banCounter, 
 											new InventoryGUIAction() {
 										public void onClickAsync() { }
 										public void onClick() {
@@ -4696,7 +4685,7 @@ public class CoreCommands implements CommandExecutor {
 									String description = punishment.split("§")[0];
 									String command = punishment.split("§")[1].replace("<user>", name);
 									List<String> lore = Arrays.asList("", "§7/" + command);
-									gui.addItem(CoreUtils.getItem(Material.STAINED_GLASS_PANE, "§6" + description, lore, 1, 1), jailCounter, 
+									gui.addItem(CoreUtils.getItem(Material.ORANGE_STAINED_GLASS_PANE, "§6" + description, lore, 1), jailCounter, 
 											new InventoryGUIAction() {
 										public void onClickAsync() { }
 										public void onClick() {
@@ -4716,7 +4705,7 @@ public class CoreCommands implements CommandExecutor {
 									String description = punishment.split("§")[0];
 									String command = punishment.split("§")[1].replace("<user>", name);
 									List<String> lore = Arrays.asList("", "§7/" + command);
-									gui.addItem(CoreUtils.getItem(Material.STAINED_GLASS_PANE, "§e" + description, lore, 1, 4), muteCounter, 
+									gui.addItem(CoreUtils.getItem(Material.YELLOW_STAINED_GLASS_PANE, "§e" + description, lore, 1), muteCounter, 
 											new InventoryGUIAction() {
 										public void onClickAsync() { }
 										public void onClick() {
@@ -4730,22 +4719,22 @@ public class CoreCommands implements CommandExecutor {
 								muteCounter++;
 							}
 							
-							gui.addItem(CoreUtils.getItem(Material.STAINED_CLAY, "§cPorttikielto", ban, 1, 14), 47, new InventoryGUIAction() {
+							gui.addItem(CoreUtils.getItem(Material.RED_TERRACOTTA, "§cPorttikielto", ban, 1), 47, new InventoryGUIAction() {
 								public void onClickAsync() { }
 								public void onClick() { }
 							});
 							
-							gui.addItem(CoreUtils.getItem(Material.STAINED_CLAY, "§6Vangittu", jail, 1, 1), 48, new InventoryGUIAction() {
+							gui.addItem(CoreUtils.getItem(Material.ORANGE_TERRACOTTA, "§6Vangittu", jail, 1), 48, new InventoryGUIAction() {
 								public void onClickAsync() { }
 								public void onClick() { }
 							});
 							
-							gui.addItem(CoreUtils.getItem(Material.STAINED_CLAY, "§eHiljennys", mute, 1, 4), 49, new InventoryGUIAction() {
+							gui.addItem(CoreUtils.getItem(Material.YELLOW_TERRACOTTA, "§eHiljennys", mute, 1), 49, new InventoryGUIAction() {
 								public void onClickAsync() { }
 								public void onClick() { }
 							});
 							
-							gui.addItem(CoreUtils.getItem(Material.BOOK_AND_QUILL, "§aRangaistushistoria", history, 1), 51, 
+							gui.addItem(CoreUtils.getItem(Material.WRITABLE_BOOK, "§aRangaistushistoria", history, 1), 51, 
 									new InventoryGUIAction() {
 								public void onClickAsync() { }
 								public void onClick() {
@@ -5104,8 +5093,8 @@ public class CoreCommands implements CommandExecutor {
 						p.sendMessage("");
 						p.spigot().sendMessage(t1);
 						p.sendMessage("");
-						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_XYLOPHONE, 10, 0.1f);
-						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_GUITAR, 10, 2);
+						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_XYLOPHONE, 10, 0.1f);
+						p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_GUITAR, 10, 2);
 					}
 				}
 				
@@ -6225,11 +6214,11 @@ public class CoreCommands implements CommandExecutor {
 									MySQLUtils.set("DELETE FROM guilds WHERE leader_uuid=?", leader);
 									for (Player p : Bukkit.getOnlinePlayers()) {
 										if (members.toString().contains(p.getUniqueId().toString())) {
-											p.playSound(p.getLocation(), Sound.ENTITY_ENDERDRAGON_GROWL, 1, 2);
+											p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1, 2);
 											p.sendMessage(tc3 + "Kiltasi johtaja poisti killan lopullisesti!");
 										}
 									}
-									player.playSound(player.getLocation(), Sound.ENTITY_ENDERDRAGON_GROWL, 1, 2);
+									player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1, 2);
 									player.sendMessage(tc2 + "Poistettiin kilta onnistuneesti!");
 								}
 								else {
@@ -6614,7 +6603,7 @@ public class CoreCommands implements CommandExecutor {
 						public void onClickAsync() { }
 						public void onClick() {
 							player.performCommand("asetukset");
-							player.playSound(player.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1, 1);
+							player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
 						}
 					});
 					
@@ -6658,7 +6647,7 @@ public class CoreCommands implements CommandExecutor {
 			}
 			else {
 				InventoryGUI settingsGui = new InventoryGUI(54, "Asetukset");
-				settingsGui.addItem(CoreUtils.getItem(Material.BOOK_AND_QUILL, "§aChat & viestit", 
+				settingsGui.addItem(CoreUtils.getItem(Material.WRITABLE_BOOK, "§aChat & viestit", 
 						Arrays.asList("", "§7Muokkaa chattiin ja", "§7viesteihin liittyviä", "§7asetuksia klikkaamalla", "§7tästä."), 1), 
 						20, new InventoryGUIAction() {
 					public void onClickAsync() { }
@@ -6689,7 +6678,7 @@ public class CoreCommands implements CommandExecutor {
 					public void onClickAsync() { }
 					public void onClick() {
 						player.closeInventory();
-						player.playSound(player.getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1, 1);
+						player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
 					}
 				});
 				settingsGui.open(player);
