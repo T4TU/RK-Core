@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.TimeZone;
 
@@ -22,12 +23,20 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.craftbukkit.v1_12_R1.inventory.CraftMetaBook;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.AbstractHorse;
+import org.bukkit.entity.Donkey;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Horse;
+import org.bukkit.entity.Llama;
+import org.bukkit.entity.Mule;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.SkeletonHorse;
+import org.bukkit.entity.ZombieHorse;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -989,6 +998,213 @@ public class CoreUtils {
 		config.set(path + ".z", location.getZ());
 		config.set(path + ".yaw", location.getYaw());
 		config.set(path + ".pitch", location.getPitch());
+		plugin.saveConfig();
+	}
+	
+	public static ItemStack[] loadInventory(Plugin plugin, String path) {
+		FileConfiguration config = plugin.getConfig();
+		try {
+			if (config.getConfigurationSection(path) != null) {
+				Set<String> keys = config.getConfigurationSection(path).getKeys(false);
+				ItemStack[] contents = new ItemStack[keys.size()];
+				for (String key : keys) {
+					int i = Integer.parseInt(key);
+					ItemStack item = (ItemStack) config.get(path + "." + key);
+					contents[i] = item.clone();
+				}
+				return contents;
+			}
+			else {
+				return null;
+			}
+		}
+		catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public static void setInventory(Plugin plugin, String path, ItemStack[] contents) {
+		FileConfiguration config = plugin.getConfig();
+		config.set(path, null);
+		for (int i = 0; i < contents.length; i++) {
+			if (contents[i] == null) {
+				config.set(path + "." + i, new ItemStack(Material.AIR));
+			}
+			else {
+				config.set(path + "." + i, contents[i].clone());
+			}
+		}
+		plugin.saveConfig();
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static AbstractHorse spawnHorse(Plugin plugin, String path, Location location) {
+		FileConfiguration config = plugin.getConfig();
+		try {
+			String type = config.getString(path + ".type");
+			String customName = config.getString(path + ".custom-name");
+			int domestication = config.getInt(path + ".domestication");
+			int maxDomestication = config.getInt(path + ".max-domestication");
+			int age = config.getInt(path + ".age");
+			double jumpStrength = config.getDouble(path + ".jump-strength");
+			double movementSpeed = config.getDouble(path + ".movement-speed");
+			double health = config.getDouble(path + ".health");
+			double maxHealth = config.getDouble(path + ".max-health");
+			boolean tamed = config.getBoolean(path + ".tamed");
+			ItemStack[] items = loadInventory(core, path + ".inventory");
+			if (type.equalsIgnoreCase("horse")) {
+				Horse.Color color = Horse.Color.valueOf(config.getString(path + ".color"));
+				Horse.Style style = Horse.Style.valueOf(config.getString(path + ".style"));
+				Horse horse = location.getWorld().spawn(location, Horse.class);
+				horse.setMaxDomestication(maxDomestication);
+				horse.setDomestication(domestication);
+				horse.setTamed(tamed);
+				horse.setMaxHealth(maxHealth);
+				horse.setHealth(health);
+				horse.setAge(age);
+				horse.setCustomName(customName);
+				horse.setJumpStrength(jumpStrength);
+				horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(movementSpeed);
+				horse.setColor(color);
+				horse.setStyle(style);
+				horse.getInventory().setContents(items);
+				return horse;
+			}
+			if (type.equalsIgnoreCase("donkey")) {
+				boolean carryingChest = config.getBoolean(path + ".carrying-chest");
+				Donkey donkey = location.getWorld().spawn(location, Donkey.class);
+				donkey.setMaxDomestication(maxDomestication);
+				donkey.setDomestication(domestication);
+				donkey.setTamed(tamed);
+				donkey.setMaxHealth(maxHealth);
+				donkey.setHealth(health);
+				donkey.setAge(age);
+				donkey.setCustomName(customName);
+				donkey.setJumpStrength(jumpStrength);
+				donkey.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(movementSpeed);
+				donkey.setCarryingChest(carryingChest);
+				donkey.getInventory().setContents(items);
+				return donkey;
+			}
+			if (type.equalsIgnoreCase("mule")) {
+				boolean carryingChest = config.getBoolean(path + ".carrying-chest");
+				Mule mule = location.getWorld().spawn(location, Mule.class);
+				mule.setMaxDomestication(maxDomestication);
+				mule.setDomestication(domestication);
+				mule.setTamed(tamed);
+				mule.setMaxHealth(maxHealth);
+				mule.setHealth(health);
+				mule.setAge(age);
+				mule.setCustomName(customName);
+				mule.setJumpStrength(jumpStrength);
+				mule.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(movementSpeed);
+				mule.setCarryingChest(carryingChest);
+				mule.getInventory().setContents(items);
+				return mule;
+			}
+			if (type.equalsIgnoreCase("llama")) {
+				boolean carryingChest = config.getBoolean(path + ".carrying-chest");
+				int strength = config.getInt(path + ".strength");
+				Llama.Color color = Llama.Color.valueOf(config.getString(path + ".color"));
+				Llama llama = location.getWorld().spawn(location, Llama.class);
+				llama.setMaxDomestication(maxDomestication);
+				llama.setDomestication(domestication);
+				llama.setTamed(tamed);
+				llama.setMaxHealth(maxHealth);
+				llama.setHealth(health);
+				llama.setAge(age);
+				llama.setCustomName(customName);
+				llama.setJumpStrength(jumpStrength);
+				llama.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(movementSpeed);
+				llama.setCarryingChest(carryingChest);
+				llama.setStrength(strength);
+				llama.setColor(color);
+				llama.getInventory().setContents(items);
+				return llama;
+			}
+			if (type.equalsIgnoreCase("zombiehorse")) {
+				ZombieHorse horse = location.getWorld().spawn(location, ZombieHorse.class);
+				horse.setMaxDomestication(maxDomestication);
+				horse.setDomestication(domestication);
+				horse.setTamed(tamed);
+				horse.setMaxHealth(maxHealth);
+				horse.setHealth(health);
+				horse.setAge(age);
+				horse.setCustomName(customName);
+				horse.setJumpStrength(jumpStrength);
+				horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(movementSpeed);
+				horse.getInventory().setContents(items);
+				return horse;
+			}
+			if (type.equalsIgnoreCase("skeletonhorse")) {
+				SkeletonHorse horse = location.getWorld().spawn(location, SkeletonHorse.class);
+				horse.setMaxDomestication(maxDomestication);
+				horse.setDomestication(domestication);
+				horse.setTamed(tamed);
+				horse.setMaxHealth(maxHealth);
+				horse.setHealth(health);
+				horse.setAge(age);
+				horse.setCustomName(customName);
+				horse.setJumpStrength(jumpStrength);
+				horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(movementSpeed);
+				horse.getInventory().setContents(items);
+				return horse;
+			}
+			else {
+				return null;
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static void saveHorse(Plugin plugin, String path, AbstractHorse abstractHorse) {
+		FileConfiguration config = plugin.getConfig();
+		if (abstractHorse instanceof Horse) {
+			Horse horse = (Horse) abstractHorse;
+			config.set(path + ".type", "horse");
+			config.set(path + ".color", horse.getColor().toString());
+			config.set(path + ".style", horse.getStyle().toString());
+		}
+		else if (abstractHorse instanceof Donkey) {
+			Donkey donkey = (Donkey) abstractHorse;
+			config.set(path + ".type", "donkey");
+			config.set(path + ".carrying-chest", donkey.isCarryingChest());
+		}
+		else if (abstractHorse instanceof Mule) {
+			Mule mule = (Mule) abstractHorse;
+			config.set(path + ".type", "mule");
+			config.set(path + ".carrying-chest", mule.isCarryingChest());
+		}
+		else if (abstractHorse instanceof Llama) {
+			Llama llama = (Llama) abstractHorse;
+			config.set(path + ".type", "llama");
+			config.set(path + ".carrying-chest", llama.isCarryingChest());
+			config.set(path + ".strength", llama.getStrength());
+			config.set(path + ".color", llama.getColor().toString());
+		}
+		else if (abstractHorse instanceof ZombieHorse) {
+			config.set(path + ".type", "zombiehorse");
+		}
+		else if (abstractHorse instanceof SkeletonHorse) {
+			config.set(path + ".type", "skeletonhorse");
+		}
+		else {
+			return;
+		}
+		config.set(path + ".custom-name", abstractHorse.getCustomName());
+		config.set(path + ".domestication", abstractHorse.getDomestication());
+		config.set(path + ".max-domestication", abstractHorse.getMaxDomestication());
+		config.set(path + ".age", abstractHorse.getAge());
+		config.set(path + ".jump-strength", abstractHorse.getJumpStrength());
+		config.set(path + ".movement-speed", abstractHorse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getBaseValue());
+		config.set(path + ".health", abstractHorse.getHealth());
+		config.set(path + ".max-health", abstractHorse.getMaxHealth());
+		config.set(path + ".tamed", abstractHorse.isTamed());
+		setInventory(core, path + ".inventory", abstractHorse.getInventory().getContents());
 		plugin.saveConfig();
 	}
 	

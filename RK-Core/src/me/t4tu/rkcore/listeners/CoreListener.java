@@ -15,6 +15,8 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Sign;
+import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
@@ -739,25 +741,12 @@ public class CoreListener implements Listener {
 		if (((player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE) && (e.getNewGameMode() == GameMode.CREATIVE || e.getNewGameMode() == GameMode.SPECTATOR)) || 
 				((player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) && (e.getNewGameMode() == GameMode.SURVIVAL || e.getNewGameMode() == GameMode.ADVENTURE))) {
 			if (core.getConfig().contains("inventories." + player.getUniqueId().toString())) {
-				core.reloadConfig();
-				int size = player.getInventory().getContents().length;
-				ItemStack[] contents = new ItemStack[size];
-				for (int i = 0; i < size; i++) {
-					ItemStack item = (ItemStack) core.getConfig().getList("inventories." + player.getUniqueId().toString()).get(i);
-					if (item != null) {
-						contents[i] = item.clone();
-					}
-					else {
-						contents[i] = null;
-					}
-				}
-				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
-				core.saveConfig();
+				ItemStack[] contents = CoreUtils.loadInventory(core, "inventories." + player.getUniqueId().toString());
+				CoreUtils.setInventory(core, "inventories." + player.getUniqueId().toString(), player.getInventory().getContents());
 				player.getInventory().setContents(contents);
 			}
 			else {
-				core.getConfig().set("inventories." + player.getUniqueId().toString(), player.getInventory().getContents().clone());
-				core.saveConfig();
+				CoreUtils.setInventory(core, "inventories." + player.getUniqueId().toString(), player.getInventory().getContents());
 				player.getInventory().clear();
 			}
 		}
@@ -1187,6 +1176,7 @@ public class CoreListener implements Listener {
 		
 		String tc1 = CoreUtils.getHighlightColor();
 		String tc2 = CoreUtils.getBaseColor();
+		String tc3 = CoreUtils.getErrorBaseColor();
 		
 		// jail
 		
@@ -1341,9 +1331,65 @@ public class CoreListener implements Listener {
 			}
 		}
 		
+		// hevostallit
+		
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
+			if (e.getClickedBlock().getState() instanceof Sign) {
+				Location clickedLocation = e.getClickedBlock().getLocation();
+				if (core.getConfig().getConfigurationSection("stables") != null) {
+					for (String id : core.getConfig().getConfigurationSection("stables").getKeys(false)) {
+						if (core.getConfig().getConfigurationSection("stables." + id + ".signs") != null) {
+							for (String identifier : core.getConfig().getConfigurationSection("stables." + id + ".signs").getKeys(false)) {
+								Location location = CoreUtils.loadLocation(core, "stables." + id + ".signs." + identifier);
+								if (location.equals(clickedLocation)) {
+									if (core.getConfig().getBoolean("stables." + id + ".in-use")) {
+										if (core.getConfig().getString("stables." + id + ".uuid").equals(player.getUniqueId().toString())) {
+											core.getConfig().set("stables." + id + ".in-use", false);
+											CoreUtils.spawnHorse(core, "stables." + id + ".horse", player.getLocation());
+											player.playSound(player.getLocation(), Sound.ENTITY_HORSE_ARMOR, 1, 1);
+											player.sendMessage(tc2 + "Otettiin hevonen tallista!");
+										}
+										else {
+											player.sendMessage(tc3 + "Tämä ei ole sinun tallisi!");
+										}
+									}
+									else {
+										AbstractHorse abstractHorse = null;
+										for (Entity entity : player.getNearbyEntities(15, 15, 15)) {
+											if (entity instanceof AbstractHorse) {
+												if (((AbstractHorse) entity).isLeashed() && ((AbstractHorse) entity).getLeashHolder().equals(player)) {
+													abstractHorse = (AbstractHorse) entity;
+												}
+											}
+										}
+										if (abstractHorse != null) {
+											core.getConfig().set("stables." + id + ".in-use", true);
+											core.getConfig().set("stables." + id + ".name", player.getName());
+											core.getConfig().set("stables." + id + ".uuid", player.getUniqueId().toString());
+											CoreUtils.saveHorse(core, "stables." + id + ".horse", abstractHorse);
+											abstractHorse.remove();
+											player.getInventory().addItem(new ItemStack(Material.LEASH));
+											player.playSound(player.getLocation(), Sound.ENTITY_HORSE_ARMOR, 1, 1);
+											player.sendMessage(tc2 + "Asetettiin hevonen talliin!");
+										}
+										else {
+											player.sendMessage(tc3 + "Pidä haluamaasi hevosta talutushihnassa ja klikkaa tätä kylttiä asettaaksesi hevosen talliin!");
+										}
+									}
+									core.saveConfig();
+									core.getCoreCommands().updateStableSigns();
+								}
+							}
+						}
+					}
+				}
+			}
+			
+		}
+		
 		// TARDIS
 		
-		if ((e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK)) {
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
 			Location clickedLocation = e.getClickedBlock().getLocation().add(0.5, 0, 0.5);
 			for (Location location : core.getCoreCommands().getTardisBlocks()) {
 				if (location.equals(clickedLocation)) {
@@ -1365,7 +1411,7 @@ public class CoreListener implements Listener {
 			}
 		}
 		
-		if ((e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK)) {
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
 			if (e.getClickedBlock().getType() == Material.IRON_DOOR_BLOCK) {
 				Location location = CoreUtils.loadLocation(core, "tardis.interior-location");
 				if (location != null && location.distance(e.getClickedBlock().getLocation()) < 4) {

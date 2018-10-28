@@ -25,6 +25,7 @@ import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Banner;
 import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -3153,16 +3154,12 @@ public class CoreCommands implements CommandExecutor {
 					Player target = Bukkit.getPlayer(args[0]);
 					if (target != null) {
 						if (core.getConfig().contains("inventories." + target.getUniqueId().toString())) {
-							core.reloadConfig();
-							@SuppressWarnings("unchecked")
-							ItemStack[] contents = ((List<ItemStack>) core.getConfig().get("inventories." + target.getUniqueId().toString())).toArray(new ItemStack[0]).clone();
-							core.getConfig().set("inventories." + target.getUniqueId().toString(), target.getInventory().getContents().clone());
-							core.saveConfig();
+							ItemStack[] contents = CoreUtils.loadInventory(core, "inventories." + target.getUniqueId().toString());
+							CoreUtils.setInventory(core, "inventories." + target.getUniqueId().toString(), target.getInventory().getContents());
 							target.getInventory().setContents(contents);
 						}
 						else {
-							core.getConfig().set("inventories." + target.getUniqueId().toString(), target.getInventory().getContents().clone());
-							core.saveConfig();
+							CoreUtils.setInventory(core, "inventories." + target.getUniqueId().toString(), target.getInventory().getContents());
 							target.getInventory().clear();
 						}
 						player.sendMessage(tc2 + "Vaihdettiin pelaajan " + tc1 + target.getName() + tc2 + " survival- ja creative-tavaraluettelot päittäin!");
@@ -3954,6 +3951,106 @@ public class CoreCommands implements CommandExecutor {
 				}
 				else {
 					player.sendMessage(usage + "/maailma <lista>" + tc3 + " tai " + tc4 + "/maailma <tp/luo/poista> <nimi>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// talli, stable
+		
+		if (cmd.getName().equalsIgnoreCase("talli") || cmd.getName().equalsIgnoreCase("stable")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 2) {
+					if (args[0].equalsIgnoreCase("lisää") || args[0].equalsIgnoreCase("add")) {
+						String id = args[1];
+						if (!core.getConfig().contains("stables." + id)) {
+							core.getConfig().set("stables." + id + ".in-use", false);
+							core.saveConfig();
+							player.sendMessage(tc2 + "Lisättiin uusi hevostalli ID:llä " + tc1 + "#" + id + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Hevostalli tällä ID:llä on jo olemassa!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("poista") || args[0].equalsIgnoreCase("remove")) {
+						String id = args[1];
+						if (core.getConfig().contains("stables." + id)) {
+							core.getConfig().set("stables." + id, null);
+							core.saveConfig();
+							player.sendMessage(tc2 + "Poistettiin hevostalli ID:llä " + tc1 + "#" + id + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Ei löydetty hevostallia kyseisellä ID:llä!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("tiedot") || args[0].equalsIgnoreCase("info")) {
+						String id = args[1];
+						if (core.getConfig().contains("stables." + id)) {
+							// TODO näytä enemmän tietoja
+							player.sendMessage("");
+							player.sendMessage(tc2 + "§m----------" + tc1 + " Hevostalli " + tc2 + "§m----------");
+							player.sendMessage("");
+							player.sendMessage(tc2 + " ID: " + tc1 + id);
+							player.sendMessage("");
+						}
+						else {
+							player.sendMessage(tc3 + "Ei löydetty hevostallia kyseisellä ID:llä!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("lisääkyltti") || args[0].equalsIgnoreCase("addsign")) {
+						String id = args[1];
+						if (core.getConfig().contains("stables." + id)) {
+							Block block = player.getTargetBlock(null, 10);
+							if (block != null && block.getState() instanceof Sign) {
+								int identifier = new Random().nextInt(10000);
+								CoreUtils.setLocation(core, "stables." + id + ".signs." + identifier, block.getLocation());
+								updateStableSigns();
+								player.sendMessage(tc2 + "Lisättiin uusi kyltti hevostalliin " + tc1 + "#" + id + tc2 + "!");
+							}
+							else {
+								player.sendMessage(tc3 + "Katso kohti sitä kylttiä, jonka haluat lisätä!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Ei löydetty hevostallia kyseisellä ID:llä!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("poistakyltit") || args[0].equalsIgnoreCase("removesigns")) {
+						String id = args[1];
+						if (core.getConfig().contains("stables." + id)) {
+							core.getConfig().set("stables." + id + ".signs", null);
+							core.saveConfig();
+							player.sendMessage(tc2 + "Poistettiin kaikki kyltit hevostallista " + tc1 + "#" + id + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Ei löydetty hevostallia kyseisellä ID:llä!");
+						}
+					}
+					else {
+						player.sendMessage(usage + "/talli <lisää/poista/tiedot/lisääkyltti/poistakyltit> <ID>" + tc3 + " tai " + tc4 + "/talli <lista>");
+					}
+				}
+				else if (args.length >= 1 && (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list"))) {
+					player.sendMessage("");
+					player.sendMessage(tc2 + "§m----------" + tc1 + " Hevostallit " + tc2 + "§m----------");
+					player.sendMessage("");
+					if (core.getConfig().getConfigurationSection("stables") != null) {
+						for (String key : core.getConfig().getConfigurationSection("stables").getKeys(false)) {
+							// TODO näytä enemmän tietoja
+							player.sendMessage(tc2 + " - " + tc1 + "#" + key);
+							player.sendMessage("");
+						}
+					}
+					else {
+						player.sendMessage(tc3 + " Ei hevostalleja!");
+						player.sendMessage("");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/talli <lisää/poista/tiedot/lisääkyltti/poistakyltit> <ID>" + tc3 + " tai " + tc4 + "/talli <lista>");
 				}
 			}
 			else {
@@ -6613,6 +6710,31 @@ public class CoreCommands implements CommandExecutor {
 						location.add(x, y, z);
 						tardisBlocks.add(location.clone());
 						location.subtract(x, y, z);
+					}
+				}
+			}
+		}
+	}
+	
+	public void updateStableSigns() {
+		if (core.getConfig().getConfigurationSection("stables") != null) {
+			for (String id : core.getConfig().getConfigurationSection("stables").getKeys(false)) {
+				if (core.getConfig().getConfigurationSection("stables." + id + ".signs") != null) {
+					for (String identifier : core.getConfig().getConfigurationSection("stables." + id + ".signs").getKeys(false)) {
+						Location location = CoreUtils.loadLocation(core, "stables." + id + ".signs." + identifier);
+						if (location != null && location.getBlock() != null && location.getBlock().getState() instanceof Sign) {
+							Sign sign = (Sign) location.getBlock().getState();
+							sign.setLine(0, "§8[Hevostalli]");
+							sign.setLine(1, "");
+							sign.setLine(3, "");
+							if (core.getConfig().getBoolean("stables." + id + ".in-use")) {
+								sign.setLine(2, core.getConfig().getString("stables." + id + ".name"));
+							}
+							else {
+								sign.setLine(2, "§4Vapaa...");
+							}
+							sign.update();
+						}
 					}
 				}
 			}
