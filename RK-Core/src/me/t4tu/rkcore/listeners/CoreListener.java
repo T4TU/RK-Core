@@ -494,7 +494,8 @@ public class CoreListener implements Listener {
 				MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE uuid=?", uuid);
 				MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE uuid=?", uuid);
 				core.getConfig().set("users." + name + ".chat_prefix", infoData.getStringNotNull(0, "chat_prefix"));
-				core.getConfig().set("users." + name + ".chat_color", infoData.getString(0, "chat_color"));
+				core.getConfig().set("users." + name + ".chat_color", infoData.getStringNotNull(0, "chat_color"));
+				core.getConfig().set("users." + name + ".chat_nick", infoData.getString(0, "chat_nick"));
 				core.getConfig().set("users." + name + ".rank", infoData.getString(0, "rank"));
 				core.getConfig().set("users." + name + ".status", statsData.getString(0, "status"));
 				core.saveConfig();

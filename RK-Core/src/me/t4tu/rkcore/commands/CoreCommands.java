@@ -226,7 +226,8 @@ public class CoreCommands implements CommandExecutor {
 								MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE uuid=?", uuid);
 								MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE uuid=?", uuid);
 								core.getConfig().set("users." + name + ".chat_prefix", infoData.getStringNotNull(0, "chat_prefix"));
-								core.getConfig().set("users." + name + ".chat_color", infoData.getString(0, "chat_color"));
+								core.getConfig().set("users." + name + ".chat_color", infoData.getStringNotNull(0, "chat_color"));
+								core.getConfig().set("users." + name + ".chat_nick", infoData.getString(0, "chat_nick"));
 								core.getConfig().set("users." + name + ".rank", infoData.getString(0, "rank"));
 								core.getConfig().set("users." + name + ".status", statsData.getString(0, "status"));
 								core.saveConfig();
@@ -269,6 +270,7 @@ public class CoreCommands implements CommandExecutor {
 								String ip = infoData.getString(0, "ip");
 								String chatPrefix = infoData.getStringNotNull(0, "chat_prefix");
 								String chatColor = infoData.getStringNotNull(0, "chat_color");
+								String chatNick = infoData.getStringNotNull(0, "chat_nick");
 								String rank = infoData.getStringNotNull(0, "rank");
 								long seconds = infoData.getLong(0, "seconds");
 								if (core.getOntimes().containsKey(uuid)) {
@@ -278,6 +280,9 @@ public class CoreCommands implements CommandExecutor {
 								long lastSeen = infoData.getLong(0, "last_seen");
 								String lastSeenString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
 										new Date(lastSeen + CoreUtils.TIME_OFFSET));
+								long nickLastChanged = infoData.getLong(0, "nick_last_changed");
+								String nickLastChangedString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
+										new Date(nickLastChanged + CoreUtils.TIME_OFFSET));
 								
 								sender.sendMessage("§e§m--------------------");
 								sender.sendMessage("§eNimi: §r" + name);
@@ -285,6 +290,8 @@ public class CoreCommands implements CommandExecutor {
 								sender.sendMessage("§eIP: §r" + ip);
 								sender.sendMessage("§eEtuliite: §r" + chatPrefix);
 								sender.sendMessage("§eVäri: §r" + chatColor);
+								sender.sendMessage("§eLempinimi: §r" + chatNick);
+								sender.sendMessage("§eLempinimi vaihdettu: §r" + nickLastChangedString);
 								sender.sendMessage("§eArvo: §r" + rank);
 								sender.sendMessage("§ePelannut: §r" + secondsString);
 								if (Bukkit.getPlayer(name) != null) {
@@ -929,7 +936,7 @@ public class CoreCommands implements CommandExecutor {
 							MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
 							if (infoData != null) {
 								String name = infoData.getString(0, "name");
-								String prefix = args[1].replace("<=", "«").replaceAll("=>", "»");
+								String prefix = args[1].replace("<=", "«").replace("=>", "»");
 								if (prefix.equals("ritari")) {
 									prefix = "&7[«&2Ritari&7»]";
 								}
@@ -967,16 +974,16 @@ public class CoreCommands implements CommandExecutor {
 								Player player = Bukkit.getPlayer(args[0]);
 								if (player != null) {
 									core.getConfig().set("users." + player.getName() + ".chat_prefix", newInfoData.getStringNotNull(0, "chat_prefix"));
-									core.getConfig().set("users." + player.getName() + ".chat_color", newInfoData.getString(0, "chat_color"));
+									core.getConfig().set("users." + player.getName() + ".chat_color", newInfoData.getStringNotNull(0, "chat_color"));
 									core.getConfig().set("users." + player.getName() + ".rank", newInfoData.getString(0, "rank"));
 									core.saveConfig();
 									CoreUtils.updateTabForAll();
 									player.updateCommands();
 								}
 								String newPrefix = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_prefix"));
-								String newColor = ChatColor.translateAlternateColorCodes('&', newInfoData.getString(0, "chat_color"));
+								String newColor = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_color"));
 								String newRank = ChatColor.translateAlternateColorCodes('&', newInfoData.getString(0, "rank"));
-								sender.sendMessage(tc2 + "Pelaaja " + tc1 + name + tc2 + " on nyt: " + newPrefix + newColor + name + tc2 
+								sender.sendMessage(tc2 + "Pelaaja " + tc1 + name + tc2 + " on nyt: §r" + newPrefix + newColor + name + tc2 
 										+ " (" + newRank + ")");
 							}
 							else {
@@ -3306,33 +3313,120 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
-		// nick
+		// lempinimi, nick
 		
-		if (cmd.getName().equalsIgnoreCase("nick")) {
-			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+		if (cmd.getName().equalsIgnoreCase("lempinimi") || cmd.getName().equalsIgnoreCase("nick")) {
+			if (CoreUtils.hasRank(player, "aatelinen")) {
 				if (args.length >= 1) {
-					if (args[0].equalsIgnoreCase("off")) {
-						core.getConfig().set("users." + player.getName() + ".chat_nick", null);
-						core.saveConfig();
-						player.sendMessage(tc2 + "Poistettiin lempinimi käytöstä!");
+					if (args[0].equalsIgnoreCase("pois") || args[0].equalsIgnoreCase("off")) {
+						if (core.getConfig().contains("users." + player.getName() + ".chat_nick")) {
+							if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
+								new BukkitRunnable() {
+									public void run() {
+										core.getConfig().set("users." + player.getName() + ".chat_nick", null);
+										core.saveConfig();
+										player.sendMessage(tc2 + "Poistettiin lempinimi käytöstä!");
+										MySQLUtils.set("UPDATE player_info SET chat_nick=? WHERE uuid=?", "", player.getUniqueId().toString());
+									}
+								}.runTaskAsynchronously(core);
+							}
+							else {
+								TextComponent t = new TextComponent("\nHaluatko varmasti poistaa lempinimesi?\n\n\n    ");
+								TextComponent yes = new TextComponent("[Kyllä, poista!]");
+								yes.setBold(true);
+								yes.setColor(ChatColor.DARK_GREEN);
+								yes.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/lempinimi pois confirm"));
+								yes.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Klikkaa tästä poistaaksesi lempinimesi!").color(ChatColor.GREEN).create()));
+								TextComponent t2 = new TextComponent("\n\n       ");
+								t2.setBold(false);
+								t2.setClickEvent(new ClickEvent(Action.CHANGE_PAGE, "1"));
+								t2.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, null));
+								TextComponent no = new TextComponent("[Peruuta]");
+								no.setBold(true);
+								no.setColor(ChatColor.DARK_RED);
+								no.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/lempinimi cancel"));
+								no.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Klikkaa tästä peruuttaaksesi!").color(ChatColor.RED).create()));
+								t.addExtra(yes);
+								t.addExtra(t2);
+								t.addExtra(no);
+								CoreUtils.openBookJson(player, "Lempinimi", "Royal Kingdom", t);
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole lempinimeä!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("cancel")) {
+						player.closeInventory();
 					}
 					else {
-						String nick = "";
-						for (String arg : args) {
-							nick = nick + " " + arg;
-						}
-						nick = nick.trim();
-						core.getConfig().set("users." + player.getName() + ".chat_nick", nick);
-						core.saveConfig();
-						player.sendMessage(tc2 + "Asetettiin lempinimeksi §r" + ChatColor.translateAlternateColorCodes('&', nick));
+						new BukkitRunnable() {
+							public void run() {
+								MySQLResult infoData = MySQLUtils.get("SELECT nick_last_changed FROM player_info WHERE uuid=?", player.getUniqueId().toString());
+								if (infoData != null) {
+									long lastChanged = infoData.getLong(0, "nick_last_changed");
+									if (lastChanged <= System.currentTimeMillis() - 86400000) {
+										String nick = args[0];
+										if (nick.length() <= 16) {
+											if (nick.matches("\\w+")) {
+												if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
+													core.getConfig().set("users." + player.getName() + ".chat_nick", nick);
+													core.saveConfig();
+													player.sendMessage(tc2 + "Asetettiin lempinimeksi: " + nick);
+													MySQLUtils.set("UPDATE player_info SET chat_nick=?, nick_last_changed=? WHERE uuid=?", nick, System.currentTimeMillis() + "", player.getUniqueId().toString());
+												}
+												else {
+													TextComponent t = new TextComponent("\nHaluatko varmasti asettaa lempinimeksesi ");
+													TextComponent lempinimi = new TextComponent(nick);
+													lempinimi.setBold(true);
+													TextComponent t2 = new TextComponent("? Voit vaihtaa lempinimeäsi vain 24 tunnin välein.\n\n\n    ");
+													t2.setBold(false);
+													t2.setColor(ChatColor.RESET);
+													TextComponent yes = new TextComponent("[Kyllä, haluan!]");
+													yes.setBold(true);
+													yes.setColor(ChatColor.DARK_GREEN);
+													yes.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/lempinimi " + nick + " confirm"));
+													yes.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Klikkaa tästä asettaaksesi lempinimesi!").color(ChatColor.GREEN).create()));
+													TextComponent t3 = new TextComponent("\n\n       ");
+													t3.setBold(false);
+													t3.setClickEvent(new ClickEvent(Action.CHANGE_PAGE, "1"));
+													t3.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, null));
+													TextComponent no = new TextComponent("[Peruuta]");
+													no.setBold(true);
+													no.setColor(ChatColor.DARK_RED);
+													no.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/lempinimi cancel"));
+													no.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Klikkaa tästä peruuttaaksesi!").color(ChatColor.RED).create()));
+													t.addExtra(lempinimi);
+													t.addExtra(t2);
+													t.addExtra(yes);
+													t.addExtra(t3);
+													t.addExtra(no);
+													CoreUtils.openBookJson(player, "Lempinimi", "Royal Kingdom", t);
+												}
+											}
+											else {
+												player.sendMessage(tc3 + "Lempinimi saa sisältää ainoastaan kirjaimia, numeroita ja alaviivoja!");
+											}
+										}
+										else {
+											player.sendMessage(tc3 + "Antamasi lempinimi on liian pitkä! Maksimipituus on 16 merkkiä.");
+										}
+									}
+									else {
+										player.sendMessage(tc3 + "Lempinimeä voi vaihtaa enintään 24 tunnin välein!");
+										player.sendMessage(tc3 + "Sinun täytyy odottaa vielä " + tc4 + CoreUtils.getHoursAndMinsFromMillis(lastChanged + 86400000 - System.currentTimeMillis()) + tc3 +  ".");
+									}
+								}
+							}
+						}.runTaskAsynchronously(core);
 					}
 				}
 				else {
-					player.sendMessage(usage + "/nick <lempinimi/off>");
+					player.sendMessage(usage + "/lempinimi <lempinimi/pois>");
 				}
 			}
 			else {
-				player.sendMessage(noPermission);
+				player.spigot().sendMessage(CoreUtils.getVipNeededMessage2());
 			}
 			return true;
 		}

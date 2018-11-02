@@ -71,7 +71,7 @@ import net.minecraft.server.v1_13_R2.IChatBaseComponent.ChatSerializer;
 
 public class CoreUtils {
 	
-	public static final long TIME_OFFSET = 10800000;
+	public static final long TIME_OFFSET = 7200000;
 	public static final double INGAME_TIME_SPEED_MULTIPLIER = 36;
 	public static final int SECONDS_TO_HOME_1 = 0; // 0 tuntia
 	public static final int SECONDS_TO_HOME_2 = 18000; // 5 tuntia
@@ -662,6 +662,10 @@ public class CoreUtils {
 		return getVipNeededMessage("käyttää tätä komentoa");
 	}
 	
+	public static TextComponent getVipNeededMessage2() {
+		return getVipNeededMessage2("käyttää tätä komentoa");
+	}
+	
 	public static TextComponent getVipNeededMessage(String action) {
 		
 		String tc3 = getErrorBaseColor();
@@ -672,6 +676,33 @@ public class CoreUtils {
 		
 		TextComponent baseComponent = new TextComponent("");
 		BaseComponent[] mainComponents = TextComponent.fromLegacyText(tc3 + "Vain §2Ritareilla" + tc3 + " ja §6Aatelisilla" + tc3 + " on oikeus "
+				+ action + "! Mikäli haluat tukea palvelimemme kehitystä, harkitse arvon ostamista ");
+		BaseComponent[] linkComponents = new ComponentBuilder("kaupastamme").color(ChatColor.getByChar(tc4.charAt(1))).event(clickEvent).create();
+		BaseComponent[] dotComponents = TextComponent.fromLegacyText(tc3 + ".");
+		
+		for (BaseComponent component : mainComponents) {
+			baseComponent.addExtra(component);
+		}
+		for (BaseComponent component : linkComponents) {
+			baseComponent.addExtra(component);
+		}
+		for (BaseComponent component : dotComponents) {
+			baseComponent.addExtra(component);
+		}
+		
+		return baseComponent;
+	}
+	
+	public static TextComponent getVipNeededMessage2(String action) {
+		
+		String tc3 = getErrorBaseColor();
+		String tc4 = getErrorHighlightColor();
+		
+		// TODO
+		ClickEvent clickEvent = new ClickEvent(Action.OPEN_URL, "https://esimerkki.fi");
+		
+		TextComponent baseComponent = new TextComponent("");
+		BaseComponent[] mainComponents = TextComponent.fromLegacyText(tc3 + "Vain §6Aatelisilla" + tc3 + " on oikeus "
 				+ action + "! Mikäli haluat tukea palvelimemme kehitystä, harkitse arvon ostamista ");
 		BaseComponent[] linkComponents = new ComponentBuilder("kaupastamme").color(ChatColor.getByChar(tc4.charAt(1))).event(clickEvent).create();
 		BaseComponent[] dotComponents = TextComponent.fromLegacyText(tc3 + ".");

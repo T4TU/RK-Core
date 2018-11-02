@@ -293,7 +293,8 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("tpohere", false);
 		commands.registerCommand("tppos", false);
 		commands.registerCommand("noafk", false);
-		commands.registerCommand("nick", false);
+		commands.registerCommand("lempinimi", true);
+		commands.registerCommand("nick", true);
 		commands.registerCommand("fix", false);
 		commands.registerCommand("pt", false);
 		commands.registerCommand("thor", false);

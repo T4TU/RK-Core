@@ -163,7 +163,7 @@ public class ChatListener implements Listener {
 					.replace("<b>", "§l").replace("<i>", "§o").replace("<u>", "§n").replace("<s>", "§m").replace("<r>", "§r");
 		}
 		if (core.getConfig().contains("users." + name + ".chat_nick")) {
-			chatName = chatColor + ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("users." + name + ".chat_nick"));
+			chatName = chatColor + "*" + core.getConfig().getString("users." + name + ".chat_nick");
 		}
 		
 		// rakennetaan viesti
