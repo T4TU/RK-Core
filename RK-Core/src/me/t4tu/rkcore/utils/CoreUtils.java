@@ -658,6 +658,10 @@ public class CoreUtils {
 		}
 	}
 	
+	public static String getRank(Player player) {
+		return core.getConfig().getString("users." + player.getName() + ".rank");
+	}
+	
 	public static TextComponent getVipNeededMessage() {
 		return getVipNeededMessage("käyttää tätä komentoa");
 	}
