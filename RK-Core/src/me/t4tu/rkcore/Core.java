@@ -296,6 +296,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("lempinimi", true);
 		commands.registerCommand("nick", true);
 		commands.registerCommand("fix", false);
+		commands.registerCommand("setamount", false);
 		commands.registerCommand("pt", false);
 		commands.registerCommand("thor", false);
 		commands.registerCommand("entity", false);

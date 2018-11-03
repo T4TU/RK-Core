@@ -119,6 +119,7 @@ commands:
     lempinimi:
     nick:
     fix:
+    setamount:
     pt:
     thor:
     entity:

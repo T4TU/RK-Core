@@ -1486,7 +1486,7 @@ public class CoreListener implements Listener {
 		if (clickedEntity instanceof ItemFrame) {
 			ItemFrame frame = (ItemFrame) clickedEntity;
 			ItemStack item = frame.getItem();
-			if (CoreUtils.isNotAir(item) && item.getType() == Material.MAP && item.hasItemMeta()) {
+			if (item != null && item.getType() == Material.FILLED_MAP && item.hasItemMeta()) {
 				MapMeta meta = (MapMeta) item.getItemMeta();
 				if (meta.hasMapId() && meta.getMapId() == 0) { // TODO seinäkalenteri-mapin data
 					e.setCancelled(true);

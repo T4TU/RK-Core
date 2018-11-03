@@ -36,7 +36,9 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
@@ -1134,7 +1136,6 @@ public class CoreCommands implements CommandExecutor {
 					}
 					
 					ItemStack item = new ItemStack(Material.APPLE);
-					ItemMeta meta = item.getItemMeta();
 					int amount = 1;
 					
 					Material materialByName = Material.getMaterial(args[1].toUpperCase());
@@ -1173,10 +1174,31 @@ public class CoreCommands implements CommandExecutor {
 								return true;
 							}
 							
-							if (property.equalsIgnoreCase("data")) {
+							if (property.equalsIgnoreCase("damage")) {
 								try {
-									int data = Integer.parseInt(value);
-									item.setDurability((short) data);
+									int damage = Integer.parseInt(value);
+									ItemMeta meta = item.getItemMeta();
+									Damageable damageable = (Damageable) meta;
+									damageable.setDamage(damage);
+									item.setItemMeta(meta);
+								}
+								catch (NumberFormatException e) {
+									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
+									return true;
+								}
+							}
+							else if (property.equalsIgnoreCase("mapid")) {
+								try {
+									int mapId = Integer.parseInt(value);
+									if (item.getItemMeta() instanceof MapMeta) {
+										MapMeta mapMeta = (MapMeta) item.getItemMeta();
+										mapMeta.setMapId(mapId);
+										item.setItemMeta(mapMeta);
+									}
+									else {
+										sender.sendMessage(tc3 + "Tälle esineelle ei voi asettaa kartan ID:tä!");
+										return true;
+									}
 								}
 								catch (NumberFormatException e) {
 									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
@@ -1184,27 +1206,37 @@ public class CoreCommands implements CommandExecutor {
 								}
 							}
 							else if (property.equalsIgnoreCase("name")) {
+								ItemMeta meta = item.getItemMeta();
 								meta.setDisplayName(value);
+								item.setItemMeta(meta);
 							}
 							else if (property.equalsIgnoreCase("lore")) {
 								List<String> lore = new ArrayList<String>();
 								for (String line : value.split("\\\\n")) {
 									lore.add(line);
 								}
+								ItemMeta meta = item.getItemMeta();
 								meta.setLore(lore);
+								item.setItemMeta(meta);
 							}
 							else if (property.equalsIgnoreCase("unbreakable")) {
+								ItemMeta meta = item.getItemMeta();
 								meta.setUnbreakable(true);
+								item.setItemMeta(meta);
 							}
 							else if (property.equalsIgnoreCase("hide")) {
+								ItemMeta meta = item.getItemMeta();
 								meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
+								item.setItemMeta(meta);
 							}
 							else {
 								try {
 									int level = Integer.parseInt(value);
 									Enchantment enchantment = Enchantment.getByName(property.toUpperCase());
 									if (enchantment != null) {
+										ItemMeta meta = item.getItemMeta();
 										meta.addEnchant(enchantment, level, true);
+										item.setItemMeta(meta);
 									}
 									else {
 										sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
@@ -1218,8 +1250,6 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 					}
-					
-					item.setItemMeta(meta);
 					
 					if (!receivers.isEmpty()) {
 						for (Player receiver : receivers) {
@@ -3435,8 +3465,47 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("fix")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				player.getInventory().getItemInMainHand().setDurability((short) 0);
-				player.sendMessage(tc2 + "Korjasit kädessäsi olevan esineen!");
+				ItemStack item = player.getInventory().getItemInMainHand();
+				if (item != null && item.hasItemMeta()) {
+					ItemMeta meta = item.getItemMeta();
+					Damageable damageable = (Damageable) meta;
+					damageable.setDamage(0);
+					item.setItemMeta(meta);
+					player.sendMessage(tc2 + "Korjasit kädessäsi olevan esineen!");
+				}
+				else {
+					player.sendMessage(tc3 + "Tätä esinettä ei voi korjata!");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// setamount
+		
+		if (cmd.getName().equalsIgnoreCase("setamount")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					try {
+						int amount = Integer.parseInt(args[0]);
+						ItemStack item = player.getInventory().getItemInMainHand();
+						if (CoreUtils.isNotAir(item)) {
+							item.setAmount(amount);
+							player.sendMessage(tc2 + "Asetettiin kädessäsi olevan esineen määräksi " + tc1 + amount + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Pidä kädessäsi jotakin esinettä!");
+						}
+					}
+					catch (NumberFormatException e) {
+						player.sendMessage(tc3 + "Virheellinen määrä!");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/setamount <määrä>");
+				}
 			}
 			else {
 				player.sendMessage(noPermission);
