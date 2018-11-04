@@ -2387,16 +2387,24 @@ public class CoreCommands implements CommandExecutor {
 							}
 							else {
 								if (CoreUtils.hasAccessToHome(player.getName(), i)) {
-									player.performCommand("asetakoti " + i);
+									new BukkitRunnable() {
+										public void run() {
+											player.performCommand("asetakoti " + i);
+										}
+									}.runTask(core);
+								}
+								else if (i >= 1 && i <= 7) {
+									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä kotipistettä!");
 								}
 								else {
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä kotipistettä!");
+									player.sendMessage(tc3 + "Kotipisteen täytyy olla välillä 1-7!");
 								}
 							}
 						}
 						catch (NumberFormatException e) {
-							player.sendMessage(tc3 + "Virheellinen kotipiste!");
+							player.sendMessage(tc3 + "Virheellinen kotipiste! Kotipisteen tätyy olla numero välillä 1-7!");
 						}
 					}
 					else {
@@ -2413,7 +2421,7 @@ public class CoreCommands implements CommandExecutor {
 							}
 						});
 						
-						gui.addItem(CoreUtils.getHomeItem(player, 2), 12, new InventoryGUIAction() {
+						gui.addItem(CoreUtils.getHomeItem(player, 2), 11, new InventoryGUIAction() {
 							public void onClickAsync() {}
 							public void onClick() {
 								gui.close(player);
@@ -2421,7 +2429,7 @@ public class CoreCommands implements CommandExecutor {
 							}
 						});
 						
-						gui.addItem(CoreUtils.getHomeItem(player, 3), 14, new InventoryGUIAction() {
+						gui.addItem(CoreUtils.getHomeItem(player, 3), 12, new InventoryGUIAction() {
 							public void onClickAsync() {}
 							public void onClick() {
 								gui.close(player);
@@ -2429,11 +2437,35 @@ public class CoreCommands implements CommandExecutor {
 							}
 						});
 						
-						gui.addItem(CoreUtils.getHomeItem(player, 4), 16, new InventoryGUIAction() {
+						gui.addItem(CoreUtils.getHomeItem(player, 4), 13, new InventoryGUIAction() {
 							public void onClickAsync() {}
 							public void onClick() {
 								gui.close(player);
 								player.performCommand("koti 4");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 5), 14, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 5");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 6), 15, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 6");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 7), 16, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 7");
 							}
 						});
 					}
@@ -2477,21 +2509,24 @@ public class CoreCommands implements CommandExecutor {
 									player.sendMessage(tc2 + "Asetettiin kotipiste " + tc1 + "#" + i + tc2 + 
 											" nykyiseen sijaintiisi! Voit nyt teleportata sen luo komennolla " + tc1 + "/koti" + tc2 + ".");
 								}
-								else {
+								else if (i >= 1 && i <= 7) {
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä kotipistettä!");
+								}
+								else {
+									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+									player.sendMessage(tc3 + "Kotipisteen täytyy olla välillä 1-7!");
 								}
 							}
 						}
 						catch (NumberFormatException e) {
-							player.sendMessage(tc3 + "Virheellinen kotipiste! Käytettävissä olevat kotipisteet: " + 
-									tc4 + 1 + tc3 + ", " + tc4 + 2 + tc3 + ", " + tc4 + 3 + tc3 + " ja " + tc4 + 4 + tc3);
+							player.sendMessage(tc3 + "Virheellinen kotipiste! Kotipisteen tätyy olla numero välillä 1-7!");
 						}
 					}
 				}.runTaskAsynchronously(core);
 			}
 			else {
-				player.sendMessage(usage + "/asetakoti <1/2/3/4>");
+				player.sendMessage(usage + "/asetakoti <1/2/3/4/5/6/7>");
 			}
 			return true;
 		}
@@ -2521,20 +2556,23 @@ public class CoreCommands implements CommandExecutor {
 									player.spigot().sendMessage(textComponent);
 								}
 							}
+							else if (i >= 1 && i <= 7) {
+								player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+								player.sendMessage(tc3 + "Et ole vielä asettanut tätä kotipistettä!");
+							}
 							else {
 								player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-								player.sendMessage(tc3 + "Et ole asettanut tätä kotipistettä!");
+								player.sendMessage(tc3 + "Kotipisteen täytyy olla välillä 1-7!");
 							}
 						}
 						catch (NumberFormatException e) {
-							player.sendMessage(tc3 + "Virheellinen kotipiste! Käytettävissä olevat kotipisteet: " + 
-									tc4 + 1 + tc3 + ", " + tc4 + 2 + tc3 + ", " + tc4 + 3 + tc3 + " ja " + tc4 + 4 + tc3);
+							player.sendMessage(tc3 + "Virheellinen kotipiste! Kotipisteen tätyy olla numero välillä 1-7!");
 						}
 					}
 				}.runTaskAsynchronously(core);
 			}
 			else {
-				player.sendMessage(usage + "/poistakoti <1/2/3/4>");
+				player.sendMessage(usage + "/poistakoti <1/2/3/4/5/6/7>");
 			}
 			return true;
 		}
