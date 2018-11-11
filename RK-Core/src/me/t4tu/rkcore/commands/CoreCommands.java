@@ -25,6 +25,7 @@ import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Banner;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -3611,6 +3612,27 @@ public class CoreCommands implements CommandExecutor {
 			}
 			else {
 				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// lightfix
+		
+		if (cmd.getName().equalsIgnoreCase("lightfix")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				Set<Material> transparent = new HashSet<Material>();
+				transparent.add(Material.AIR);
+				transparent.add(Material.WATER);
+				Block block = player.getTargetBlock(transparent, 150);
+				if (block != null) {
+					BlockState state = block.getState();
+					block.setType(Material.GLOWSTONE);
+					new BukkitRunnable() {
+						public void run() {
+							state.update(true);
+						}
+					}.runTaskLater(core, 10);
+				}
 			}
 			return true;
 		}

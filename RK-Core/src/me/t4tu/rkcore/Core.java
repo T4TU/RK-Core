@@ -298,6 +298,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("fix", false);
 		commands.registerCommand("setamount", false);
 		commands.registerCommand("pt", false);
+		commands.registerCommand("lightfix", false);
 		commands.registerCommand("thor", false);
 		commands.registerCommand("entity", false);
 		commands.registerCommand("mob", false);

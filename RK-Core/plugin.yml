@@ -121,6 +121,7 @@ commands:
     fix:
     setamount:
     pt:
+    lightfix:
     thor:
     entity:
     mob:
