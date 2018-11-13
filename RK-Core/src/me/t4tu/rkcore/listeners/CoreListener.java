@@ -656,7 +656,11 @@ public class CoreListener implements Listener {
 				else {
 					Location startpoint = CoreUtils.loadLocation(core, "startpoint");
 					if (startpoint != null) {
-						player.teleport(startpoint);
+						new BukkitRunnable() {
+							public void run() {
+								player.teleport(startpoint);
+							}
+						}.runTask(core);
 					}
 				}
 				
