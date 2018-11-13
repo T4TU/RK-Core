@@ -4562,8 +4562,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 					else if (args[0].equalsIgnoreCase("location")) {
 						if (args.length >= 2) {
-							core.getConfig().set("tutorial." + args[1] + ".location", player.getLocation().add(0, 2, 0));
-							core.saveConfig();
+							CoreUtils.setLocation(core, "tutorial." + args[1] + ".location", player.getLocation().add(0, 2, 0));
 							player.sendMessage(tc2 + "Asetettiin sijainti!");
 						}
 						else {
@@ -4571,8 +4570,7 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else if (args[0].equalsIgnoreCase("startpoint")) {
-						core.getConfig().set("tutorial-start-point", player.getLocation().add(0, 2, 0));
-						core.saveConfig();
+						CoreUtils.setLocation(core, "tutorial-start-point", player.getLocation().add(0, 2, 0));
 						player.sendMessage(tc2 + "Asetettiin aloitussijainti!");
 					}
 					else if (args[0].equalsIgnoreCase("reload")) {

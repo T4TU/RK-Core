@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.Location;
 
 import me.t4tu.rkcore.Core;
+import me.t4tu.rkcore.utils.CoreUtils;
 
 public class TutorialStage {
 	
@@ -45,7 +46,7 @@ public class TutorialStage {
 			for (String stage : core.getConfig().getConfigurationSection("tutorial").getKeys(false)) {
 				String title = core.getConfig().getString("tutorial." + stage + ".title");
 				String subtitle = core.getConfig().getString("tutorial." + stage + ".subtitle");
-				Location location = (Location) core.getConfig().get("tutorial." + stage + ".location");
+				Location location = CoreUtils.loadLocation(core, "tutorial." + stage + ".location");
 				if (location != null) {
 					tutorialStages.add(new TutorialStage(title, subtitle, location));
 				}

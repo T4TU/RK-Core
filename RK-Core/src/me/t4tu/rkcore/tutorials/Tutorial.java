@@ -16,6 +16,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import me.t4tu.rkcore.Core;
+import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
 
@@ -125,10 +126,7 @@ public class Tutorial implements Listener {
 	}
 	
 	private Location loadStartLocation() {
-		if (core.getConfig().get("tutorial-start-point") != null) {
-			return (Location) core.getConfig().get("tutorial-start-point");
-		}
-		return null;
+		return CoreUtils.loadLocation(core, "tutorial-start-point");
 	}
 	
 	private ArmorStand spawnGuideAt(Location location) {
