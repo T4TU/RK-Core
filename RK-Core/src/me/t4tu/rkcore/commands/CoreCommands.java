@@ -3620,18 +3620,73 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("lightfix")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				Set<Material> transparent = new HashSet<Material>();
-				transparent.add(Material.AIR);
-				transparent.add(Material.WATER);
-				Block block = player.getTargetBlock(transparent, 150);
-				if (block != null) {
-					BlockState state = block.getState();
-					block.setType(Material.GLOWSTONE);
-					new BukkitRunnable() {
-						public void run() {
-							state.update(true);
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("1")) {
+						Set<Material> transparent = new HashSet<Material>();
+						transparent.add(Material.AIR);
+						transparent.add(Material.WATER);
+						Block block = player.getTargetBlock(transparent, 150);
+						if (block != null) {
+							BlockState state = block.getState();
+							block.setType(Material.GLOWSTONE);
+							new BukkitRunnable() {
+								public void run() {
+									state.update(true);
+								}
+							}.runTaskLater(core, 10);
 						}
-					}.runTaskLater(core, 10);
+					}
+					else if (args[0].equalsIgnoreCase("2")) {
+						Location location = player.getLocation();
+						for (int x = -20; x <= 20; x++) {
+							for (int y = -20; y <= 20; y++) {
+								for (int z = -20; z <= 20; z++) {
+									location.add(x, y, z);
+									Block block = location.getBlock();
+									location.subtract(x, y, z);
+									if (block != null && block.getLightFromBlocks() >= 14) {
+										new BukkitRunnable() {
+											int i = 0;
+											public void run() {
+												i++;
+												player.spawnParticle(Particle.VILLAGER_HAPPY, block.getLocation().add(0.5, 0.5, 0.5), 1);
+												if (i >= 20) {
+													cancel();
+												}
+											}
+										}.runTaskTimer(core, 0, 10);
+									}
+								}
+							}
+						}
+					}
+					else if (args[0].equalsIgnoreCase("3")) {
+						Location location = player.getLocation();
+						for (int x = -20; x <= 20; x++) {
+							for (int y = -20; y <= 20; y++) {
+								for (int z = -20; z <= 20; z++) {
+									location.add(x, y, z);
+									Block block = location.getBlock();
+									location.subtract(x, y, z);
+									if (block != null && block.getLightFromBlocks() >= 14) {
+										BlockState state = block.getState();
+										block.setType(Material.STONE_BRICKS, true);
+										new BukkitRunnable() {
+											public void run() {
+												state.update(true);
+											}
+										}.runTaskLater(core, 20);
+									}
+								}
+							}
+						}
+					}
+					else {
+						player.sendMessage(usage + "/lightfix <1/2/3>");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/lightfix <1/2/3>");
 				}
 			}
 			return true;
