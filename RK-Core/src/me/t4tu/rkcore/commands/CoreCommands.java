@@ -4838,192 +4838,197 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("rankaise") || cmd.getName().equalsIgnoreCase("h")) {
 			if (CoreUtils.hasRank(player, "valvoja")) {
-				new BukkitRunnable() {
-					public void run() {
-						MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
-						if (infoData != null) {
-							
-							String name = infoData.getString(0, "name");
-							String uuidWithoutDashes = infoData.getString(0, "uuid").replace("-", "");
-							
-							InventoryGUI gui = new InventoryGUI(54, "Rankaise: " + name);
-							
-							gui.open(player);
-							
-							// TODO
-							
-							List<String> ban = Arrays.asList("", "§7Ei ole");
-							List<String> jail = Arrays.asList("", "§7Ei ole");
-							List<String> mute = Arrays.asList("", "§7Ei ole");
-							List<String> history = Arrays.asList("", "§7 » Näytä historia klikkaamalla");
-							
-							MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
-							if (banData != null) {
+				if (args.length >= 1) {
+					new BukkitRunnable() {
+						public void run() {
+							MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
+							if (infoData != null) {
 								
-								String banner = banData.getString(0, "banner");
-								String reason = banData.getString(0, "reason");
-								long time = banData.getLong(0, "time");
-								long duration = banData.getLong(0, "duration");
-								String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
-								String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
-								String[] wrappedReason = ChatPaginator.wordWrap(reason, 30);
+								String name = infoData.getString(0, "name");
+								String uuidWithoutDashes = infoData.getString(0, "uuid").replace("-", "");
 								
-								if (duration == 0) {
-									expires = "Ei koskaan";
+								InventoryGUI gui = new InventoryGUI(54, "Rankaise: " + name);
+								
+								gui.open(player);
+								
+								// TODO
+								
+								List<String> ban = Arrays.asList("", "§7Ei ole");
+								List<String> jail = Arrays.asList("", "§7Ei ole");
+								List<String> mute = Arrays.asList("", "§7Ei ole");
+								List<String> history = Arrays.asList("", "§7 » Näytä historia klikkaamalla");
+								
+								MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
+								if (banData != null) {
+									
+									String banner = banData.getString(0, "banner");
+									String reason = banData.getString(0, "reason");
+									long time = banData.getLong(0, "time");
+									long duration = banData.getLong(0, "duration");
+									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
+									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
+									String[] wrappedReason = ChatPaginator.wordWrap(reason, 30);
+									
+									if (duration == 0) {
+										expires = "Ei koskaan";
+									}
+									
+									ban = Arrays.asList("", "§cAntanut: §7" + banner, "§cAnnettu: §7" + timeGiven, "§cPäättyy: §7" + expires, "§cSyy:", "");
+									
+									ArrayList<String> temp = new ArrayList<String>();
+									temp.addAll(ban);
+									ban = temp;
+									
+									for (int i = 0; i < wrappedReason.length; i++) {
+										ban.add("§7§o" + ChatColor.stripColor(wrappedReason[i]));
+									}
 								}
 								
-								ban = Arrays.asList("", "§cAntanut: §7" + banner, "§cAnnettu: §7" + timeGiven, "§cPäättyy: §7" + expires, "§cSyy:", "");
-								
-								ArrayList<String> temp = new ArrayList<String>();
-								temp.addAll(ban);
-								ban = temp;
-								
-								for (int i = 0; i < wrappedReason.length; i++) {
-									ban.add("§7§o" + ChatColor.stripColor(wrappedReason[i]));
+								MySQLResult jailData = MySQLUtils.get("SELECT * FROM player_jail WHERE uuid=?", uuidWithoutDashes);
+								if (jailData != null) {
+									
+									String jailer = jailData.getString(0, "jailer");
+									String reason = jailData.getString(0, "reason");
+									long time = jailData.getLong(0, "time");
+									long duration = jailData.getLong(0, "duration");
+									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
+									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
+									String[] wrappedReason = ChatPaginator.wordWrap(reason, 30);
+									
+									if (duration == 0) {
+										expires = "Ei koskaan";
+									}
+									
+									jail = Arrays.asList("", "§6Antanut: §7" + jailer, "§6Annettu: §7" + timeGiven, "§6Päättyy: §7" + expires, "§6Syy:", "");
+									
+									ArrayList<String> temp = new ArrayList<String>();
+									temp.addAll(jail);
+									jail = temp;
+									
+									for (int i = 0; i < wrappedReason.length; i++) {
+										jail.add("§7§o" + ChatColor.stripColor(wrappedReason[i]));
+									}
 								}
+								
+								MySQLResult muteData = MySQLUtils.get("SELECT * FROM player_mute WHERE uuid=?", uuidWithoutDashes);
+								if (muteData != null) {
+									
+									String muter = muteData.getString(0, "muter");
+									String reason = muteData.getString(0, "reason");
+									long time = muteData.getLong(0, "time");
+									long duration = muteData.getLong(0, "duration");
+									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
+									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
+									String[] wrappedReason = ChatPaginator.wordWrap(reason, 30);
+									
+									if (duration == 0) {
+										expires = "Ei koskaan";
+									}
+									
+									mute = Arrays.asList("", "§eAntanut: §7" + muter, "§eAnnettu: §7" + timeGiven, "§ePäättyy: §7" + expires, "§eSyy:", "");
+									
+									ArrayList<String> temp = new ArrayList<String>();
+									temp.addAll(mute);
+									mute = temp;
+									
+									for (int i = 0; i < wrappedReason.length; i++) {
+										mute.add("§7§o" + ChatColor.stripColor(wrappedReason[i]));
+									}
+								}
+								
+								int banCounter = 10;
+								for (String punishment : banPunishments) {
+									try {
+										String description = punishment.split("§")[0];
+										String command = punishment.split("§")[1].replace("<user>", name);
+										List<String> lore = Arrays.asList("", "§7/" + command);
+										gui.addItem(CoreUtils.getItem(Material.RED_STAINED_GLASS_PANE, "§c" + description, lore, 1), banCounter, 
+												new InventoryGUIAction() {
+											public void onClickAsync() { }
+											public void onClick() {
+												gui.close(player);
+												player.performCommand(command);
+											}
+										});
+									}
+									catch (ArrayIndexOutOfBoundsException e) {
+									}
+									banCounter++;
+								}
+								
+								int jailCounter = 19;
+								for (String punishment : jailPunishments) {
+									try {
+										String description = punishment.split("§")[0];
+										String command = punishment.split("§")[1].replace("<user>", name);
+										List<String> lore = Arrays.asList("", "§7/" + command);
+										gui.addItem(CoreUtils.getItem(Material.ORANGE_STAINED_GLASS_PANE, "§6" + description, lore, 1), jailCounter, 
+												new InventoryGUIAction() {
+											public void onClickAsync() { }
+											public void onClick() {
+												gui.close(player);
+												player.performCommand(command);
+											}
+										});
+									}
+									catch (ArrayIndexOutOfBoundsException e) {
+									}
+									jailCounter++;
+								}
+								
+								int muteCounter = 28;
+								for (String punishment : mutePunishments) {
+									try {
+										String description = punishment.split("§")[0];
+										String command = punishment.split("§")[1].replace("<user>", name);
+										List<String> lore = Arrays.asList("", "§7/" + command);
+										gui.addItem(CoreUtils.getItem(Material.YELLOW_STAINED_GLASS_PANE, "§e" + description, lore, 1), muteCounter, 
+												new InventoryGUIAction() {
+											public void onClickAsync() { }
+											public void onClick() {
+												gui.close(player);
+												player.performCommand(command);
+											}
+										});
+									}
+									catch (ArrayIndexOutOfBoundsException e) {
+									}
+									muteCounter++;
+								}
+								
+								gui.addItem(CoreUtils.getItem(Material.RED_TERRACOTTA, "§cPorttikielto", ban, 1), 47, new InventoryGUIAction() {
+									public void onClickAsync() { }
+									public void onClick() { }
+								});
+								
+								gui.addItem(CoreUtils.getItem(Material.ORANGE_TERRACOTTA, "§6Vangittu", jail, 1), 48, new InventoryGUIAction() {
+									public void onClickAsync() { }
+									public void onClick() { }
+								});
+								
+								gui.addItem(CoreUtils.getItem(Material.YELLOW_TERRACOTTA, "§eHiljennys", mute, 1), 49, new InventoryGUIAction() {
+									public void onClickAsync() { }
+									public void onClick() { }
+								});
+								
+								gui.addItem(CoreUtils.getItem(Material.WRITABLE_BOOK, "§aRangaistushistoria", history, 1), 51, 
+										new InventoryGUIAction() {
+									public void onClickAsync() { }
+									public void onClick() {
+										gui.close(player);
+										player.performCommand("history " + name);
+									}
+								});
 							}
-							
-							MySQLResult jailData = MySQLUtils.get("SELECT * FROM player_jail WHERE uuid=?", uuidWithoutDashes);
-							if (jailData != null) {
-								
-								String jailer = jailData.getString(0, "jailer");
-								String reason = jailData.getString(0, "reason");
-								long time = jailData.getLong(0, "time");
-								long duration = jailData.getLong(0, "duration");
-								String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
-								String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
-								String[] wrappedReason = ChatPaginator.wordWrap(reason, 30);
-								
-								if (duration == 0) {
-									expires = "Ei koskaan";
-								}
-								
-								jail = Arrays.asList("", "§6Antanut: §7" + jailer, "§6Annettu: §7" + timeGiven, "§6Päättyy: §7" + expires, "§6Syy:", "");
-								
-								ArrayList<String> temp = new ArrayList<String>();
-								temp.addAll(jail);
-								jail = temp;
-								
-								for (int i = 0; i < wrappedReason.length; i++) {
-									jail.add("§7§o" + ChatColor.stripColor(wrappedReason[i]));
-								}
+							else {
+								player.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
 							}
-							
-							MySQLResult muteData = MySQLUtils.get("SELECT * FROM player_mute WHERE uuid=?", uuidWithoutDashes);
-							if (muteData != null) {
-								
-								String muter = muteData.getString(0, "muter");
-								String reason = muteData.getString(0, "reason");
-								long time = muteData.getLong(0, "time");
-								long duration = muteData.getLong(0, "duration");
-								String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
-								String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
-								String[] wrappedReason = ChatPaginator.wordWrap(reason, 30);
-								
-								if (duration == 0) {
-									expires = "Ei koskaan";
-								}
-								
-								mute = Arrays.asList("", "§eAntanut: §7" + muter, "§eAnnettu: §7" + timeGiven, "§ePäättyy: §7" + expires, "§eSyy:", "");
-								
-								ArrayList<String> temp = new ArrayList<String>();
-								temp.addAll(mute);
-								mute = temp;
-								
-								for (int i = 0; i < wrappedReason.length; i++) {
-									mute.add("§7§o" + ChatColor.stripColor(wrappedReason[i]));
-								}
-							}
-							
-							int banCounter = 10;
-							for (String punishment : banPunishments) {
-								try {
-									String description = punishment.split("§")[0];
-									String command = punishment.split("§")[1].replace("<user>", name);
-									List<String> lore = Arrays.asList("", "§7/" + command);
-									gui.addItem(CoreUtils.getItem(Material.RED_STAINED_GLASS_PANE, "§c" + description, lore, 1), banCounter, 
-											new InventoryGUIAction() {
-										public void onClickAsync() { }
-										public void onClick() {
-											gui.close(player);
-											player.performCommand(command);
-										}
-									});
-								}
-								catch (ArrayIndexOutOfBoundsException e) {
-								}
-								banCounter++;
-							}
-							
-							int jailCounter = 19;
-							for (String punishment : jailPunishments) {
-								try {
-									String description = punishment.split("§")[0];
-									String command = punishment.split("§")[1].replace("<user>", name);
-									List<String> lore = Arrays.asList("", "§7/" + command);
-									gui.addItem(CoreUtils.getItem(Material.ORANGE_STAINED_GLASS_PANE, "§6" + description, lore, 1), jailCounter, 
-											new InventoryGUIAction() {
-										public void onClickAsync() { }
-										public void onClick() {
-											gui.close(player);
-											player.performCommand(command);
-										}
-									});
-								}
-								catch (ArrayIndexOutOfBoundsException e) {
-								}
-								jailCounter++;
-							}
-							
-							int muteCounter = 28;
-							for (String punishment : mutePunishments) {
-								try {
-									String description = punishment.split("§")[0];
-									String command = punishment.split("§")[1].replace("<user>", name);
-									List<String> lore = Arrays.asList("", "§7/" + command);
-									gui.addItem(CoreUtils.getItem(Material.YELLOW_STAINED_GLASS_PANE, "§e" + description, lore, 1), muteCounter, 
-											new InventoryGUIAction() {
-										public void onClickAsync() { }
-										public void onClick() {
-											gui.close(player);
-											player.performCommand(command);
-										}
-									});
-								}
-								catch (ArrayIndexOutOfBoundsException e) {
-								}
-								muteCounter++;
-							}
-							
-							gui.addItem(CoreUtils.getItem(Material.RED_TERRACOTTA, "§cPorttikielto", ban, 1), 47, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() { }
-							});
-							
-							gui.addItem(CoreUtils.getItem(Material.ORANGE_TERRACOTTA, "§6Vangittu", jail, 1), 48, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() { }
-							});
-							
-							gui.addItem(CoreUtils.getItem(Material.YELLOW_TERRACOTTA, "§eHiljennys", mute, 1), 49, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() { }
-							});
-							
-							gui.addItem(CoreUtils.getItem(Material.WRITABLE_BOOK, "§aRangaistushistoria", history, 1), 51, 
-									new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() {
-									gui.close(player);
-									player.performCommand("history " + name);
-								}
-							});
 						}
-						else {
-							player.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-						}
-					}
-				}.runTaskAsynchronously(core);
+					}.runTaskAsynchronously(core);
+				}
+				else {
+					player.sendMessage(usage + "/rankaise <pelaaja>");
+				}
 			}
 			else {
 				player.sendMessage(noPermission);
