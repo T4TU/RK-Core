@@ -4126,6 +4126,96 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// komentokuutio, command-block
+		
+		if (cmd.getName().equalsIgnoreCase("komentokuutio") || cmd.getName().equalsIgnoreCase("command-block")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("aseta") || args[0].equalsIgnoreCase("set")) {
+						if (args.length >= 2) {
+							Block block = player.getTargetBlock(null, 20);
+							if (block != null) {
+								if (block.getType().toString().contains("SIGN") || block.getType().toString().contains("BUTTON") || block.getType().toString().contains("PRESSURE_PLATE")) {
+									String command = "";
+									for (int i = 1; i < args.length; i++) {
+										command += args[i] + " ";
+									}
+									command = command.trim();
+									Location location = block.getLocation();
+									String key = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ();
+									core.getConfig().set("command-blocks." + key, command);
+									core.saveConfig();
+									player.sendMessage(tc2 + "Lisättiin komento!");
+								}
+								else {
+									player.sendMessage(tc3 + "Komentoja voi lisätä vain painelaattoihin, nappeihin ja kyltteihin!");
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Komentoja voi lisätä vain painelaattoihin, nappeihin ja kyltteihin!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/komentokuutio <aseta> <komento>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list")) {
+						player.sendMessage("");
+						player.sendMessage(tc2 + "§m----------" + tc1 + " Komentokuutiot " + tc2 + "§m----------");
+						player.sendMessage("");
+						if (core.getConfig().getConfigurationSection("command-blocks") != null && 
+								!core.getConfig().getConfigurationSection("command-blocks").getKeys(false).isEmpty()) {
+							for (String key : core.getConfig().getConfigurationSection("command-blocks").getKeys(false)) {
+								try {
+									String world = key.split("/")[0];
+									int x = Integer.parseInt(key.split("/")[1]);
+									int y = Integer.parseInt(key.split("/")[2]);
+									int z = Integer.parseInt(key.split("/")[3]);
+									String command = core.getConfig().getString("command-blocks." + key);
+									player.sendMessage(tc2 + " - " + tc1 + world + " " + x + " " + y + " " + z + ": " + tc2 + "/" + command);
+								}
+								catch (Exception e) {
+								}
+							}
+							player.sendMessage("");
+						}
+						else {
+							player.sendMessage(tc3 + " Ei komentokuutioita!");
+							player.sendMessage("");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("poista") || args[0].equalsIgnoreCase("remove")) {
+						Block block = player.getTargetBlock(null, 20);
+						if (block != null) {
+							Location location = block.getLocation();
+							String key = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ();
+							if (core.getConfig().contains("command-blocks." + key)) {
+								core.getConfig().set("command-blocks." + key, null);
+								core.saveConfig();
+								player.sendMessage(tc2 + "Poistettiin komento!");
+							}
+							else {
+								player.sendMessage(tc3 + "Tähän kuutioon ei ole asetettu komentoa!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Tähän kuutioon ei ole asetettu komentoa!");
+						}
+					}
+					else {
+						player.sendMessage(usage + "/komentokuutio <aseta> <komento>" + tc3 + " tai " + tc4 + "/komentokuutio <lista/poista>");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/komentokuutio <aseta> <komento>" + tc3 + " tai " + tc4 + "/komentokuutio <lista/poista>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
 		// maailma, world
 		
 		if (cmd.getName().equalsIgnoreCase("maailma") || cmd.getName().equalsIgnoreCase("world")) {
@@ -6821,7 +6911,7 @@ public class CoreCommands implements CommandExecutor {
 												}
 												else if (p.getName().equals(name)) {
 													p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-													p.sendMessage(tc2 + "Sinut potkittiin pois killasta!");
+													p.sendMessage(tc3 + "Sinut potkittiin pois killasta!");
 												}
  											}
 											

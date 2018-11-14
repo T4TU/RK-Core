@@ -306,6 +306,8 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("xp", false);
 		commands.registerCommand("xpl", false);
 		commands.registerCommand("portti", false);
+		commands.registerCommand("komentokuutio", false);
+		commands.registerCommand("command-block", false);
 		commands.registerCommand("maailma", false);
 		commands.registerCommand("world", false);
 		commands.registerCommand("talli", false);

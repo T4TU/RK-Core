@@ -1339,12 +1339,12 @@ public class CoreListener implements Listener {
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
-			List<Material> stairBlocks = Arrays.asList(Material.OAK_STAIRS, Material.BIRCH_STAIRS, Material.SPRUCE_STAIRS, 
-					Material.JUNGLE_STAIRS, Material.ACACIA_STAIRS, Material.DARK_OAK_STAIRS, Material.QUARTZ_STAIRS);
+//			List<Material> stairBlocks = Arrays.asList(Material.OAK_STAIRS, Material.BIRCH_STAIRS, Material.SPRUCE_STAIRS, 
+//					Material.JUNGLE_STAIRS, Material.ACACIA_STAIRS, Material.DARK_OAK_STAIRS, Material.QUARTZ_STAIRS);
 			List<Material> sideBlocks = Arrays.asList(Material.WALL_SIGN, Material.OAK_TRAPDOOR, Material.BIRCH_TRAPDOOR, Material.SPRUCE_TRAPDOOR,
 					Material.JUNGLE_TRAPDOOR, Material.ACACIA_TRAPDOOR, Material.DARK_OAK_TRAPDOOR, Material.IRON_TRAPDOOR, Material.OAK_FENCE_GATE,
 					Material.BIRCH_FENCE_GATE, Material.SPRUCE_FENCE_GATE, Material.JUNGLE_FENCE_GATE, Material.ACACIA_FENCE_GATE, Material.DARK_OAK_FENCE_GATE);
-			if (stairBlocks.contains(block.getType())) {
+			if (block.getType().toString().contains("STAIRS")) {
 				boolean c = false;
 				Stairs stairs = (Stairs) block.getState().getData();
 				if (stairs.getFacing() == BlockFace.NORTH || stairs.getFacing() == BlockFace.SOUTH) {
@@ -1366,6 +1366,50 @@ public class CoreListener implements Listener {
 					a.setGravity(false);
 					a.setSilent(true);
 					a.addPassenger(player);
+				}
+			}
+		}
+		
+		// komentokuutiot
+		
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			Block block = e.getClickedBlock();
+			if (block.getType().toString().contains("SIGN") || block.getType().toString().contains("BUTTON")) {
+				Location location = block.getLocation();
+				String key = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ();
+				if (core.getConfig().contains("command-blocks." + key)) {
+					String s = core.getConfig().getString("command-blocks." + key).replace("{name}", player.getName());
+					String[] commands = s.split("&&");
+					for (String command : commands) {
+						if (command.startsWith("console:")) {
+							command = command.substring(8);
+							Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+						}
+						else {
+							player.performCommand(command);
+						}
+					}
+				}
+			}
+		}
+		
+		if (e.getAction() == Action.PHYSICAL) {
+			Block block = e.getClickedBlock();
+			if (block.getType().toString().contains("PRESSURE_PLATE")) {
+				Location location = block.getLocation();
+				String key = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ();
+				if (core.getConfig().contains("command-blocks." + key)) {
+					String s = core.getConfig().getString("command-blocks." + key).replace("{name}", player.getName());
+					String[] commands = s.split("&&");
+					for (String command : commands) {
+						if (command.startsWith("console:")) {
+							command = command.substring(8);
+							Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+						}
+						else {
+							player.performCommand(command);
+						}
+					}
 				}
 			}
 		}
