@@ -5159,7 +5159,11 @@ public class CoreCommands implements CommandExecutor {
 								}
 							}
 							else {
-								player.performCommand("sakko");
+								new BukkitRunnable() {
+									public void run() {
+										player.performCommand("sakko");
+									}
+								}.runTask(core);
 							}
 						}
 						else if (CoreUtils.hasRank(player, "valvoja")) {
@@ -5279,7 +5283,11 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							player.performCommand("sakko");
+							new BukkitRunnable() {
+								public void run() {
+									player.performCommand("sakko");
+								}
+							}.runTask(core);
 						}
 					}
 					else {
@@ -5783,7 +5791,11 @@ public class CoreCommands implements CommandExecutor {
 								if (!requests.isEmpty()) {
 									for (FriendRequest request : requests) {
 										String from = request.getFrom();
-										player.performCommand("k hyväksy " + from);
+										new BukkitRunnable() {
+											public void run() {
+												player.performCommand("k hyväksy " + from);
+											}
+										}.runTask(core);
 									}
 								}
 								else {
@@ -5818,7 +5830,11 @@ public class CoreCommands implements CommandExecutor {
 								if (!requests.isEmpty()) {
 									for (FriendRequest request : requests) {
 										String from = request.getFrom();
-										player.performCommand("k hylkää " + from);
+										new BukkitRunnable() {
+											public void run() {
+												player.performCommand("k hylkää " + from);
+											}
+										}.runTask(core);
 									}
 								}
 								else {
@@ -5972,10 +5988,10 @@ public class CoreCommands implements CommandExecutor {
 										player.sendMessage(tc4 + target.getName() + tc3 + " ei ole kaverisi!");
 										return;
 									}
-//									if (!SettingsUtils.getSetting(target, "show_teleport_requests")) { TODO show_TELEPORT_requests
-//										player.sendMessage(tc4 + target.getName() + tc3 + " on poistanut teleporttauspyynnöt käytöstä!");
-//										return;
-//									}
+									if (!SettingsUtils.getSetting(target, "show_teleport_requests")) {
+										player.sendMessage(tc4 + target.getName() + tc3 + " on poistanut teleporttauspyynnöt käytöstä!");
+										return;
+									}
 									if (TeleportRequest.hasSentRequestTo(player.getName(), target.getName())) {
 										player.sendMessage(tc3 + "Olet jo lähettänyt teleporttauspyynnön tälle pelaajalle!");
 										return;
@@ -6052,7 +6068,11 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							player.performCommand("k");
+							new BukkitRunnable() {
+								public void run() {
+									player.performCommand("k");
+								}
+							}.runTask(core);
 						}
 					}
 				}.runTaskAsynchronously(core);
@@ -6131,11 +6151,15 @@ public class CoreCommands implements CommandExecutor {
 				new BukkitRunnable() {
 					public void run() {
 						if (args[0].equalsIgnoreCase("chat") || args[0].equalsIgnoreCase("c")) {
-							String arguments = "";
-							for (int i = 1; i < args.length; i++) {
-								arguments += " " + args[i];
-							}
-							player.performCommand("kc " + arguments);
+							new BukkitRunnable() {
+								public void run() {
+									String arguments = "";
+									for (int i = 1; i < args.length; i++) {
+										arguments += " " + args[i];
+									}
+									player.performCommand("kc " + arguments);
+								}
+							}.runTask(core);
 						}
 						else if (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("l")) {
 							player.sendMessage("");
@@ -6818,7 +6842,11 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							player.performCommand("kilta");
+							new BukkitRunnable() {
+								public void run() {
+									player.performCommand("kilta");
+								}
+							}.runTask(core);
 						}
 					}
 				}.runTaskAsynchronously(core);
@@ -7013,12 +7041,13 @@ public class CoreCommands implements CommandExecutor {
 			"Soita ääni, kun saan yksityisviestin§play_sound_msg§13", 
 			"Vastaanota kaveripyyntöjä pelaajilta§show_friend_requests§14", 
 			"Soita ääni, kun kaverini liittyy palvelimelle§play_sound_friends§15", 
-			"Vastaanota kiltapyyntöjä pelaajilta§show_guild_requests§16", 
-			"Näytä viesti, kun minulta ostetaan tuotteita§show_bought_items§19", 
-			"Näytä pelaajien kuolinilmoitukset§show_death_messages§20", 
-			"Näytä muiden pelaajien AFK-ilmoitukset§show_afk§21", 
-			"Huomauta, jos chat-viestissä mainitsemani pelaaja on AFK§show_afk_chat_notification§22", 
-			"Näytä kavereideni tilaviestien päivitykset§show_friend_status§23"
+			"Vastaanota teleporttauspyyntöjä kavereiltasi§show_teleport_requests§16", 
+			"Vastaanota kiltapyyntöjä pelaajilta§show_guild_requests§19", 
+			"Näytä viesti, kun minulta ostetaan tuotteita§show_bought_items§20", 
+			"Näytä pelaajien kuolinilmoitukset§show_death_messages§21", 
+			"Näytä muiden pelaajien AFK-ilmoitukset§show_afk§22", 
+			"Huomauta, jos chat-viestissä mainitsemani pelaaja on AFK§show_afk_chat_notification§23", 
+			"Näytä kavereideni tilaviestien päivitykset§show_friend_status§24"
 			);
 	
 	private List<String> profileSettings = Arrays.asList(
