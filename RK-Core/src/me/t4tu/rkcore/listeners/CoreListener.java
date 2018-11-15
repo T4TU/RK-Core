@@ -799,6 +799,11 @@ public class CoreListener implements Listener {
 	public void onEntityDismount(EntityDismountEvent e) {
 		if (e.getDismounted().getType() == EntityType.ARROW) {
 			e.getDismounted().remove();
+			new BukkitRunnable() {
+				public void run() {
+					e.getEntity().teleport(e.getEntity().getLocation().add(0, 1.5, 0));
+				}
+			}.runTask(core);
 		}
 	}
 	
@@ -1339,29 +1344,28 @@ public class CoreListener implements Listener {
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
-//			List<Material> stairBlocks = Arrays.asList(Material.OAK_STAIRS, Material.BIRCH_STAIRS, Material.SPRUCE_STAIRS, 
-//					Material.JUNGLE_STAIRS, Material.ACACIA_STAIRS, Material.DARK_OAK_STAIRS, Material.QUARTZ_STAIRS);
-			List<Material> sideBlocks = Arrays.asList(Material.WALL_SIGN, Material.OAK_TRAPDOOR, Material.BIRCH_TRAPDOOR, Material.SPRUCE_TRAPDOOR,
-					Material.JUNGLE_TRAPDOOR, Material.ACACIA_TRAPDOOR, Material.DARK_OAK_TRAPDOOR, Material.IRON_TRAPDOOR, Material.OAK_FENCE_GATE,
-					Material.BIRCH_FENCE_GATE, Material.SPRUCE_FENCE_GATE, Material.JUNGLE_FENCE_GATE, Material.ACACIA_FENCE_GATE, Material.DARK_OAK_FENCE_GATE);
 			if (block.getType().toString().contains("STAIRS")) {
 				boolean c = false;
 				Stairs stairs = (Stairs) block.getState().getData();
 				if (stairs.getFacing() == BlockFace.NORTH || stairs.getFacing() == BlockFace.SOUTH) {
-					if (sideBlocks.contains(block.getLocation().add(1, 0, 0).getBlock().getType()) && 
-							sideBlocks.contains(block.getLocation().add(-1, 0, 0).getBlock().getType())) {
+					String sideblock1 = block.getLocation().add(1, 0, 0).getBlock().getType().toString();
+					String sideblock2 = block.getLocation().add(-1, 0, 0).getBlock().getType().toString();
+					if ((sideblock1.contains("SIGN") || sideblock1.contains("TRAPDOOR") || sideblock1.contains("FENCE_GATE")) && 
+							(sideblock2.contains("SIGN") || sideblock2.contains("TRAPDOOR") || sideblock2.contains("FENCE_GATE"))) {
 						c = true;
 					}
 				}
 				else if (stairs.getFacing() == BlockFace.EAST || stairs.getFacing() == BlockFace.WEST) {
-					if (sideBlocks.contains(block.getLocation().add(0, 0, 1).getBlock().getType()) && 
-							sideBlocks.contains(block.getLocation().add(0, 0, -1).getBlock().getType())) {
+					String sideblock1 = block.getLocation().add(0, 0, 1).getBlock().getType().toString();
+					String sideblock2 = block.getLocation().add(0, 0, -1).getBlock().getType().toString();
+					if ((sideblock1.contains("SIGN") || sideblock1.contains("TRAPDOOR") || sideblock1.contains("FENCE_GATE")) && 
+							(sideblock2.contains("SIGN") || sideblock2.contains("TRAPDOOR") || sideblock2.contains("FENCE_GATE"))) {
 						c = true;
 					}
 				}
 				if (c && !player.isSneaking() && SettingsUtils.getSetting(player, "use_chairs")) {
 					e.setCancelled(true);
-					Arrow a = player.getWorld().spawnArrow(block.getLocation().add(0.5, -0.1, 0.5), new Vector(0, 0, 0), 0, 0);
+					Arrow a = player.getWorld().spawnArrow(block.getLocation().add(0.5, -0.1, 0.5), new Vector(0, 0.00001, 0), 0, 0);
 					a.setBounce(false);
 					a.setGravity(false);
 					a.setSilent(true);
