@@ -122,14 +122,14 @@ public class ChatListener implements Listener {
 			return;
 		}
 		
-		// chatin nopeusrajoitus (maks. 2 viestiä 4 sekunnin sisällä)
+		// chatin nopeusrajoitus (maks. 3 viestiä 4 sekunnin sisällä)
 		
 		if (!CoreUtils.hasRank(player, "ritari")) {
 			int i = 0;
 			if (cooldownCounter.containsKey(name)) {
 				i = cooldownCounter.get(name);
 			}
-			if (i >= 2) {
+			if (i >= 3) {
 				player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 				player.sendMessage(tc3 + "Et voi lähettää viestejä noin nopeasti!");
 				return;
