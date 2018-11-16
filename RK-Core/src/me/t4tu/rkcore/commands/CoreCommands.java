@@ -79,7 +79,9 @@ public class CoreCommands implements CommandExecutor {
 	private List<String> commandSpyPlayers;
 	private List<String> teleportingPlayers;
 	private List<String> powerTools;
-	private List<Location> tardisBlocks;
+	private List<Location> tardisBlocks1;
+	private List<Location> tardisBlocks2;
+	private List<Location> tardisBlocks3;
 	private Map<String, String> mailWritingPlayers;
 	private Map<String, PermissionAttachment> permissions;
 	private Map<String, ArmorStand> selectedHolograms;
@@ -87,7 +89,9 @@ public class CoreCommands implements CommandExecutor {
 	private Block b2;
 	private int autoRestartTaskId;
 	private boolean evokkiModeEnabled;
-	private boolean canTardisMove;
+	private boolean canTardisMove1;
+	private boolean canTardisMove2;
+	private boolean canTardisMove3;
 	
 	public CoreCommands(Core core) {
 		this.core = core;
@@ -98,7 +102,9 @@ public class CoreCommands implements CommandExecutor {
 		commandSpyPlayers = new ArrayList<String>();
 		teleportingPlayers = new ArrayList<String>();
 		powerTools = new ArrayList<String>();
-		tardisBlocks = new ArrayList<Location>();
+		tardisBlocks1 = new ArrayList<Location>();
+		tardisBlocks2 = new ArrayList<Location>();
+		tardisBlocks3 = new ArrayList<Location>();
 		mailWritingPlayers = new HashMap<String, String>();
 		permissions = new HashMap<String, PermissionAttachment>();
 		selectedHolograms = new HashMap<String, ArmorStand>();
@@ -106,7 +112,9 @@ public class CoreCommands implements CommandExecutor {
 		b2 = null;
 		autoRestartTaskId = -1;
 		evokkiModeEnabled = true;
-		canTardisMove = true;
+		canTardisMove1 = true;
+		canTardisMove2 = true;
+		canTardisMove3 = true;
 	}
 	
 	public void registerCommand(String command, boolean tabCompletion) {
@@ -147,8 +155,16 @@ public class CoreCommands implements CommandExecutor {
 		return powerTools;
 	}
 	
-	public List<Location> getTardisBlocks() {
-		return tardisBlocks;
+	public List<Location> getTardisBlocks(int i) {
+		if (i == 0) {
+			return tardisBlocks1;
+		}
+		else if (i == 1) {
+			return tardisBlocks2;
+		}
+		else {
+			return tardisBlocks3;
+		}
 	}
 	
 	public Map<String, String> getMailWritingPlayers() {
@@ -179,8 +195,16 @@ public class CoreCommands implements CommandExecutor {
 		return evokkiModeEnabled;
 	}
 	
-	public boolean canTardisMove() {
-		return canTardisMove;
+	public boolean canTardisMove(int i) {
+		if (i == 0) {
+			return canTardisMove1;
+		}
+		else if (i == 1) {
+			return canTardisMove2;
+		}
+		else {
+			return canTardisMove3;
+		}
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -3707,6 +3731,21 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// getpos
+		
+		if (cmd.getName().equalsIgnoreCase("getpos")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				int x = player.getLocation().getBlockX();
+				int y = player.getLocation().getBlockY();
+				int z = player.getLocation().getBlockZ();
+				player.sendMessage(tc2 + "Sijaintisi: " + tc1 + x + " " + y + " " + z);
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
 		// entity, mob
 		
 		if (cmd.getName().equalsIgnoreCase("entity") || cmd.getName().equalsIgnoreCase("mob")) {
@@ -3975,7 +4014,7 @@ public class CoreCommands implements CommandExecutor {
 							return true;
 						}
 						Block block = player.getTargetBlock(null, 5);
-						if (block != null && (block.getType() == Material.OAK_BUTTON || block.getType() == Material.STONE_BUTTON)) {
+						if (block != null && block.getType().toString().contains("BUTTON")) {
 							int i = new Random().nextInt(10000);
 							CoreUtils.setLocation(core, "gates." + args[1] + ".buttons." + i, block.getLocation());
 							player.sendMessage(tc2 + "Lisättiin nappi porttiin " + tc1 + "#" + args[1] + tc2 + "!");
@@ -4010,9 +4049,17 @@ public class CoreCommands implements CommandExecutor {
 									for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
 										for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 											Block block = l1.getWorld().getBlockAt(x, y, z);
-											if (block != null && block.getType() == Material.OAK_FENCE) {
-												block.setType(Material.AIR);
-												block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+											if (args[1].startsWith("-")) {
+												if (block != null && block.getType() == Material.SMOOTH_STONE) {
+													block.setType(Material.AIR);
+													block.getWorld().playSound(block.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 0.1f, 2);
+												}
+											}
+											else {
+												if (block != null && block.getType() == Material.OAK_FENCE) {
+													block.setType(Material.AIR);
+													block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+												}
 											}
 										}
 									}
@@ -4045,9 +4092,17 @@ public class CoreCommands implements CommandExecutor {
 									for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
 										for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 											Block block = l1.getWorld().getBlockAt(x, y, z);
-											if (block != null && block.getType() == Material.AIR) {
-												block.setType(Material.OAK_FENCE);
-												block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+											if (args[1].startsWith("-")) {
+												if (block != null && block.getType() == Material.AIR) {
+													block.setType(Material.SMOOTH_STONE);
+													block.getWorld().playSound(block.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 0.1f, 2);
+												}
+											}
+											else {
+												if (block != null && block.getType() == Material.AIR) {
+													block.setType(Material.OAK_FENCE);
+													block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+												}
 											}
 										}
 									}
@@ -4687,14 +4742,22 @@ public class CoreCommands implements CommandExecutor {
 		// tardis
 		
 		if (cmd.getName().equalsIgnoreCase("tardis")) {
-			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä") && (player.getName().equals("T4TU_") || player.getName().equals("Ahishi") || player.getName().equals("evokki0075"))) {
 				if (args.length >= 1) {
 					if (args[0].equalsIgnoreCase("spawn")) {
-						if (!canTardisMove) {
+						if (!canTardisMove1 && player.getName().equals("T4TU_")) {
 							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi spawnata juuri nyt!");
 							return true;
 						}
-						final Location modelLocation = CoreUtils.loadLocation(core, "tardis.model-location");
+						if (!canTardisMove2 && player.getName().equals("Ahishi")) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi spawnata juuri nyt!");
+							return true;
+						}
+						if (!canTardisMove3 && player.getName().equals("evokki0075")) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi spawnata juuri nyt!");
+							return true;
+						}
+						final Location modelLocation = CoreUtils.loadLocation(core, "tardis." + player.getName() + ".model-location");
 						if (modelLocation == null) {
 							player.sendMessage("§9§lTARDIS" + tc3 + "in mallin sijaintia ei ole asetettu!");
 							return true;
@@ -4771,9 +4834,17 @@ public class CoreCommands implements CommandExecutor {
 								}
 							}
 						}
-						final Location currentLocation = CoreUtils.loadLocation(core, "tardis.current-location");
-						final Location centerLocation = CoreUtils.loadLocation(core, "tardis.center-location");
-						canTardisMove = false;
+						final Location currentLocation = CoreUtils.loadLocation(core, "tardis." + player.getName() + ".current-location");
+						final Location centerLocation = CoreUtils.loadLocation(core, "tardis." + player.getName() + ".center-location");
+						if (player.getName().equals("T4TU_")) {
+							canTardisMove1 = false;
+						}
+						if (player.getName().equals("Ahishi")) {
+							canTardisMove2 = false;
+						}
+						if (player.getName().equals("evokki0075")) {
+							canTardisMove3 = false;
+						}
 						player.sendMessage(tc2 + "Spawnataan §9§lTARDIS" + tc2 + "...");
 						new BukkitRunnable() {
 							int i = 0;
@@ -4814,9 +4885,17 @@ public class CoreCommands implements CommandExecutor {
 									if (centerLocation != null) {
 										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMOR_STAND_BREAK, 1, 0.1f);
 									}
-									canTardisMove = true;
-									CoreUtils.setLocation(core, "tardis.current-location", newLocation);
-									updateTardisBlocks();
+									if (player.getName().equals("T4TU_")) {
+										canTardisMove1 = true;
+									}
+									if (player.getName().equals("Ahishi")) {
+										canTardisMove2 = true;
+									}
+									if (player.getName().equals("evokki0075")) {
+										canTardisMove3 = true;
+									}
+									CoreUtils.setLocation(core, "tardis." + player.getName() + ".current-location", newLocation);
+									updateTardisBlocks(player.getName());
 								}
 								else {
 									newLocation.add(0, 1.5, 0);
@@ -4839,17 +4918,33 @@ public class CoreCommands implements CommandExecutor {
 						}.runTaskTimer(core, 5, 5);
 					}
 					else if (args[0].equalsIgnoreCase("despawn")) {
-						if (!canTardisMove) {
+						if (!canTardisMove1 && player.getName().equals("T4TU_")) {
 							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi despawnata juuri nyt!");
 							return true;
 						}
-						final Location currentLocation = CoreUtils.loadLocation(core, "tardis.current-location");
+						if (!canTardisMove2 && player.getName().equals("Ahishi")) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi despawnata juuri nyt!");
+							return true;
+						}
+						if (!canTardisMove3 && player.getName().equals("evokki0075")) {
+							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei voi despawnata juuri nyt!");
+							return true;
+						}
+						final Location currentLocation = CoreUtils.loadLocation(core, "tardis." + player.getName() + ".current-location");
 						if (currentLocation == null) {
 							player.sendMessage("§9§lTARDIS" + tc3 + "ta ei ole tällä hetkellä spawnattuna!");
 							return true;
 						}
-						final Location centerLocation = CoreUtils.loadLocation(core, "tardis.center-location");
-						canTardisMove = false;
+						final Location centerLocation = CoreUtils.loadLocation(core, "tardis." + player.getName() + ".center-location");
+						if (player.getName().equals("T4TU_")) {
+							canTardisMove1 = false;
+						}
+						if (player.getName().equals("Ahishi")) {
+							canTardisMove2 = false;
+						}
+						if (player.getName().equals("evokki0075")) {
+							canTardisMove3 = false;
+						}
 						player.sendMessage(tc2 + "Despawnataan §9§lTARDIS" + tc2 + "...");
 						new BukkitRunnable() {
 							int i = 0;
@@ -4870,10 +4965,18 @@ public class CoreCommands implements CommandExecutor {
 									if (centerLocation != null) {
 										centerLocation.getWorld().playSound(centerLocation, Sound.ENTITY_ARMOR_STAND_BREAK, 1, 0.1f);
 									}
-									canTardisMove = true;
-									core.getConfig().set("tardis.current-location", null);
+									if (player.getName().equals("T4TU_")) {
+										canTardisMove1 = true;
+									}
+									if (player.getName().equals("Ahishi")) {
+										canTardisMove2 = true;
+									}
+									if (player.getName().equals("evokki0075")) {
+										canTardisMove3 = true;
+									}
+									core.getConfig().set("tardis." + player.getName() + ".current-location", null);
 									core.saveConfig();
-									updateTardisBlocks();
+									updateTardisBlocks(player.getName());
 								}
 								else {
 									currentLocation.add(0, 1.5, 0);
@@ -4889,7 +4992,7 @@ public class CoreCommands implements CommandExecutor {
 						}.runTaskTimer(core, 5, 5);
 					}
 					else if (args[0].equalsIgnoreCase("tp")) {
-						Location location = CoreUtils.loadLocation(core, "tardis.interior-location");
+						Location location = CoreUtils.loadLocation(core, "tardis." + player.getName() + ".interior-location");
 						if (location != null) {
 							player.teleport(location);
 							player.sendMessage(tc2 + "Teleportattiin §9§lTARDIS" + tc2 + "iin!");
@@ -4899,23 +5002,27 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else if (args[0].equalsIgnoreCase("set-model-location")) {
-						CoreUtils.setLocation(core, "tardis.model-location", player.getLocation());
+						CoreUtils.setLocation(core, "tardis." + player.getName() + ".model-location", player.getLocation());
 						player.sendMessage(tc2 + "Asetettiin §9§lTARDIS" + tc2 + "in mallin sijainti nykyiseen sijaintiisi!");
 					}
 					else if (args[0].equalsIgnoreCase("set-interior-location")) {
-						CoreUtils.setLocation(core, "tardis.interior-location", player.getLocation());
+						CoreUtils.setLocation(core, "tardis." + player.getName() + ".interior-location", player.getLocation());
 						player.sendMessage(tc2 + "Asetettiin §9§lTARDIS" + tc2 + "in sisustan sijainti nykyiseen sijaintiisi!");
 					}
 					else if (args[0].equalsIgnoreCase("set-center-location")) {
-						CoreUtils.setLocation(core, "tardis.center-location", player.getLocation());
+						CoreUtils.setLocation(core, "tardis." + player.getName() + ".center-location", player.getLocation());
 						player.sendMessage(tc2 + "Asetettiin §9§lTARDIS" + tc2 + "in keskustan sijainti nykyiseen sijaintiisi!");
 					}
+					else if (args[0].equalsIgnoreCase("key")) {
+						player.getInventory().addItem(CoreUtils.getItem(Material.TRIPWIRE_HOOK, "§9§lTARDIS§bin avain", null, 1));
+						player.sendMessage(tc2 + "Annettiin §9§lTARDIS" + tc2 + "in avain!");
+					}
 					else {
-						player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location>");
+						player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location/key>");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location>");
+					player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location/key>");
 				}
 			}
 			else {
@@ -7088,15 +7195,31 @@ public class CoreCommands implements CommandExecutor {
 		return true;
 	}
 	
-	public void updateTardisBlocks() {
-		tardisBlocks.clear();
-		Location location = CoreUtils.loadLocation(core, "tardis.current-location");
+	public void updateTardisBlocks(String name) {
+		if (name.equals("T4TU_")) {
+			tardisBlocks1.clear();
+		}
+		if (name.equals("Ahishi")) {
+			tardisBlocks2.clear();
+		}
+		if (name.equals("evokki0075")) {
+			tardisBlocks3.clear();
+		}
+		Location location = CoreUtils.loadLocation(core, "tardis." + name + ".current-location");
 		if (location != null) {
 			for (int x = -1; x <= 1; x++) {
 				for (int y = 0; y <= 2; y++) {
 					for (int z = -1; z <= 1; z++) {
 						location.add(x, y, z);
-						tardisBlocks.add(location.clone());
+						if (name.equals("T4TU_")) {
+							tardisBlocks1.add(location.clone());
+						}
+						if (name.equals("Ahishi")) {
+							tardisBlocks2.add(location.clone());
+						}
+						if (name.equals("evokki0075")) {
+							tardisBlocks3.add(location.clone());
+						}
 						location.subtract(x, y, z);
 					}
 				}

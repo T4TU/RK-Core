@@ -66,7 +66,7 @@ public class ChatListener implements Listener {
 		
 		if (core.getConfig().getBoolean("users." + name + ".jail.jailed")) {
 			player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-			player.sendMessage(tc3 + "Et voi lähettää viestejä olessassi vankilasssa!");
+			player.sendMessage(tc3 + "Et voi lähettää viestejä ollessassi vankilasssa!");
 			return;
 		}
 		

@@ -82,7 +82,9 @@ public class Core extends JavaPlugin {
 		
 		createWorlds();
 		
-		coreCommands.updateTardisBlocks();
+		coreCommands.updateTardisBlocks("T4TU_");
+		coreCommands.updateTardisBlocks("Ahishi");
+		coreCommands.updateTardisBlocks("evokki0075");
 	}
 	
 	@Override
@@ -300,6 +302,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("pt", false);
 		commands.registerCommand("lightfix", false);
 		commands.registerCommand("thor", false);
+		commands.registerCommand("getpos", false);
 		commands.registerCommand("entity", false);
 		commands.registerCommand("mob", false);
 		commands.registerCommand("killall", false);

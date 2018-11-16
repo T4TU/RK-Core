@@ -123,6 +123,7 @@ commands:
     pt:
     lightfix:
     thor:
+    getpos:
     entity:
     mob:
     killall:

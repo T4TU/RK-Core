@@ -124,7 +124,7 @@ public class CoreListener implements Listener {
 		
 		if (core.getConfig().getBoolean("users." + player.getName() + ".jail.jailed")) {
 			player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-			player.sendMessage(CoreUtils.getErrorBaseColor() + "Et voi käyttää komentoja olessassi vankilasssa!");
+			player.sendMessage(CoreUtils.getErrorBaseColor() + "Et voi käyttää komentoja ollessassi vankilasssa!");
 			e.setCancelled(true);
 			return;
 		}
@@ -1182,12 +1182,16 @@ public class CoreListener implements Listener {
 	public void onBlockPlace(BlockPlaceEvent e) {
 		if (core.getConfig().getBoolean("users." + e.getPlayer().getName() + ".jail.jailed")) {
 			e.setCancelled(true);
+			return;
 		}
-		for (Location location : core.getCoreCommands().getTardisBlocks()) {
-			Location blockLocation = e.getBlockPlaced().getLocation();
-			blockLocation.add(0.5, 0, 0.5);
-			if (location.equals(blockLocation)) {
-				e.setCancelled(true);
+		for (int i = 0; i < 3; i++) {
+			for (Location location : core.getCoreCommands().getTardisBlocks(i)) {
+				Location blockLocation = e.getBlockPlaced().getLocation();
+				blockLocation.add(0.5, 0, 0.5);
+				if (location.equals(blockLocation)) {
+					e.setCancelled(true);
+					return;
+				}
 			}
 		}
 	}
@@ -1268,7 +1272,7 @@ public class CoreListener implements Listener {
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
-			if (block.getType() == Material.OAK_BUTTON || block.getType() == Material.STONE_BUTTON) {
+			if (block.getType().toString().contains("BUTTON")) {
 				if (core.getConfig().getConfigurationSection("gates") != null) {
 					for (String s : core.getConfig().getConfigurationSection("gates").getKeys(false)) {
 						if (core.getConfig().getConfigurationSection("gates." + s + ".buttons") != null) {
@@ -1288,9 +1292,17 @@ public class CoreListener implements Listener {
 													for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
 														for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 															Block block = l1.getWorld().getBlockAt(x, y, z);
-															if (block != null && block.getType() == Material.OAK_FENCE) {
-																block.setType(Material.AIR);
-																block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+															if (s.startsWith("-")) {
+																if (block != null && block.getType() == Material.SMOOTH_STONE) {
+																	block.setType(Material.AIR);
+																	block.getWorld().playSound(block.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 0.1f, 2);
+																}
+															}
+															else {
+																if (block != null && block.getType() == Material.OAK_FENCE) {
+																	block.setType(Material.AIR);
+																	block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+																}
 															}
 														}
 													}
@@ -1314,9 +1326,17 @@ public class CoreListener implements Listener {
 													for (int x = l1.getBlockX(); x <= l2.getBlockX(); x++) {
 														for (int z = l1.getBlockZ(); z <= l2.getBlockZ(); z++) {
 															Block block = l1.getWorld().getBlockAt(x, y, z);
-															if (block != null && block.getType() == Material.AIR) {
-																block.setType(Material.OAK_FENCE);
-																block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+															if (s.startsWith("-")) {
+																if (block != null && block.getType() == Material.AIR) {
+																	block.setType(Material.SMOOTH_STONE);
+																	block.getWorld().playSound(block.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 0.1f, 2);
+																}
+															}
+															else {
+																if (block != null && block.getType() == Material.AIR) {
+																	block.setType(Material.OAK_FENCE);
+																	block.getWorld().playSound(block.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 0.1f, 2);
+																}
 															}
 														}
 													}
@@ -1478,21 +1498,26 @@ public class CoreListener implements Listener {
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
 			Location clickedLocation = e.getClickedBlock().getLocation().add(0.5, 0, 0.5);
-			for (Location location : core.getCoreCommands().getTardisBlocks()) {
-				if (location.equals(clickedLocation)) {
-					e.setCancelled(true);
-					if ((CoreUtils.hasRank(player, "ylläpitäjä") || CoreUtils.getDisplayName(e.getItem()).equals("§9§lTARDIS§bin avain")) && core.getCoreCommands().canTardisMove()) {
-						Location interiorLocation = CoreUtils.loadLocation(core, "tardis.interior-location");
-						if (interiorLocation != null) {
-							player.teleport(interiorLocation);
-							player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.2f, 1);
+			String[] names = {"T4TU_", "Ahishi", "evokki0075"};
+			for (int i = 0; i < 3; i++) {
+				String name = names[i];
+				for (Location location : core.getCoreCommands().getTardisBlocks(i)) {
+					if (location.equals(clickedLocation)) {
+						e.setCancelled(true);
+						if ((CoreUtils.hasRank(player, "ylläpitäjä") || CoreUtils.getDisplayName(e.getItem()).equals("§9§lTARDIS§bin avain")) && core.getCoreCommands().canTardisMove(i)) {
+							Location interiorLocation = CoreUtils.loadLocation(core, "tardis." + name + ".interior-location");
+							if (interiorLocation != null) {
+								player.teleport(interiorLocation);
+								player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.5f, 1);
+							}
+							else {
+								player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
+							}
 						}
 						else {
 							player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
 						}
-					}
-					else {
-						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.2f, 2);
+						return;
 					}
 				}
 			}
@@ -1500,19 +1525,24 @@ public class CoreListener implements Listener {
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
 			if (e.getClickedBlock().getType() == Material.IRON_DOOR) {
-				Location location = CoreUtils.loadLocation(core, "tardis.interior-location");
-				if (location != null && location.distance(e.getClickedBlock().getLocation()) < 4) {
-					e.setCancelled(true);
-					Location currentLocation = CoreUtils.loadLocation(core, "tardis.current-location");
-					if (currentLocation != null && core.getCoreCommands().canTardisMove()) {
-						currentLocation.add(1, 0, 0);
-						currentLocation.setPitch(0);
-						currentLocation.setYaw(270);
-						player.teleport(currentLocation);
-						player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.2f, 1);
-					}
-					else {
-						player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
+				String[] names = {"T4TU_", "Ahishi", "evokki0075"};
+				for (int i = 0; i < 3; i++) {
+					String name = names[i];
+					Location location = CoreUtils.loadLocation(core, "tardis." + name + ".interior-location");
+					if (location != null && location.distance(e.getClickedBlock().getLocation()) < 4) {
+						e.setCancelled(true);
+						Location currentLocation = CoreUtils.loadLocation(core, "tardis." + name + ".current-location");
+						if (currentLocation != null && core.getCoreCommands().canTardisMove(i)) {
+							currentLocation.add(1, 0, 0);
+							currentLocation.setPitch(0);
+							currentLocation.setYaw(270);
+							player.teleport(currentLocation);
+							player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.5f, 1);
+						}
+						else {
+							player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
+						}
+						return;
 					}
 				}
 			}
