@@ -464,8 +464,8 @@ public class CoreListener implements Listener {
 				}
 				
 				if (!MySQLUtils.contains("SELECT * FROM player_stats WHERE uuid=?", uuid)) {
-					MySQLUtils.set("INSERT INTO player_stats (name, uuid, money, friends) VALUES "
-							+ "(?, ?, 0, ?)", name, uuid, "");
+					MySQLUtils.set("INSERT INTO player_stats (name, uuid, friends) VALUES "
+							+ "(?, ?, ?)", name, uuid, "");
 				}
 				
 				if (!MySQLUtils.contains("SELECT * FROM player_homes WHERE uuid=?", uuid)) {
