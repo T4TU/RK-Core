@@ -18,6 +18,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Stairs;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Arrow;
@@ -61,7 +62,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.MapMeta;
-import org.bukkit.material.Stairs;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -1366,7 +1366,7 @@ public class CoreListener implements Listener {
 			Block block = e.getClickedBlock();
 			if (block.getType().toString().contains("STAIRS")) {
 				boolean c = false;
-				Stairs stairs = (Stairs) block.getState().getData();
+				Stairs stairs = (Stairs) block.getBlockData();
 				if (stairs.getFacing() == BlockFace.NORTH || stairs.getFacing() == BlockFace.SOUTH) {
 					String sideblock1 = block.getLocation().add(1, 0, 0).getBlock().getType().toString();
 					String sideblock2 = block.getLocation().add(-1, 0, 0).getBlock().getType().toString();
