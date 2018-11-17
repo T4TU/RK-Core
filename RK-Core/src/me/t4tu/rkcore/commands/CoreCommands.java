@@ -5439,8 +5439,10 @@ public class CoreCommands implements CommandExecutor {
 													p.sendMessage(tc3 + " Sinulle on määrätty maksettavaksi " + tc4 + amount + "£" + tc3 + 
 															" sakkoa!");
 													p.sendMessage("");
-													p.sendMessage(tc3 + " Lisätietoja tästä sakkomaksusta saat komennolla:");
-													p.sendMessage(tc4 + "  /sakot");
+													TextComponent text = new TextComponent(tc3 + " Lisätietoja tästä sakkomaksusta saat komennolla " + tc4 + "/sakot" + tc3 + " tai klikkaamalla tästä.");
+													text.setColor(ChatColor.getByChar(tc3.charAt(1)));
+													text.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/sakot"));
+													p.spigot().sendMessage(text);
 													p.sendMessage("");
 												}
 											}
@@ -5523,15 +5525,23 @@ public class CoreCommands implements CommandExecutor {
 								
 								String date = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
 								
+								ClickEvent clickEvent = new ClickEvent(Action.RUN_COMMAND, "/sakko maksa " + id);
+								HoverEvent hoverEvent = new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
+										new ComponentBuilder(tc4 + "Summa: " + tc3 + amount + "£\n" + tc4 + "Erääntyy: " + 
+												tc3 + date + "\n\n" + tc3 + "Maksa tämä sakkomaksu klikkaamalla!").create());
+								
 								TextComponent t1 = new TextComponent(tc4 + " - ");
+								t1.setColor(ChatColor.getByChar(tc4.charAt(1)));
+								t1.setClickEvent(clickEvent);
+								t1.setHoverEvent(hoverEvent);
 								TextComponent t2 = new TextComponent(tc4 + amount + "£: ");
+								t2.setColor(ChatColor.getByChar(tc4.charAt(1)));
+								t2.setClickEvent(clickEvent);
+								t2.setHoverEvent(hoverEvent);
 								TextComponent t3 = new TextComponent(tc3 + reason);
 								t3.setColor(ChatColor.getByChar(tc3.charAt(1)));
-								t3.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/sakko maksa " + id));
-								t3.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-										new ComponentBuilder(tc4 + "Summa: " + tc3 + amount + "£\n" + tc4 + "Erääntyy: " + 
-												tc3 + date + "\n\n" + tc3 + "Maksa tämä sakkomaksu klikkaamalla!").create()));
-								
+								t3.setClickEvent(clickEvent);
+								t3.setHoverEvent(hoverEvent);
 								t1.addExtra(t2);
 								t1.addExtra(t3);
 								
