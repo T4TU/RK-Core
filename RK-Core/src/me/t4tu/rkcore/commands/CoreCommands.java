@@ -3735,10 +3735,26 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("getpos")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				int x = player.getLocation().getBlockX();
-				int y = player.getLocation().getBlockY();
-				int z = player.getLocation().getBlockZ();
-				player.sendMessage(tc2 + "Sijaintisi: " + tc1 + x + " " + y + " " + z);
+				if (args.length >= 1) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						String world = target.getWorld().getName();
+						int x = target.getLocation().getBlockX();
+						int y = target.getLocation().getBlockY();
+						int z = target.getLocation().getBlockZ();
+						player.sendMessage(tc2 + "Pelaajan " + tc1 + target.getName() + tc2 + " sijainti: " + tc1 + x + " " + y + " " + z + " (" + world + ")");
+					}
+					else {
+						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					String world = player.getWorld().getName();
+					int x = player.getLocation().getBlockX();
+					int y = player.getLocation().getBlockY();
+					int z = player.getLocation().getBlockZ();
+					player.sendMessage(tc2 + "Sijaintisi: " + tc1 + x + " " + y + " " + z + " (" + world + ")");
+				}
 			}
 			else {
 				player.sendMessage(noPermission);
