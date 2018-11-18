@@ -3126,7 +3126,7 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("back")) {
 			if (CoreUtils.hasRank(player, "arkkitehti") || CoreUtils.hasRank(player, "valvoja")) {
-				Location location = (Location) core.getConfig().get("users." + player.getName() + ".back");
+				Location location = CoreUtils.loadLocation(core, "users." + player.getName() + ".back");
 				if (location != null) {
 					player.teleport(location);
 					player.sendMessage(tc2 + "Sinut palautettiin aikaisempaan sijaintiisi!");

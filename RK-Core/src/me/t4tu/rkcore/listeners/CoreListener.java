@@ -1039,8 +1039,7 @@ public class CoreListener implements Listener {
 		e.setDeathMessage(null);
 		
 		if (CoreUtils.hasRank(player, "arkkitehti") || CoreUtils.hasRank(player, "valvoja")) {
-			core.getConfig().set("users." + player.getName() + ".back", player.getLocation());
-			core.saveConfig();
+			CoreUtils.setLocation(core, "users." + player.getName() + ".back", player.getLocation());
 		}
 		
 		if (player.getGameMode() == GameMode.CREATIVE) {
@@ -1145,13 +1144,8 @@ public class CoreListener implements Listener {
 	@EventHandler
 	public void onPlayerTeleport(PlayerTeleportEvent e) {
 		if (CoreUtils.hasRank(e.getPlayer(), "arkkitehti") || CoreUtils.hasRank(e.getPlayer(), "valvoja")) {
-			if (!e.getFrom().getWorld().getName().equals(e.getTo().getWorld().getName())) {
-				core.getConfig().set("users." + e.getPlayer().getName() + ".back", e.getFrom());
-				core.saveConfig();
-			}
-			else if (e.getFrom().distance(e.getTo()) > 10) {
-				core.getConfig().set("users." + e.getPlayer().getName() + ".back", e.getFrom());
-				core.saveConfig();
+			if (!e.getFrom().getWorld().getName().equals(e.getTo().getWorld().getName()) || e.getFrom().distance(e.getTo()) > 10) {
+				CoreUtils.setLocation(core, "users." + e.getPlayer().getName() + ".back", e.getFrom());
 			}
 		}
 	}
