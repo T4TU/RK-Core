@@ -272,5 +272,7 @@ public class ChatListener implements Listener {
 	
 	// TODO lisää makroja
 	
-	private Map<String, String> macros = Map.of("*shrug*", "¯\\_(ツ)_/¯");
+	private Map<String, String> macros = new HashMap<String, String>(); {
+		macros.put("*shrug*", "¯\\_(ツ)_/¯");
+	}
 }
