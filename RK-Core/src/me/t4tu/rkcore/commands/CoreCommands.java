@@ -722,7 +722,7 @@ public class CoreCommands implements CommandExecutor {
 					sender.sendMessage("");
 					sender.sendMessage(tc2 + "§m----------" + tc1 + " Pelaajat " + tc2 + "§m----------");
 					sender.sendMessage("");
-					sender.sendMessage(tc2 + " Palvelimelle on liittynyt yhteensä " + tc1 + globalData.getInt(0, "count") + tc2 + " pelaajaa,");
+					sender.sendMessage(tc2 + " Palvelimelle on liittynyt yhteensä " + tc1 + globalData.getInt(0, "uniquejoins") + tc2 + " pelaajaa,");
 					sender.sendMessage(tc2 + " pelaajaennätys on " + tc1 + globalData.getInt(0, "record") + tc2 + " samanaikaista pelaajaa.");
 					sender.sendMessage("");
 					if (CoreUtils.hasRank(sender, "valvoja")) {
