@@ -509,7 +509,7 @@ public class Core extends JavaPlugin {
 				
 				// online-pelaajat
 				
-				MySQLUtils.set("UPDATE global SET count=" + Bukkit.getOnlinePlayers().size());
+				MySQLUtils.set("UPDATE global SET online=" + Bukkit.getOnlinePlayers().size());
 			}
 		}.runTaskTimerAsynchronously(this, 100, 100);
 		

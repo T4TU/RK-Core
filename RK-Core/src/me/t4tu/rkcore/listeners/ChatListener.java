@@ -78,6 +78,8 @@ public class ChatListener implements Listener {
 			return;
 		}
 		
+		// postin lähetys
+		
 		if (core.getCoreCommands().getMailWritingPlayers().containsKey(player.getName())) {
 			String sender = player.getUniqueId().toString();
 			String receiver = core.getCoreCommands().getMailWritingPlayers().get(player.getName()).split("§")[0];
@@ -157,13 +159,19 @@ public class ChatListener implements Listener {
 			chatMessage = ChatColor.translateAlternateColorCodes('&', chatMessage.replace("<bold>", "§l").replace("<italics>", "§o").replace("<underline>", "§n").replace("<strikethrough>", "§m")
 					.replace("<reset>", "§r").replace("<b>", "§l").replace("<i>", "§o").replace("<u>", "§n").replace("<s>", "§m").replace("<r>", "§r"));
 		}
-		if (CoreUtils.hasRank(player, "ritari")) {
+		else if (CoreUtils.hasRank(player, "ritari")) {
 			chatMessage = chatMessage.replace("&l", "§l").replace("&o", "§o").replace("&n", "§n").replace("&m", "§m").replace("&r", "§r")
 					.replace("<bold>", "§l").replace("<italics>", "§o").replace("<underline>", "§n").replace("<strikethrough>", "§m").replace("<reset>", "§r")
 					.replace("<b>", "§l").replace("<i>", "§o").replace("<u>", "§n").replace("<s>", "§m").replace("<r>", "§r");
 		}
 		if (core.getConfig().contains("users." + name + ".chat_nick")) {
 			chatName = chatColor + "*" + core.getConfig().getString("users." + name + ".chat_nick");
+		}
+		
+		// makrot
+		
+		for (String macro : macros.keySet()) {
+			chatMessage = chatMessage.replace(macro, macros.get(macro));
 		}
 		
 		// rakennetaan viesti
@@ -261,4 +269,8 @@ public class ChatListener implements Listener {
 		
 		Bukkit.getConsoleSender().sendMessage("CHAT > " + player.getName() + ": " + e.getMessage());
 	}
+	
+	// TODO lisää makroja
+	
+	private Map<String, String> macros = Map.of("*shrug*", "¯\\_(ツ)_/¯");
 }

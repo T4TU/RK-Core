@@ -459,7 +459,7 @@ public class CoreListener implements Listener {
 				if (!MySQLUtils.contains("SELECT * FROM player_info WHERE uuid=?", uuid)) {
 					MySQLUtils.set("INSERT INTO player_info (name, uuid, ip, last_seen) "
 							+ "VALUES (?, ?, ?, " + System.currentTimeMillis() + ")", name, uuid, ip);
-					MySQLUtils.set("UPDATE global SET count=count+1");
+					MySQLUtils.set("UPDATE global SET uniquejoins=uniquejoins+1");
 					firstTimeJoining = true;
 				}
 				
