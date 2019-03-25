@@ -76,6 +76,8 @@ import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 
 public class CoreListener implements Listener {
 	
@@ -1577,6 +1579,27 @@ public class CoreListener implements Listener {
 								calendarCooldown.remove(player.getName());
 							}
 						}.runTaskLater(core, 40);
+					}
+				}
+			}
+			if (item != null && item.getType().toString().contains("MUSIC_DISC_")) {
+				Location musicShopLocation = CoreUtils.loadLocation(core, "music-shop");
+				if (musicShopLocation != null && musicShopLocation.getWorld().getName().equals(player.getLocation().getWorld().getName())) {
+					if (musicShopLocation.distance(player.getLocation()) <= 20) {
+						e.setCancelled(true);
+						for (Sound sound : Sound.values()) {
+							if (sound.toString().contains("MUSIC_DISC_")) {
+								player.stopSound(sound);
+							}
+						}
+						Sound sound = Sound.valueOf(item.getType().toString());
+						player.playSound(frame.getLocation(), sound, 10, 1);
+						player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(tc2 + "Esikuunnellaan: " + tc1 + CoreUtils.firstUpperCase(sound.toString().substring(11).toLowerCase())));
+						new BukkitRunnable() {
+							public void run() {
+								player.stopSound(sound);
+							}
+						}.runTaskLater(core, 600);
 					}
 				}
 			}

@@ -5047,6 +5047,18 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// musiikkikauppa
+		
+		if (cmd.getName().equalsIgnoreCase("musiikkikauppa")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				CoreUtils.setLocation(core, "music-shop", player.getLocation());
+				player.sendMessage(tc2 + "Asetettiin musiikkikaupan sijainti nykyiseen sijaintiisi!");
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+		}
+		
 		// rankaise, h
 		
 		if (cmd.getName().equalsIgnoreCase("rankaise") || cmd.getName().equalsIgnoreCase("h")) {
