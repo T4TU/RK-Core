@@ -97,6 +97,10 @@ public class CoreUtils {
 		core = plugin;
 	}
 	
+	public static Core getCore() {
+		return core;
+	}
+	
 	public static String getBaseColor() {
 		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("colors.base"));
 	}
