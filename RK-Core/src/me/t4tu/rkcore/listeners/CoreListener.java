@@ -1565,7 +1565,7 @@ public class CoreListener implements Listener {
 			ItemStack item = frame.getItem();
 			if (item != null && item.getType() == Material.FILLED_MAP && item.hasItemMeta()) {
 				MapMeta meta = (MapMeta) item.getItemMeta();
-				if (meta.hasMapId() && meta.getMapId() == 0) { // TODO seinäkalenteri-mapin data
+				if (meta.hasMapView() && meta.getMapView().getId() == 0) { // TODO seinäkalenteri-mapin data
 					e.setCancelled(true);
 					if (!calendarCooldown.contains(player.getName())) {
 						
