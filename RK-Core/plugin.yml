@@ -165,6 +165,8 @@ commands:
     guild:
     guilds:
     g:
+    pc:
+    party:
     asetukset:
     settings:
     options:

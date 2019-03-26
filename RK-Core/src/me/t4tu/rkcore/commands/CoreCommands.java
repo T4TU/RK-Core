@@ -52,6 +52,8 @@ import com.meowj.langutils.lang.LanguageHelper;
 import me.t4tu.rkcore.Core;
 import me.t4tu.rkcore.inventories.InventoryGUI;
 import me.t4tu.rkcore.inventories.InventoryGUIAction;
+import me.t4tu.rkcore.parties.Party;
+import me.t4tu.rkcore.parties.PartyRequest;
 import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.FriendRequest;
 import me.t4tu.rkcore.utils.GuildRequest;
@@ -2064,8 +2066,8 @@ public class CoreCommands implements CommandExecutor {
 						target.spigot().sendMessage(baseComponent);
 						player.sendMessage("§e§lSinä§6§l ▶ §e§l" + target.getName() + " §7" + message);
 						for (Player p : Bukkit.getOnlinePlayers()) {
-							if (CoreUtils.hasRank(p, "valvoja") && spyPlayers.contains(player.getName())) {
-								player.sendMessage("§8§l" + player.getName() + "§7§l ▶ §8§l" + target.getName() + " §7" + message);
+							if (CoreUtils.hasRank(p, "valvoja") && spyPlayers.contains(p.getName())) {
+								p.sendMessage("§8§l" + player.getName() + "§7§l ▶ §8§l" + target.getName() + " §7" + message);
 							}
 						}
 						
@@ -6370,6 +6372,12 @@ public class CoreCommands implements CommandExecutor {
 									p.sendMessage("§7[§9Kilta§7] " + prefix + player.getName() + "§9: " + message);
 								}
 							}
+							
+							for (Player p : Bukkit.getOnlinePlayers()) {
+								if (CoreUtils.hasRank(p, "valvoja") && spyPlayers.contains(p.getName())) {
+									p.sendMessage("§7[§8Kilta§7] " + prefix + player.getName() + "§8: " + message);
+								}
+							}
 						}
 						else {
 							player.sendMessage(tc3 + "Et kuulu mihinkään kiltaan!");
@@ -6639,6 +6647,9 @@ public class CoreCommands implements CommandExecutor {
 								else {
 									player.sendMessage(tc3 + "Ei hyväksymättömiä kiltakutsuja tällä nimellä!");
 								}
+							}
+							else {
+								player.sendMessage(usage + "/kilta hylkää <kutsun lähettäjä>");
 							}
 						}
 						else if (args[0].equalsIgnoreCase("poistu") || args[0].equalsIgnoreCase("leave")) {
@@ -7099,8 +7110,8 @@ public class CoreCommands implements CommandExecutor {
 						" - Lähetä viesti oman kiltasi chattiin");
 				player.sendMessage(tc1 + " /kilta lista" + tc2 + " - Näytä kaikki palvelimen killat");
 				player.sendMessage(tc1 + " /kilta info [kilta]" + tc2 + " - Näytä tietoja killasta");
-				player.sendMessage(tc1 + " /kilta hyväksy" + tc2 + " - Hyväksy uusin pyyntö liittyä kiltaan");
-				player.sendMessage(tc1 + " /kilta hylkää" + tc2 + " - Hylkää uusin pyyntö liittyä kiltaan");
+				player.sendMessage(tc1 + " /kilta hyväksy" + tc2 + " - Hyväksy kutsu liittyä kiltaan");
+				player.sendMessage(tc1 + " /kilta hylkää" + tc2 + " - Hylkää kutsu liittyä kiltaan");
 				player.sendMessage(tc1 + " /kilta poistu" + tc2 + " - Poistu nykyisestä killastasi");
 				player.sendMessage(tc1 + " /kilta perusta <killan nimi>" + tc2 + " - Perusta uusi kilta");
 				player.sendMessage(tc1 + " /kilta poista" + tc2 + " - Poista kiltasi");
@@ -7111,6 +7122,301 @@ public class CoreCommands implements CommandExecutor {
 				player.sendMessage(tc1 + " /kilta kutsu <pelaaja>" + tc2 + " - Kutsu pelaaja kiltaasi");
 				player.sendMessage(tc1 + " /kilta potki <pelaaja>" + tc2 + " - Potki pelaaja pois killastasi");
 				player.sendMessage("");
+			}
+			return true;
+		}
+		
+		// pc
+		
+		if (cmd.getName().equalsIgnoreCase("pc")) {
+			if (core.getConfig().getBoolean("users." + player.getName() + ".mute.muted")) {
+				player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+				player.sendMessage(CoreUtils.getErrorBaseColor() + "Et voi käyttää tätä komentoa, sillä sinut on hiljennetty!");
+				return true;
+			}
+			if (args.length >= 1) {
+				
+				Party party = core.getPartyManager().getPartyOfPlayer(player);
+				if (party != null) {
+					
+					String message = "";
+					for (String arg : args) {
+						message += " " + arg;
+					}
+					message = message.trim();
+					
+					for (Player member : party.getMembersAsPlayers()) {
+						member.sendMessage("§7[§dParty§7] " + player.getName() + "§d: " + message);
+					}
+					
+					for (Player p : Bukkit.getOnlinePlayers()) {
+						if (CoreUtils.hasRank(p, "valvoja") && spyPlayers.contains(p.getName())) {
+							p.sendMessage("§7[§8Party§7] " + player.getName() + "§8: " + message);
+						}
+					}
+				}
+				else {
+					player.sendMessage(tc3 + "Et ole partyssa!");
+				}
+			}
+			else {
+				player.sendMessage(usage + "/party chat <viesti>");
+			}
+			return true;
+		}
+		
+		// party
+		
+		if (cmd.getName().equalsIgnoreCase("party")) {
+			if (args.length >= 1) {
+				if (args[0].equalsIgnoreCase("chat") || args[0].equalsIgnoreCase("c")) {
+					new BukkitRunnable() {
+						public void run() {
+							String arguments = "";
+							for (int i = 1; i < args.length; i++) {
+								arguments += " " + args[i];
+							}
+							player.performCommand("pc " + arguments);
+						}
+					}.runTask(core);
+				}
+				else if (args[0].equalsIgnoreCase("luo") || args[0].equalsIgnoreCase("create")) {
+					Party party = core.getPartyManager().getPartyOfPlayer(player);
+					if (party == null) {
+						core.getPartyManager().getParties().add(new Party(player.getUniqueId().toString()));
+						player.sendMessage(tc2 + "Luotiin uusi party! Kutsu jäseniä komennolla " + tc1 + "/party kutsu <pelaaja>" + tc2 + ".");
+					}
+					else {
+						player.sendMessage(tc3 + "Olet jo partyssa!");
+					}
+				}
+				else if (args[0].equalsIgnoreCase("jäsenet") || args[0].equalsIgnoreCase("members")) {
+					Party party = core.getPartyManager().getPartyOfPlayer(player);
+					if (party != null) {
+						String members = "";
+						for (Player member : party.getMembersAsPlayers()) {
+							members += " " + member.getName();
+						}
+						members = members.trim().replace(" ", ", ");
+						player.sendMessage("");
+						player.sendMessage(tc2 + "§m----------" + tc1 + " Party " + tc2 + "§m----------");
+						player.sendMessage("");
+						player.sendMessage(tc1 + " Partyn jäsenet:");
+						player.sendMessage("");
+						player.sendMessage(tc2 + " " + members);
+						player.sendMessage("");
+					}
+					else {
+						player.sendMessage(tc3 + "Et ole partyssa!");
+					}
+				}
+				else if (args[0].equalsIgnoreCase("poistu") || args[0].equalsIgnoreCase("leave")) {
+					Party party = core.getPartyManager().getPartyOfPlayer(player);
+					if (party != null) {
+						ListIterator<String> iterator = party.getMembers().listIterator();
+						while (iterator.hasNext()) {
+							String member = iterator.next();
+							if (member.equals(player.getUniqueId().toString())) {
+								iterator.remove();
+								player.sendMessage(tc2 + "Poistuit partysta!");
+								for (Player playerMember : party.getMembersAsPlayers()) {
+									playerMember.sendMessage(tc1 + player.getName() + tc2 + " poistui partysta!");
+								}
+								if (party.getMembersAsPlayers().isEmpty()) {
+									core.getPartyManager().getParties().remove(party);
+								}
+								return true;
+							}
+						}
+					}
+					else {
+						player.sendMessage(tc3 + "Et ole partyssa!");
+					}
+				}
+				else if (args[0].equalsIgnoreCase("kutsu") || args[0].equalsIgnoreCase("invite")) {
+					if (args.length >= 2) {
+						
+						Player target = Bukkit.getPlayer(args[1]);
+						Party party = core.getPartyManager().getPartyOfPlayer(player);
+						
+						if (target == null) {
+							player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+							return true;
+						}
+						if (target.equals(player)) {
+							player.sendMessage(tc3 + "Et voi lähettää partykutsua itsellesi... :(");
+							return true;
+						}
+						if (party == null) {
+							player.sendMessage(tc3 + "Et ole partyssa. Sinun täytyy ensin perustaa party komennolla " + tc4 + "/party luo" + tc3 + ".");
+							return true;
+						}
+						if (party.getMembers().contains(target.getUniqueId().toString())) {
+							player.sendMessage(tc3 + "Pelaaja " + tc4 + target.getName() + tc3 + " on jo partyssasi!");
+							return true;
+						}
+						if (party.getMembers().size() >= 10) {
+							player.sendMessage(tc3 + "Partyssä voi olla korkeintaan 10 jäsentä!");
+							return true;
+						}
+						if (!SettingsUtils.getSetting(target, "show_party_requests")) {
+							player.sendMessage(tc4 + target.getName() + tc3 + " on asetuksissaan estänyt partykutsut!");
+							return true;
+						}
+						if (core.getPartyManager().hasSentRequestTo(party, target.getName())) {
+							player.sendMessage(tc3 + "Partysi jäsen on jo kutsunut tämän pelaajan partyyn!");
+							return true;
+						}
+						
+						for (Player member : party.getMembersAsPlayers()) {
+							member.sendMessage(tc1 + player.getName() + tc2 + " kutsui pelaajan " + tc1 + target.getName() + tc2 + " partyyn!");
+						}
+						target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
+						target.sendMessage("§6§m----------------------------------------");
+						target.sendMessage("§e " + player.getName() + " kutsui sinut partyynsa!");
+						
+						target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", 
+								"§aHyväksy tämä partykutsu klikkaamalla!", "§cHylkää tämä partykutsu klikkaamalla!", 
+								"/party hyväksy " + player.getName(), "/party hylkää " + player.getName()));
+						
+						target.sendMessage("§6§m----------------------------------------");
+						
+						PartyRequest request = new PartyRequest(party, target.getName());
+						core.getPartyManager().getPartyRequests().add(request);
+						
+						new BukkitRunnable() {
+							public void run() {
+								if (core.getPartyManager().getPartyRequests().contains(request)) {
+									core.getPartyManager().getPartyRequests().remove(request);
+									for (Player member : party.getMembersAsPlayers()) {
+										member.sendMessage(tc3 + "Partykutsu pelaajalle " + tc4 + target.getName() + tc3 + " vanhentui!");
+									}
+									target.sendMessage(tc3 + "Pelaajan " + tc4 + player.getName() + tc3 + " partykutsu on vanhentunut!");
+								}
+							}
+						}.runTaskLater(core, 400);
+					}
+					else {
+						player.sendMessage(usage + "/party kutsu <pelaaja>");
+					}
+				}
+				else if (args[0].equalsIgnoreCase("hyväksy") || args[0].equalsIgnoreCase("accept")) {
+					if (args.length >= 2) {
+						
+						Player target = Bukkit.getPlayer(args[1]);
+						
+						if (target == null) {
+							player.sendMessage(tc3 + "Tämä pelaaja ei ole paikalla!");
+							return true;
+						}
+						
+						Party party = core.getPartyManager().getPartyOfPlayer(target);
+						
+						if (party == null) {
+							player.sendMessage(tc3 + "Ei hyväksymättömiä partykutsuja tällä nimellä!");
+							return true;
+						}
+						
+						for (PartyRequest request : core.getPartyManager().getPartyRequestsFrom(party)) {
+							if (request.getTo().equalsIgnoreCase(player.getName())) {
+								
+								if (core.getPartyManager().getPartyOfPlayer(player) != null) {
+									player.sendMessage(tc3 + "Olet jo partyssa!");
+									return true;
+								}
+								if (party.getMembers().size() >= 10) {
+									player.sendMessage(tc3 + "Tässä partyssa on jo maksimimäärä jäseniä!");
+									return true;
+								}
+								
+								core.getPartyManager().getPartyRequests().remove(request);
+								
+								party.getMembers().add(player.getUniqueId().toString());
+								
+								for (Player member : party.getMembersAsPlayers()) {
+									member.playSound(member.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+									member.sendMessage(tc1 + player.getName() + tc2 + " liittyi partyyn!");
+								}
+								
+								return true;
+							}
+						}
+						player.sendMessage(tc3 + "Ei hyväksymättömiä partykutsuja tällä nimellä!");
+						return true;
+					}
+					else {
+						player.sendMessage(usage + "/party hyväksy <kutsun lähettäjä>");
+					}
+				}
+				else if (args[0].equalsIgnoreCase("hylkää") || args[0].equalsIgnoreCase("deny")) {
+					if (args.length >= 2) {
+						
+						Player target = Bukkit.getPlayer(args[1]);
+						
+						if (target == null) {
+							player.sendMessage(tc3 + "Tämä pelaaja ei ole paikalla!");
+							return true;
+						}
+						
+						Party party = core.getPartyManager().getPartyOfPlayer(target);
+						
+						if (party == null) {
+							player.sendMessage(tc3 + "Ei hyväksymättömiä partykutsuja tällä nimellä!");
+							return true;
+						}
+						
+						for (PartyRequest request : core.getPartyManager().getPartyRequestsFrom(party)) {
+							if (request.getTo().equalsIgnoreCase(player.getName())) {
+								
+								core.getPartyManager().getPartyRequests().remove(request);
+								
+								player.sendMessage(tc2 + "Hylättiin pelaajan " + tc1 + target.getName() + tc2 + " partykutsu!");
+								
+								for (Player member : party.getMembersAsPlayers()) {
+									member.sendMessage(tc4 + player.getName() + tc3 + " hylkäsi kutsun liittyä partyyn!");
+								}
+								
+								return true;
+							}
+						}
+						player.sendMessage(tc3 + "Ei hyväksymättömiä partykutsuja tällä nimellä!");
+						return true;
+					}
+					else {
+						player.sendMessage(usage + "/party hylkää <kutsun lähettäjä>");
+					}
+				}
+				else {
+					player.performCommand("party");
+				}
+			}
+			else {
+				if (core.getPartyManager().getPartyOfPlayer(player) != null) {
+					player.sendMessage("");
+					player.sendMessage(tc2 + "§m----------" + tc1 + " Party " + tc2 + "§m----------");
+					player.sendMessage("");
+					player.sendMessage(tc1 + " /party chat <viesti>" + tc2 + " tai " + tc1 + "/pc <viesti>" + tc2 + 
+							" - Lähetä viesti oman partysi chattiin");
+					player.sendMessage(tc1 + " /party luo" + tc2 + " - Luo uusi party");
+					player.sendMessage(tc1 + " /party kutsu <pelaaja>" + tc2 + " - Kutsu pelaaja partyysi");
+					player.sendMessage(tc1 + " /party jäsenet" + tc2 + " - Näytä partysi jäsenet");
+					player.sendMessage(tc1 + " /party hyväksy" + tc2 + " - Hyväksy kutsu liittyä partyyn");
+					player.sendMessage(tc1 + " /party hylkää" + tc2 + " - Hylkää kutsu liittyä partyyn");
+					player.sendMessage(tc1 + " /party poistu" + tc2 + " - Poistu partystasi");
+					player.sendMessage("");
+				}
+				else {
+					player.sendMessage("");
+					player.sendMessage(tc2 + "§m----------" + tc1 + " Party " + tc2 + "§m----------");
+					player.sendMessage("");
+					player.sendMessage(tc2 + " Partyt ovat helppo tapa pelata kavereiden kanssa. Partyn");
+					player.sendMessage(tc2 + " jäsenet voivat avata toistensa lukitsemia ovia, arkkuja yms.");
+					player.sendMessage(tc2 + " ilman erikoisoikeuksia. Lisäksi jäsenet voivat kurkistaa");
+					player.sendMessage(tc2 + " toistensa reppuihin hiipimällä ja oikeaklikkaamalla.");
+					player.sendMessage("");
+					player.sendMessage(tc2 + " Luo kaveriporukallesi party komennolla " + tc1 + "/party luo");
+					player.sendMessage("");
+				}
 			}
 			return true;
 		}

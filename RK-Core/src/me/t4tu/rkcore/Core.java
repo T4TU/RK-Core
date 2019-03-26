@@ -20,6 +20,7 @@ import me.t4tu.rkcore.commands.CoreCommands;
 import me.t4tu.rkcore.inventories.InventoryGUI;
 import me.t4tu.rkcore.listeners.ChatListener;
 import me.t4tu.rkcore.listeners.CoreListener;
+import me.t4tu.rkcore.parties.PartyManager;
 import me.t4tu.rkcore.punishments.PunishmentCommands;
 import me.t4tu.rkcore.tutorials.Tutorial;
 import me.t4tu.rkcore.utils.CoreUtils;
@@ -36,6 +37,7 @@ public class Core extends JavaPlugin {
 	private ChatListener chatListener;
 	private CoreCommands coreCommands;
 	private PunishmentCommands punishmentCommands;
+	private PartyManager partyManager;
 	private Tutorial tutorial;
 	private Map<String, Long> ontimes = new HashMap<String, Long>();
 	private long ingameTime;
@@ -64,6 +66,7 @@ public class Core extends JavaPlugin {
 		chatListener = new ChatListener(this);
 		coreCommands = new CoreCommands(this);
 		punishmentCommands = new PunishmentCommands(this);
+		partyManager = new PartyManager();
 		tutorial = new Tutorial(this);
 		
 		registerCoreCommands(coreCommands);
@@ -126,6 +129,10 @@ public class Core extends JavaPlugin {
 	
 	public PunishmentCommands getPunishmentCommands() {
 		return punishmentCommands;
+	}
+	
+	public PartyManager getPartyManager() {
+		return partyManager;
 	}
 	
 	public Tutorial getTutorial() {
@@ -344,6 +351,8 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("guild", true);
 		commands.registerCommand("guilds", true);
 		commands.registerCommand("g", true);
+		commands.registerCommand("pc", true);
+		commands.registerCommand("party", true);
 		commands.registerCommand("asetukset", true);
 		commands.registerCommand("settings", true);
 		commands.registerCommand("options", true);

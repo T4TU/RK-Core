@@ -71,6 +71,7 @@ import org.spigotmc.event.entity.EntityDismountEvent;
 import com.meowj.langutils.lang.LanguageHelper;
 
 import me.t4tu.rkcore.Core;
+import me.t4tu.rkcore.parties.Party;
 import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
@@ -686,6 +687,9 @@ public class CoreListener implements Listener {
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent e) {
 		
+		String tc1 = CoreUtils.getHighlightColor();
+		String tc2 = CoreUtils.getBaseColor();
+		
 		e.setQuitMessage(null);
 		
 		new BukkitRunnable() {
@@ -737,6 +741,26 @@ public class CoreListener implements Listener {
 				// päivitetään vanish
 				
 				CoreUtils.updateVanish();
+				
+				// poistetaan partysta
+				
+				Party party = core.getPartyManager().getPartyOfPlayer(player);
+				if (party != null) {
+					ListIterator<String> iterator = party.getMembers().listIterator();
+					while (iterator.hasNext()) {
+						String member = iterator.next();
+						if (member.equals(player.getUniqueId().toString())) {
+							iterator.remove();
+							for (Player playerMember : party.getMembersAsPlayers()) {
+								playerMember.sendMessage(tc1 + player.getName() + tc2 + " poistui partysta!");
+							}
+							if (party.getMembersAsPlayers().isEmpty()) {
+								core.getPartyManager().getParties().remove(party);
+							}
+							break;
+						}
+					}
+				}
 				
 				// liittymisviesti
 				
@@ -1583,23 +1607,40 @@ public class CoreListener implements Listener {
 				}
 			}
 			if (item != null && item.getType().toString().contains("MUSIC_DISC_")) {
-				Location musicShopLocation = CoreUtils.loadLocation(core, "music-shop");
-				if (musicShopLocation != null && musicShopLocation.getWorld().getName().equals(player.getLocation().getWorld().getName())) {
-					if (musicShopLocation.distance(player.getLocation()) <= 20) {
-						e.setCancelled(true);
-						for (Sound sound : Sound.values()) {
-							if (sound.toString().contains("MUSIC_DISC_")) {
-								player.stopSound(sound);
+				if (e.getHand() == EquipmentSlot.HAND) {
+					Location musicShopLocation = CoreUtils.loadLocation(core, "music-shop");
+					if (musicShopLocation != null && musicShopLocation.getWorld().getName().equals(player.getLocation().getWorld().getName())) {
+						if (musicShopLocation.distance(player.getLocation()) <= 20) {
+							e.setCancelled(true);
+							for (Sound sound : Sound.values()) {
+								if (sound.toString().contains("MUSIC_DISC_")) {
+									player.stopSound(sound);
+								}
 							}
+							Sound sound = Sound.valueOf(item.getType().toString());
+							player.playSound(frame.getLocation(), sound, 10, 1);
+							player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(tc2 + "Esikuunnellaan: " + tc1 + CoreUtils.firstUpperCase(sound.toString().substring(11).toLowerCase())));
+							new BukkitRunnable() {
+								public void run() {
+									player.stopSound(sound);
+								}
+							}.runTaskLater(core, 600);
 						}
-						Sound sound = Sound.valueOf(item.getType().toString());
-						player.playSound(frame.getLocation(), sound, 10, 1);
-						player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(tc2 + "Esikuunnellaan: " + tc1 + CoreUtils.firstUpperCase(sound.toString().substring(11).toLowerCase())));
-						new BukkitRunnable() {
-							public void run() {
-								player.stopSound(sound);
-							}
-						}.runTaskLater(core, 600);
+					}
+				}
+			}
+		}
+		
+		if (clickedEntity instanceof Player) {
+			if (e.getHand() == EquipmentSlot.HAND) {
+				Player target = (Player) clickedEntity;
+				if (player.isSneaking()) {
+					Party party = core.getPartyManager().getPartyOfPlayer(player);
+					if (party != null) {
+						if (party.getMembers().contains(target.getUniqueId().toString())) {
+							player.openInventory(target.getInventory());
+							target.sendMessage("§7§o" + player.getName() + " avasi reppusi.");
+						}
 					}
 				}
 			}
