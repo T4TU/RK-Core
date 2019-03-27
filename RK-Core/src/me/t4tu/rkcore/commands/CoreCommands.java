@@ -4199,6 +4199,14 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// tykki
+		
+		if (cmd.getName().equalsIgnoreCase("tykki")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				// TODO
+			}
+		}
+		
 		// komentokuutio, command-block
 		
 		if (cmd.getName().equalsIgnoreCase("komentokuutio") || cmd.getName().equalsIgnoreCase("command-block")) {

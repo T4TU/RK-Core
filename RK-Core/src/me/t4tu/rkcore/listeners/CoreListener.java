@@ -17,6 +17,7 @@ import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.entity.AbstractHorse;
@@ -1387,29 +1388,31 @@ public class CoreListener implements Listener {
 			if (block.getType().toString().contains("STAIRS")) {
 				boolean c = false;
 				Stairs stairs = (Stairs) block.getBlockData();
-				if (stairs.getFacing() == BlockFace.NORTH || stairs.getFacing() == BlockFace.SOUTH) {
-					String sideblock1 = block.getLocation().add(1, 0, 0).getBlock().getType().toString();
-					String sideblock2 = block.getLocation().add(-1, 0, 0).getBlock().getType().toString();
-					if ((sideblock1.contains("SIGN") || sideblock1.contains("TRAPDOOR") || sideblock1.contains("FENCE_GATE")) && 
-							(sideblock2.contains("SIGN") || sideblock2.contains("TRAPDOOR") || sideblock2.contains("FENCE_GATE"))) {
-						c = true;
+				if (stairs.getHalf() == Half.BOTTOM) {
+					if (stairs.getFacing() == BlockFace.NORTH || stairs.getFacing() == BlockFace.SOUTH) {
+						String sideblock1 = block.getLocation().add(1, 0, 0).getBlock().getType().toString();
+						String sideblock2 = block.getLocation().add(-1, 0, 0).getBlock().getType().toString();
+						if ((sideblock1.contains("SIGN") || sideblock1.contains("TRAPDOOR") || sideblock1.contains("FENCE_GATE")) && 
+								(sideblock2.contains("SIGN") || sideblock2.contains("TRAPDOOR") || sideblock2.contains("FENCE_GATE"))) {
+							c = true;
+						}
 					}
-				}
-				else if (stairs.getFacing() == BlockFace.EAST || stairs.getFacing() == BlockFace.WEST) {
-					String sideblock1 = block.getLocation().add(0, 0, 1).getBlock().getType().toString();
-					String sideblock2 = block.getLocation().add(0, 0, -1).getBlock().getType().toString();
-					if ((sideblock1.contains("SIGN") || sideblock1.contains("TRAPDOOR") || sideblock1.contains("FENCE_GATE")) && 
-							(sideblock2.contains("SIGN") || sideblock2.contains("TRAPDOOR") || sideblock2.contains("FENCE_GATE"))) {
-						c = true;
+					else if (stairs.getFacing() == BlockFace.EAST || stairs.getFacing() == BlockFace.WEST) {
+						String sideblock1 = block.getLocation().add(0, 0, 1).getBlock().getType().toString();
+						String sideblock2 = block.getLocation().add(0, 0, -1).getBlock().getType().toString();
+						if ((sideblock1.contains("SIGN") || sideblock1.contains("TRAPDOOR") || sideblock1.contains("FENCE_GATE")) && 
+								(sideblock2.contains("SIGN") || sideblock2.contains("TRAPDOOR") || sideblock2.contains("FENCE_GATE"))) {
+							c = true;
+						}
 					}
-				}
-				if (c && !player.isSneaking() && SettingsUtils.getSetting(player, "use_chairs")) {
-					e.setCancelled(true);
-					Arrow a = player.getWorld().spawnArrow(block.getLocation().add(0.5, -0.1, 0.5), new Vector(0, 0.00001, 0), 0, 0);
-					a.setBounce(false);
-					a.setGravity(false);
-					a.setSilent(true);
-					a.addPassenger(player);
+					if (c && !player.isSneaking() && SettingsUtils.getSetting(player, "use_chairs")) {
+						e.setCancelled(true);
+						Arrow a = player.getWorld().spawnArrow(block.getLocation().add(0.5, -0.1, 0.5), new Vector(0, 0.00001, 0), 0, 0);
+						a.setBounce(false);
+						a.setGravity(false);
+						a.setSilent(true);
+						a.addPassenger(player);
+					}
 				}
 			}
 		}
