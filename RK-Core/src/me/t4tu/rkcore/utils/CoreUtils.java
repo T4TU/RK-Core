@@ -74,12 +74,12 @@ public class CoreUtils {
 	public static final long TIME_OFFSET = 7200000;
 	public static final double INGAME_TIME_SPEED_MULTIPLIER = 36;
 	public static final int SECONDS_TO_HOME_1 = 0; // 0 tuntia
-	public static final int SECONDS_TO_HOME_2 = 7200; // 2 tuntia
-	public static final int SECONDS_TO_HOME_3 = 18000; // 5 tuntia
-	public static final int SECONDS_TO_HOME_4 = 36000; // 10 tuntia
-	public static final int SECONDS_TO_HOME_5 = 72000; // 20 tuntia
-	public static final int SECONDS_TO_HOME_6 = 180000; // 50 tuntia
-	public static final int SECONDS_TO_HOME_7 = 360000; // 100 tuntia
+	public static final int SECONDS_TO_HOME_2 = 14400; // 4 tuntia
+	public static final int SECONDS_TO_HOME_3 = 36000; // 10 tuntia
+	public static final int SECONDS_TO_HOME_4 = 90000; // 25 tuntia
+	public static final int SECONDS_TO_HOME_5 = 180000; // 50 tuntia
+	public static final int SECONDS_TO_HOME_6 = 360000; // 100 tuntia
+	public static final int SECONDS_TO_HOME_7 = 720000; // 200 tuntia
 	
 	private static Core core;
 	private static List<String> registeredCommandsNoTabComplete = new ArrayList<String>();
