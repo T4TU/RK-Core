@@ -56,7 +56,7 @@ commands:
     viesti:
     msg:
     tell:
-    w:
+    v:
     t:
     m:
     vastaa:

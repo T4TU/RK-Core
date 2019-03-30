@@ -2015,10 +2015,10 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
-		// viesti, msg, tell, w, t, m
+		// viesti, msg, tell, v, t, m
 		
 		if (cmd.getName().equalsIgnoreCase("viesti") ||cmd.getName().equalsIgnoreCase("msg") || cmd.getName().equalsIgnoreCase("tell") 
-				|| cmd.getName().equalsIgnoreCase("w") || cmd.getName().equalsIgnoreCase("t") || cmd.getName().equalsIgnoreCase("m")) {
+				|| cmd.getName().equalsIgnoreCase("v") || cmd.getName().equalsIgnoreCase("t") || cmd.getName().equalsIgnoreCase("m")) {
 			if (core.getConfig().getBoolean("users." + player.getName() + ".mute.muted")) {
 				player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 				player.sendMessage(CoreUtils.getErrorBaseColor() + "Et voi lähettää yksityisviestejä, sillä sinut on hiljennetty!");

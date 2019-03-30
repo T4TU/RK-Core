@@ -242,7 +242,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("viesti", true);
 		commands.registerCommand("msg", true);
 		commands.registerCommand("tell", true);
-		commands.registerCommand("w", true);
+		commands.registerCommand("v", true);
 		commands.registerCommand("t", true);
 		commands.registerCommand("m", true);
 		commands.registerCommand("vastaa", true);
