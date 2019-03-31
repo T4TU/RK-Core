@@ -77,6 +77,8 @@ import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
+import me.t4tu.rkmobs.Mob;
+import me.t4tu.rkmobs.Mobs;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -1108,17 +1110,29 @@ public class CoreListener implements Listener {
 						if (cause.equals(player.getLastDamageCause().getCause())) {
 							if (cause == DamageCause.ENTITY_ATTACK && text.contains("<killer>")) {
 								EntityDamageByEntityEvent event = (EntityDamageByEntityEvent) player.getLastDamageCause();
-								String killer = event.getDamager().getName();
+								String killer = LanguageHelper.getEntityName(event.getDamager(), "fi_fi");
 								if (event.getDamager().getCustomName() != null) {
-									killer = event.getDamager().getCustomName(); // TODO jos sydämet näkyy nimessä
+									killer = event.getDamager().getCustomName();
+									if (Bukkit.getPluginManager().getPlugin("RK-Mobs") != null) {
+										Mob mob = Mobs.getMobManager().getMob(event.getDamager());
+										if (mob != null) {
+											killer = mob.getDisplayName();
+										}
+									}
 								}
 								deathNotes.add(text.replace("<victim>", player.getName()).replace("<killer>", killer));
 							}
 							else if (cause == DamageCause.ENTITY_EXPLOSION && text.contains("<killer>")) {
 								EntityDamageByEntityEvent event = (EntityDamageByEntityEvent) player.getLastDamageCause();
-								String killer = event.getDamager().getName().replace("Block of TNT", "TNT");
+								String killer = LanguageHelper.getEntityName(event.getDamager(), "fi_fi");
 								if (event.getDamager().getCustomName() != null) {
-									killer = event.getDamager().getCustomName(); // TODO jos sydämet näkyy nimessä
+									killer = event.getDamager().getCustomName();
+									if (Bukkit.getPluginManager().getPlugin("RK-Mobs") != null) {
+										Mob mob = Mobs.getMobManager().getMob(event.getDamager());
+										if (mob != null) {
+											killer = mob.getDisplayName();
+										}
+									}
 								}
 								deathNotes.add(text.replace("<victim>", player.getName()).replace("<killer>", killer));
 							}
@@ -1126,9 +1140,15 @@ public class CoreListener implements Listener {
 								EntityDamageByEntityEvent event = (EntityDamageByEntityEvent) player.getLastDamageCause();
 								Projectile projectile = (Projectile) event.getDamager();
 								Entity shooter = (Entity) projectile.getShooter();
-								String killer = shooter.getName();
+								String killer = LanguageHelper.getEntityName(shooter, "fi_fi");
 								if (shooter.getCustomName() != null) {
-									killer = shooter.getCustomName(); // TODO jos sydämet näkyy nimessä
+									killer = shooter.getCustomName();
+									if (Bukkit.getPluginManager().getPlugin("RK-Mobs") != null) {
+										Mob mob = Mobs.getMobManager().getMob(shooter);
+										if (mob != null) {
+											killer = mob.getDisplayName();
+										}
+									}
 								}
 								deathNotes.add(text.replace("<victim>", player.getName()).replace("<killer>", killer));
 							}
