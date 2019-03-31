@@ -2610,61 +2610,102 @@ public class CoreCommands implements CommandExecutor {
 			new BukkitRunnable() {
 				public void run() {
 					if (args.length >= 1) {
-						String warp = "";
-						for (String word : args) {
-							warp = warp + " " + word;
+						if (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list")) {
+							player.sendMessage("");
+							player.sendMessage(tc2 + "§m----------" + tc1 + " Matkustuspisteet " + tc2 + "§m----------");
+							player.sendMessage("");
+							player.sendMessage(tc2 + " Käytettävissä olevat matkustuspisteet:");
+							player.sendMessage("");
+							if (core.getConfig().getConfigurationSection("warps") != null && !core.getConfig().getConfigurationSection("warps").getKeys(false).isEmpty()) {
+								String warps = "";
+								for (String warp : core.getConfig().getConfigurationSection("warps").getKeys(false)) {
+									warps += " " + warp;
+								}
+								warps = warps.trim().replace(" ", ", ");
+								player.sendMessage(tc2 + " " + warps);
+							}
+							else {
+								player.sendMessage(tc3 + " Ei matkustuspisteitä!");
+							}
+							player.sendMessage("");
 						}
-						warp = warp.trim().replace(" ", "_").toLowerCase();
-						Location location = CoreUtils.loadLocation(core, "warps." + warp + ".location");
-						if (location != null) {
-							MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3 FROM player_stats WHERE name=?", player.getName());
-							if (visitedData != null) {
-								if (warp.equalsIgnoreCase("port_rotfield") && !visitedData.getBoolean(0, "visited_1")) {
-									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä!");
-									return;
+						else if (args[0].equalsIgnoreCase("kaupungit")) {
+							
+							InventoryGUI gui = new InventoryGUI(27, "Valitse määränpääsi...");
+							
+							gui.addItem(CoreUtils.getItem(Material.ARROW, "§c« Palaa takaisin", null, 1), 0, new InventoryGUIAction() {
+								public void onClickAsync() { }
+								public void onClick() {
+									gui.close(player);
+									player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+									player.performCommand("matkusta");
 								}
-								if (warp.equalsIgnoreCase("lorem_ipsum") && !visitedData.getBoolean(0, "visited_2")) { // TODO
-									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä!");
-									return;
-								}
-								if (warp.equalsIgnoreCase("dolor_sit_amet") && !visitedData.getBoolean(0, "visited_3")) { // TODO
-									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä!");
-									return;
+							});
+							
+							if (core.getConfig().getConfigurationSection("warps") != null && !core.getConfig().getConfigurationSection("warps").getKeys(false).isEmpty()) {
+								int slot = 10;
+								for (String warp : core.getConfig().getConfigurationSection("warps").getKeys(false)) {
+									String cityName = core.getConfig().getString("warps." + warp + ".city-name");
+									if (cityName != null) {
+										gui.addItem(CoreUtils.getItem(Material.APPLE, "§a" + cityName, Arrays.asList("", "§a » Teleporttaa klikkaamalla!"), 1), slot++, new InventoryGUIAction() {
+											public void onClickAsync() { }
+											public void onClick() {
+												gui.close(player);
+												player.performCommand("matkusta " + warp);
+											}
+										});
+									}
 								}
 							}
 							
-							CoreUtils.teleport(player, location);
+							gui.open(player);
 						}
 						else {
-							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-							player.sendMessage(tc3 + "Tuntematon matkustuspiste!");
+							String warp = "";
+							for (String word : args) {
+								warp = warp + " " + word;
+							}
+							warp = warp.trim().replace(" ", "_").toLowerCase();
+							Location location = CoreUtils.loadLocation(core, "warps." + warp + ".location");
+							if (location != null) {
+								MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3 FROM player_stats WHERE name=?", player.getName());
+								if (visitedData != null) {
+									if (warp.equalsIgnoreCase("kylä") && !visitedData.getBoolean(0, "visited_1")) { // TODO
+										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+										player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä käyttöösi!");
+										return;
+									}
+									if (warp.equalsIgnoreCase("kylä2") && !visitedData.getBoolean(0, "visited_2")) { // TODO
+										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+										player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä käyttöösi!");
+										return;
+									}
+									if (warp.equalsIgnoreCase("kylä3") && !visitedData.getBoolean(0, "visited_3")) { // TODO
+										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+										player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä käyttöösi!");
+										return;
+									}
+								}
+								CoreUtils.teleport(player, location);
+							}
+							else {
+								player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+								player.sendMessage(tc3 + "Tuntematon matkustuspiste!");
+							}
 						}
 					}
 					else {
 						
-						InventoryGUI gui = new InventoryGUI(45, "Valitse määränpääsi...");
+						InventoryGUI gui = new InventoryGUI(27, "Valitse määränpääsi...");
 						
-						gui.addItem(CoreUtils.getItem(Material.ENDER_EYE, "§aFort Royal (Spawn)", Arrays.asList("" , 
-								"§7§oFort Royal on kuningaskunnan", "§7§okeskus. Korkeiden muurien takana", 
+						gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§a********** (Spawn)", Arrays.asList("" , 
+								"§7§o********** on koko valtakunnan", "§7§okeskus. Korkeiden muurien takana", 
 								"§7§okohoaa vielä korkeampi linna, jonka", "§7§osuojissa itse kuningas asustaa.", "", 
-								"§a » Teleporttaa klikkaamalla!"), 1), 12, new InventoryGUIAction() {
+								"§a » Teleporttaa klikkaamalla!"), 1), 10, new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
 								gui.close(player);
 								player.performCommand("spawn");
-							}
-						});
-						gui.addItem(CoreUtils.getItem(Material.RED_BED, "§aKotipisteet", Arrays.asList("" , 
-								"§7§oVoit asettaa itsellesi kotipisteitä,", "§7§ojoihin voit teleportata helposti", 
-								"§7§omistä päin maailmaa tahansa.", "", "§a » Avaa valikko klikkaamalla!"), 1, 14), 
-								14, new InventoryGUIAction() {
-							public void onClickAsync() { }
-							public void onClick() {
-								gui.close(player);
-								player.performCommand("koti");
 							}
 						});
 						
@@ -2692,50 +2733,47 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						
-						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix1 + "Port Rotfield", Arrays.asList("" , 
-								"§7§oPort Rotfield on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu laajoista", 
-								"§7§opelloistaan ja suuresta satamastaan.", "", actionText1), 1), 29, new InventoryGUIAction() {
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix1 + "************", Arrays.asList("" , 
+								"§7§o************ on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu laajoista", 
+								"§7§opelloistaan ja suuresta satamastaan. Se", "§7§oon myös valtakunnan kaupankäynnin keskus.", 
+								"", actionText1), 1), 12, new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
 								gui.close(player);
-								player.performCommand("matkusta port_rotfield");
+								player.performCommand("matkusta kylä"); // TODO
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix2 + "???", Arrays.asList("" , 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix2 + "************", Arrays.asList("" , 
 								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
-								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText2), 1), 31, 
+								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText2), 1), 13, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
 								gui.close(player);
-								player.performCommand("matkusta lorem_ipsum"); // TODO
+								player.performCommand("matkusta kylä2"); // TODO
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix3 + "???", Arrays.asList("" , 
-								"§7§oTulossa pian...", "", actionText3), 1), 33, 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix3 + "************", Arrays.asList("" , 
+								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
+								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText3), 1), 14, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
 								gui.close(player);
-								player.performCommand("matkusta dolor_sit_amet"); // TODO
+								player.performCommand("matkusta kylä3"); // TODO
 							}
 						});
 						
-						if (core.getConfig().getConfigurationSection("warps") != null) {
-							for (String warp : core.getConfig().getConfigurationSection("warps").getKeys(false)) {
-								int slot = core.getConfig().getInt("warps." + warp + ".slot");
-								ItemStack item = (ItemStack) core.getConfig().get("warps." + warp + ".item");
-								if (item != null && slot >= 0 && slot < gui.getInventory().getSize()) {
-									gui.addItem(item, slot, new InventoryGUIAction() {
-										public void onClickAsync() { }
-										public void onClick() {
-											gui.close(player);
-											player.performCommand("matkusta " + warp);
-										}
-									});
-								}
+						gui.addItem(CoreUtils.getItem(Material.CHEST, "§aPelaajien kaupungit", Arrays.asList("" , 
+								"§7§oTässä listassa on pelaajien rakentamia", "§7§okyliä, jotka ovat hakeneet ja saaneet", 
+								"§7§okaupungin arvonimen.", "", "§a » Näytä klikkaamalla!"), 1), 16, new InventoryGUIAction() {
+							public void onClickAsync() { }
+							public void onClick() {
+								gui.close(player);
+								player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+								player.performCommand("matkusta kaupungit");
 							}
-						}
+						});
 						
 						gui.open(player);
 					}
@@ -2748,26 +2786,27 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("setwarp")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				if (args.length >= 2) {
-					String warp = "";
-					for (int i = 1; i < args.length; i++) {
-						warp = warp + " " + args[i];
+				if (args.length >= 1) {
+					String warp = args[0].toLowerCase();
+					String cityName = null;
+					if (args.length >= 2) {
+						cityName = "";
+						for (int i = 1; i < args.length; i++) {
+							cityName += " " + args[i];
+						}
+						cityName = cityName.trim();
 					}
-					warp = warp.trim().replace(" ", "_").toLowerCase();
-					try {
-						int slot = Integer.parseInt(args[0]);
-						CoreUtils.setLocation(core, "warps." + warp + ".location", player.getLocation());
-						core.getConfig().set("warps." + warp + ".slot", slot);
-						core.getConfig().set("warps." + warp + ".item", player.getInventory().getItemInMainHand());
-						core.saveConfig();
+					CoreUtils.setLocation(core, "warps." + warp + ".location", player.getLocation());
+					core.getConfig().set("warps." + warp + ".city-name", cityName);
+					if (cityName == null) {
 						player.sendMessage(tc2 + "Asetettiin warp-piste " + tc1 + warp + tc2 + " nykyiseen sijaintiisi!");
 					}
-					catch (NumberFormatException e) {
-						player.sendMessage(tc3 + "Virheellinen slotti!");
+					else {
+						player.sendMessage(tc2 + "Asetettiin warp-piste " + tc1 + warp + tc2 + " nykyiseen sijaintiisi ja yhdistettiin se kaupunkiin " + tc1 + cityName + tc2 + "!");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/setwarp <slot/-1> <pisteen nimi>");
+					player.sendMessage(usage + "/setwarp <pisteen nimi> [kaupungin nimi]");
 				}
 			}
 			else {
