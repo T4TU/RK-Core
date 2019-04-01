@@ -699,11 +699,11 @@ public class CoreCommands implements CommandExecutor {
 						}.runTaskAsynchronously(core);
 					}
 					else {
-						sender.sendMessage(usage + "/sql <get/set> <query>");
+						sender.sendMessage(usage + "/sql get/set <query>");
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/sql <get/set> <query>");
+					sender.sendMessage(usage + "/sql get/set <query>");
 				}
 			}
 			else {
@@ -783,12 +783,12 @@ public class CoreCommands implements CommandExecutor {
 							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 						}
 						else {
-							sender.sendMessage(usage + "/alert <chat/title/both> <viesti>");
+							sender.sendMessage(usage + "/alert chat/title/both <viesti>");
 						}
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/alert <chat/title/both> <viesti>");
+					sender.sendMessage(usage + "/alert chat/title/both <viesti>");
 				}
 			}
 			else {
@@ -841,7 +841,7 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							sender.sendMessage(usage + "/send <pelaaja> <chat/title/subtitle/actionbar> <viesti>");
+							sender.sendMessage(usage + "/send <pelaaja> chat/title/subtitle/actionbar <viesti>");
 						}
 					}
 					else  {
@@ -849,7 +849,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/send <pelaaja> <chat/title/subtitle/actionbar> <viesti>");
+					sender.sendMessage(usage + "/send <pelaaja> chat/title/subtitle/actionbar <viesti>");
 				}
 			}
 			else {
@@ -946,7 +946,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/perm <pelaaja> <permission> <true/false/reset>");
+					sender.sendMessage(usage + "/perm <pelaaja> <permission> true/false/reset");
 				}
 			}
 			else {
@@ -1299,7 +1299,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/give <pelaaja/all/world/säde> <esine> [määrä] [ominaisuudet]");
+					sender.sendMessage(usage + "/give <pelaaja>/all/world/<säde> <esine> [määrä] [ominaisuudet]");
 				}
 			}
 			else {
@@ -1389,7 +1389,7 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							sender.sendMessage(usage + "/effect <pelaaja/all/world/säde> <efekti> <taso> <kesto>");
+							sender.sendMessage(usage + "/effect <pelaaja>/all/world/<säde> <efekti> <taso> <kesto>");
 							return true;
 						}
 					}
@@ -1432,7 +1432,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/effect <pelaaja/all/world/säde> <efekti> <taso> <kesto>");
+					sender.sendMessage(usage + "/effect <pelaaja>/all/world/<säde> <efekti> <taso> <kesto>");
 				}
 			}
 			else {
@@ -1523,7 +1523,7 @@ public class CoreCommands implements CommandExecutor {
 					sender.sendMessage(tc2 + "Asetettiin uusi Mitä uutta? -teksti!");
 				}
 				else {
-					sender.sendMessage(usage + "/setnews <json/clear>");
+					sender.sendMessage(usage + "/setnews <json>/clear");
 				}
 			}
 			else {
@@ -2553,7 +2553,7 @@ public class CoreCommands implements CommandExecutor {
 				}.runTaskAsynchronously(core);
 			}
 			else {
-				player.sendMessage(usage + "/asetakoti <1/2/3/4/5/6/7>");
+				player.sendMessage(usage + "/asetakoti 1/2/3/4/5/6/7");
 			}
 			return true;
 		}
@@ -2599,7 +2599,7 @@ public class CoreCommands implements CommandExecutor {
 				}.runTaskAsynchronously(core);
 			}
 			else {
-				player.sendMessage(usage + "/poistakoti <1/2/3/4/5/6/7>");
+				player.sendMessage(usage + "/poistakoti 1/2/3/4/5/6/7");
 			}
 			return true;
 		}
@@ -3556,7 +3556,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/lempinimi <lempinimi/pois>");
+					player.sendMessage(usage + "/lempinimi <lempinimi>/pois");
 				}
 			}
 			else {
@@ -3672,7 +3672,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/pt <komento/clear/clearall>");
+					player.sendMessage(usage + "/pt <komento>/clear/clearall");
 				}
 			}
 			else {
@@ -3747,11 +3747,11 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else {
-						player.sendMessage(usage + "/lightfix <1/2/3>");
+						player.sendMessage(usage + "/lightfix 1/2/3");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/lightfix <1/2/3>");
+					player.sendMessage(usage + "/lightfix 1/2/3");
 				}
 			}
 			return true;
@@ -3890,7 +3890,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/killall <tyyppi/all> <säde>");
+					player.sendMessage(usage + "/killall <tyyppi>/all <säde>");
 				}
 			}
 			else {
@@ -3942,7 +3942,7 @@ public class CoreCommands implements CommandExecutor {
 									target.getName() + tc2 + "!");
 						}
 						else {
-							player.sendMessage(usage + "/xp <pelaaja> [<set/give/take> <määrä>]");
+							player.sendMessage(usage + "/xp <pelaaja> [set/give/take <määrä>]");
 						}
 					}
 					else {
@@ -3959,7 +3959,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/xp <pelaaja> [<set/give/take> <määrä>]");
+					player.sendMessage(usage + "/xp <pelaaja> [set/give/take <määrä>]");
 				}
 			}
 			else {
@@ -4011,7 +4011,7 @@ public class CoreCommands implements CommandExecutor {
 									target.getName() + tc2 + "!");
 						}
 						else {
-							player.sendMessage(usage + "/xpl <pelaaja> [<set/give/take> <määrä>]");
+							player.sendMessage(usage + "/xpl <pelaaja> [set/give/take <määrä>]");
 						}
 					}
 					else {
@@ -4028,7 +4028,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/xpl <pelaaja> [<set/give/take> <määrä>]");
+					player.sendMessage(usage + "/xpl <pelaaja> [set/give/take <määrä>]");
 				}
 			}
 			else {
@@ -4184,7 +4184,7 @@ public class CoreCommands implements CommandExecutor {
 						player.sendMessage(tc2 + "Sinut teleportattiin portin " + tc1 + "#" + args[1] + tc2 + " luokse!");
 					}
 					else {
-						player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp> <ID>" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
+						player.sendMessage(usage + "/portti avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp <ID>" + tc3 + " tai " + tc4 + "/portti lista/työkalu");
 					}
 				}
 				else {
@@ -4224,11 +4224,11 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp> <ID>" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
+							player.sendMessage(usage + "/portti avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp <ID>" + tc3 + " tai " + tc4 + "/portti lista/työkalu");
 						}
 					}
 					else {
-						player.sendMessage(usage + "/portti <avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp> <ID>" + tc3 + " tai " + tc4 + "/portti <lista/työkalu>");
+						player.sendMessage(usage + "/portti avaa/sulje/aseta/poista/lisäänappi/poistanapit/tp <ID>" + tc3 + " tai " + tc4 + "/portti lista/työkalu");
 					}
 				}
 			}
@@ -4242,7 +4242,15 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("tykki")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				// TODO
+				if (args.length >= 1) {
+					
+				}
+				else {
+					player.sendMessage(usage + "/tykki aseta <pituus>" + tc3 + " tai " + tc4 + "/tykki lista/poista");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
 			}
 		}
 		
@@ -4323,11 +4331,11 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else {
-						player.sendMessage(usage + "/komentokuutio <aseta> <komento>" + tc3 + " tai " + tc4 + "/komentokuutio <lista/poista>");
+						player.sendMessage(usage + "/komentokuutio aseta <komento>" + tc3 + " tai " + tc4 + "/komentokuutio lista/poista");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/komentokuutio <aseta> <komento>" + tc3 + " tai " + tc4 + "/komentokuutio <lista/poista>");
+					player.sendMessage(usage + "/komentokuutio aseta <komento>" + tc3 + " tai " + tc4 + "/komentokuutio lista/poista");
 				}
 			}
 			else {
@@ -4423,11 +4431,11 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else {
-						player.sendMessage(usage + "/maailma <lista>" + tc3 + " tai " + tc4 + "/maailma <tp/luo/poista> <nimi>");
+						player.sendMessage(usage + "/maailma lista" + tc3 + " tai " + tc4 + "/maailma tp/luo/poista <nimi>");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/maailma <lista>" + tc3 + " tai " + tc4 + "/maailma <tp/luo/poista> <nimi>");
+					player.sendMessage(usage + "/maailma lista" + tc3 + " tai " + tc4 + "/maailma tp/luo/poista <nimi>");
 				}
 			}
 			else {
@@ -4507,7 +4515,7 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else {
-						player.sendMessage(usage + "/talli <lisää/poista/tiedot/lisääkyltti/poistakyltit> <ID>" + tc3 + " tai " + tc4 + "/talli <lista>");
+						player.sendMessage(usage + "/talli lisää/poista/tiedot/lisääkyltti/poistakyltit <ID>" + tc3 + " tai " + tc4 + "/talli lista");
 					}
 				}
 				else if (args.length >= 1 && (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list"))) {
@@ -4527,7 +4535,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else {
-					player.sendMessage(usage + "/talli <lisää/poista/tiedot/lisääkyltti/poistakyltit> <ID>" + tc3 + " tai " + tc4 + "/talli <lista>");
+					player.sendMessage(usage + "/talli lisää/poista/tiedot/lisääkyltti/poistakyltit <ID>" + tc3 + " tai " + tc4 + "/talli lista");
 				}
 			}
 			else {
@@ -4719,11 +4727,11 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else {
-						player.sendMessage(usage + "/holo <create/select/edit/move/remove/tp/tphere/vis>");
+						player.sendMessage(usage + "/holo create/select/edit/move/remove/tp/tphere/vis");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/holo <create/select/edit/move/remove/tp/tphere/vis>");
+					player.sendMessage(usage + "/holo create/select/edit/move/remove/tp/tphere/vis");
 				}
 			}
 			else {
@@ -4788,11 +4796,11 @@ public class CoreCommands implements CommandExecutor {
 						player.sendMessage(tc2 + "Uudelleenladattiin tutoriaali!");
 					}
 					else {
-						player.sendMessage(usage + "/tutorial <start/title/subtitle/location/startpoint/reload>");
+						player.sendMessage(usage + "/tutorial start/title/subtitle/location/startpoint/reload");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/tutorial <start/title/subtitle/location/startpoint/reload>");
+					player.sendMessage(usage + "/tutorial start/title/subtitle/location/startpoint/reload");
 				}
 			}
 			else if (args.length >= 1 && args[0].equalsIgnoreCase("start")) {
@@ -5083,11 +5091,11 @@ public class CoreCommands implements CommandExecutor {
 						player.sendMessage(tc2 + "Annettiin §9§lTARDIS" + tc2 + "in avain!");
 					}
 					else {
-						player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location/key>");
+						player.sendMessage(usage + "/tardis spawn/despawn/tp/set-model-location/set-interior-location/set-center-location/key");
 					}
 				}
 				else {
-					player.sendMessage(usage + "/tardis <spawn/despawn/tp/set-model-location/set-interior-location/set-center-location/key>");
+					player.sendMessage(usage + "/tardis spawn/despawn/tp/set-model-location/set-interior-location/set-center-location/key");
 				}
 			}
 			else {
@@ -5363,7 +5371,7 @@ public class CoreCommands implements CommandExecutor {
 									}
 								}
 								else {
-									player.sendMessage(usage + "/huomautus <pelaaja> [<lisää/poista> <huomautus>]");
+									player.sendMessage(usage + "/huomautus <pelaaja> [lisää/poista <huomautus>]");
 								}
 							}
 							else {
@@ -5397,7 +5405,7 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							player.sendMessage(usage + "/huomautus <pelaaja> [<lisää/poista> <huomautus>]");
+							player.sendMessage(usage + "/huomautus <pelaaja> [lisää/poista <huomautus>]");
 						}
 					}
 				}.runTaskAsynchronously(core);
@@ -5881,7 +5889,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				else if (CoreUtils.hasRank(player, "valvoja")) {
-					player.sendMessage(usage + "/tiketit <tiedot/tp/sulje/avaa> <ID>");
+					player.sendMessage(usage + "/tiketit tiedot/tp/sulje/avaa <ID>");
 				}
 				else {
 					player.performCommand("tiketit");
@@ -5892,7 +5900,7 @@ public class CoreCommands implements CommandExecutor {
 						"/tiketit reset confirm" + tc2 + ".");
 			}
 			else if (args.length >= 1 && CoreUtils.hasRank(player, "valvoja")) {
-				player.sendMessage(usage + "/tiketit <tiedot/tp/sulje/avaa> <ID>");
+				player.sendMessage(usage + "/tiketit tiedot/tp/sulje/avaa <ID>");
 			}
 			else {
 				player.sendMessage("");

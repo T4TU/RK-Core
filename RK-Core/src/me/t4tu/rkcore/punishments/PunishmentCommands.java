@@ -316,7 +316,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/tempmute <pelaaja> <kesto> <s/min/h/d/w/mon/y> <syy>");
+					sender.sendMessage(usage + "/tempmute <pelaaja> <kesto> s/min/h/d/w/mon/y <syy>");
 				}
 			}
 			else {
@@ -616,7 +616,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/tempjail <pelaaja> <kesto> <s/min/h/d/w/mon/y> <syy>");
+					sender.sendMessage(usage + "/tempjail <pelaaja> <kesto> s/min/h/d/w/mon/y <syy>");
 				}
 			}
 			else {
@@ -914,7 +914,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/tempban <pelaaja> <kesto> <s/min/h/d/w/mon/y> <syy>");
+					sender.sendMessage(usage + "/tempban <pelaaja> <kesto> s/min/h/d/w/mon/y <syy>");
 				}
 			}
 			else {
@@ -1038,7 +1038,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/ipban <ip> [selvennys]" + tc3 + " tai " + tc4 + "/ipban <list>");
+					sender.sendMessage(usage + "/ipban <ip> [selvennys]" + tc3 + " tai " + tc4 + "/ipban list");
 				}
 			}
 			else {
