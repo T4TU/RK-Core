@@ -19,6 +19,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.ArmorStand;
@@ -89,6 +90,7 @@ public class CoreListener implements Listener {
 	private boolean maintenanceMode;
 	private List<String> calendarCooldown;
 	private List<String> stunCooldown;
+	private List<String> cannonCooldown;
 	private List<Location> fireSpreadCooldown;
 	
 	public CoreListener(Core core) {
@@ -96,6 +98,7 @@ public class CoreListener implements Listener {
 		maintenanceMode = false;
 		calendarCooldown = new ArrayList<String>();
 		stunCooldown = new ArrayList<String>();
+		cannonCooldown = new ArrayList<String>();
 		fireSpreadCooldown = new ArrayList<Location>();
 		Bukkit.getPluginManager().registerEvents(this, core);
 	}
@@ -1439,7 +1442,7 @@ public class CoreListener implements Listener {
 		
 		// komentokuutiot
 		
-		if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
 			Block block = e.getClickedBlock();
 			if (block.getType().toString().contains("SIGN") || block.getType().toString().contains("BUTTON")) {
 				Location location = block.getLocation();
@@ -1476,6 +1479,50 @@ public class CoreListener implements Listener {
 						else {
 							player.performCommand(command);
 						}
+					}
+				}
+			}
+		}
+		
+		// tykit
+		
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
+			Block block = e.getClickedBlock();
+			if (block.getType().toString().contains("BUTTON")) {
+				Location location = block.getLocation();
+				String cannon = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ() + "/";
+				List<String> cannons = core.getConfig().getStringList("cannons");
+				ListIterator<String> iterator = cannons.listIterator();
+				while (iterator.hasNext()) {
+					String next = iterator.next();
+					if (next.startsWith(cannon) && !cannonCooldown.contains(next)) {
+						String[] data = next.split("/");
+						try {
+							int length = Integer.parseInt(data[4]);
+							Directional button = (Directional) block.getBlockData();
+							int modX = button.getFacing().getOppositeFace().getModX();
+							int modZ = button.getFacing().getOppositeFace().getModZ();
+							double yOffset = 0.5;
+							Location barrelLocation = location.clone().add(0.5 + modX * (length + 1), yOffset, 0.5 + modZ * (length + 1));
+							if (barrelLocation.getBlock().getType().isSolid()) {
+								length++;
+								yOffset += 0.5;
+							}
+							barrelLocation.getWorld().playSound(barrelLocation, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 5, 1);
+							location.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, location.getBlockX() + 0.5 + modX * (length + 1), location.getBlockY() + yOffset, 
+									location.getBlockZ() + 0.5 + modZ * (length + 1), 1, 0, 0, 0);
+							location.getWorld().spawnParticle(Particle.CLOUD, location.getBlockX() + 0.5 + modX * (length + 3), location.getBlockY() + yOffset, 
+									location.getBlockZ() + 0.5 + modZ * (length + 3), 30, Math.abs(modX), 0, Math.abs(modZ), 0.05);
+							cannonCooldown.add(next);
+							new BukkitRunnable() {
+								public void run() {
+									cannonCooldown.remove(next);
+									location.getWorld().playSound(location, Sound.UI_BUTTON_CLICK, 1, 1.2f);
+								}
+							}.runTaskLater(core, 120);
+						}
+						catch (NumberFormatException ex) { }
+						break;
 					}
 				}
 			}

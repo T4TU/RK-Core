@@ -27,6 +27,7 @@ import org.bukkit.block.Banner;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.Directional;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -4243,10 +4244,131 @@ public class CoreCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("tykki")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
 				if (args.length >= 1) {
-					
+					if (args[0].equalsIgnoreCase("lista")) {
+						player.sendMessage("");
+						player.sendMessage(tc2 + "§m----------" + tc1 + " Tykit " + tc2 + "§m----------");
+						player.sendMessage("");
+						List<String> cannons = core.getConfig().getStringList("cannons");
+						if (!cannons.isEmpty()) {
+							for (String cannon : cannons) {
+								String[] data = cannon.split("/");
+								String world = data[0];
+								String x = data[1];
+								String y = data[2];
+								String z = data[3];
+								String length = data[4];
+								player.sendMessage(tc2 + " - " + tc1 + world + " " + x + " " + y + " " + z + " (" + length + ")");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + " Ei tykkejä!");
+						}
+						player.sendMessage("");
+					}
+					else if (args[0].equalsIgnoreCase("poista")) {
+						Block block = player.getTargetBlock(null, 20);
+						if (block != null) {
+							Location location = block.getLocation();
+							String cannon = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ() + "/";
+							List<String> cannons = core.getConfig().getStringList("cannons");
+							ListIterator<String> iterator = cannons.listIterator();
+							boolean removed = false;
+							while (iterator.hasNext()) {
+								String next = iterator.next();
+								if (next.startsWith(cannon)) {
+									iterator.remove();
+									removed = true;
+									break;
+								}
+							}
+							if (removed) {
+								core.getConfig().set("cannons", cannons);
+								core.saveConfig();
+								player.sendMessage(tc2 + "Poistettiin tykki!");
+							}
+							else {
+								player.sendMessage(tc3 + "Tähän kuutioon ei ole asetettu tykin laukaisunappia!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Tähän kuutioon ei ole asetettu tykin laukaisunappia!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("aseta")) {
+						if (args.length >= 2) {
+							try {
+								int length = Integer.parseInt(args[1]);
+								if (length > 0 && length < 10) {
+									Block block = player.getTargetBlock(null, 20);
+									if (block != null && block.getType().toString().contains("BUTTON")) {
+										Location location = block.getLocation();
+										String cannon = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ() + "/" + length;
+										List<String> cannons = core.getConfig().getStringList("cannons");
+										cannons.remove(cannon);
+										cannons.add(cannon);
+										core.getConfig().set("cannons", cannons);
+										core.saveConfig();
+										player.sendMessage(tc2 + "Lisättiin tykki!");
+									}
+									else {
+										player.sendMessage(tc3 + "Sinun täytyy katsoa kohti nappia, jonka haluat lisätä tykin laukaisunapiksi!");
+									}
+								}
+								else {
+									player.sendMessage(tc3 + "Virheellinen tykin piipun pituus!");
+								}
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheellinen tykin piipun pituus!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/tykki aseta <pituus>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("ammu")) {
+						if (args.length >= 5) {
+							try {
+								int x = Integer.parseInt(args[1]);
+								int y = Integer.parseInt(args[2]);
+								int z = Integer.parseInt(args[3]);
+								int length = Integer.parseInt(args[4]);
+								Location location = new Location(player.getWorld(), x, y, z);
+								Block block = location.getBlock();
+								if (block.getType().toString().contains("BUTTON")) {
+									Directional button = (Directional) block.getBlockData();
+									int modX = button.getFacing().getOppositeFace().getModX();
+									int modZ = button.getFacing().getOppositeFace().getModZ();
+									double yOffset = 0.5;
+									Location barrelLocation = location.clone().add(0.5 + modX * (length + 1), yOffset, 0.5 + modZ * (length + 1));
+									if (barrelLocation.getBlock().getType().isSolid()) {
+										length++;
+										yOffset += 0.5;
+									}
+									location.getWorld().playSound(barrelLocation, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 5, 1);
+									location.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, location.getBlockX() + 0.5 + modX * (length + 1), location.getBlockY() + yOffset, 
+											location.getBlockZ() + 0.5 + modZ * (length + 1), 1, 0, 0, 0);
+									location.getWorld().spawnParticle(Particle.EXPLOSION_NORMAL, location.getBlockX() + 0.5 + modX * (length + 3), location.getBlockY() + yOffset, 
+											location.getBlockZ() + 0.5 + modZ * (length + 3), 30, Math.abs(modX), 0, Math.abs(modZ), 0.05);
+								}
+								else {
+									player.sendMessage(tc3 + "Tässä sijainnissa ei ole nappia!");
+								}
+							}
+							catch (NumberFormatException ex) {
+								player.sendMessage(tc3 + "Virheelliset argumentit!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/tykki ammu <x> <y> <z> <pituus>");
+						}
+					}
+					else {
+						player.sendMessage(usage + "/tykki aseta <pituus>" + tc3 + " tai " + tc4 + "/tykki lista/poista");
+					}
 				}
 				else {
-					player.sendMessage(usage + "/tykki aseta <pituus>" + tc3 + " tai " + tc4 + "/tykki lista/poista");
+					player.sendMessage(usage + "/tykki aseta <pituus>" + tc3 + " tai " + tc4 + "/tykki lista/poista" + tc3 + " tai " + tc4 + "/tykki ammu <x> <y> <z> <pituus>");
 				}
 			}
 			else {
