@@ -67,6 +67,10 @@ commands:
     uutiset:
     news:
     motd:
+    palkkiot:
+    rewards:
+    äänestä:
+    vote:
     tilaviesti:
     status:
     kompassi:
@@ -138,9 +142,13 @@ commands:
     talli:
     stable:
     holo:
+    armorstand:
+    stand:
     tutorial:
     tardis:
     musiikkikauppa:
+    palkkiostandi:
+    apuastandi:
     rankaise:
     h:
     huomautus:

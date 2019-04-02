@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +48,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.ChatPaginator;
+import org.bukkit.util.EulerAngle;
 
 import com.meowj.langutils.lang.LanguageHelper;
 
@@ -82,12 +84,14 @@ public class CoreCommands implements CommandExecutor {
 	private List<String> commandSpyPlayers;
 	private List<String> teleportingPlayers;
 	private List<String> powerTools;
+	private List<String> rewardCooldown;
 	private List<Location> tardisBlocks1;
 	private List<Location> tardisBlocks2;
 	private List<Location> tardisBlocks3;
 	private Map<String, String> mailWritingPlayers;
 	private Map<String, PermissionAttachment> permissions;
 	private Map<String, ArmorStand> selectedHolograms;
+	private Map<String, ArmorStand> selectedArmorstands;
 	private Block b1;
 	private Block b2;
 	private int autoRestartTaskId;
@@ -105,12 +109,14 @@ public class CoreCommands implements CommandExecutor {
 		commandSpyPlayers = new ArrayList<String>();
 		teleportingPlayers = new ArrayList<String>();
 		powerTools = new ArrayList<String>();
+		rewardCooldown = new ArrayList<String>();
 		tardisBlocks1 = new ArrayList<Location>();
 		tardisBlocks2 = new ArrayList<Location>();
 		tardisBlocks3 = new ArrayList<Location>();
 		mailWritingPlayers = new HashMap<String, String>();
 		permissions = new HashMap<String, PermissionAttachment>();
 		selectedHolograms = new HashMap<String, ArmorStand>();
+		selectedArmorstands = new HashMap<String, ArmorStand>();
 		b1 = null;
 		b2 = null;
 		autoRestartTaskId = -1;
@@ -1880,7 +1886,17 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage("");
 			player.sendMessage(tc2 + "§m----------" + tc1 + " Apua " + tc2 + "§m----------");
 			player.sendMessage("");
-			player.sendMessage(tc2 + " Tulossa..."); // TODO
+			player.sendMessage(tc2 + " Tutustu nettisivuihimme osoitteessa:"); // TODO
+			player.sendMessage(tc1 + " http://esimerkki.fi");
+			player.sendMessage("");
+			player.sendMessage(tc2 + " Hukassa? Löydät ohjeita moneen eri tilanteeseen tietopankistamme:");
+			player.sendMessage(tc1 + " http://esimerkki.fi/tietoa");
+			player.sendMessage("");
+			player.sendMessage(tc2 + " Liity Discord-palvelimellemme:");
+			player.sendMessage(tc1 + " https://discord.gg/xzstZDt");
+			player.sendMessage("");
+			player.sendMessage(tc2 + " Asiaa henkilökunnalle? Komennolla " + tc1 + "/a <viesti>" + tc2 + " voit lähettää yksityisen viestin paikalla olevalle "
+					+ "henkilökunnalle. Henkilökuntamme auttaa sinua mielellään!");
 			player.sendMessage("");
 			return true;
 		}
@@ -1892,7 +1908,7 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage(tc2 + "§m----------" + tc1 + " Säännöt " + tc2 + "§m----------");
 			player.sendMessage("");
 			player.sendMessage(tc2 + " Pelaamalla palvelimellamme hyväksyt säännöt:");
-			player.sendMessage(tc1 + " http://esimerkki.fi/tietoa/yleiset/säännöt"); // TODO
+			player.sendMessage(tc1 + " http://esimerkki.fi/tietoa/säännöt"); // TODO
 			player.sendMessage("");
 			return true;
 		}
@@ -2263,6 +2279,7 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("uutiset") || cmd.getName().equalsIgnoreCase("news") || cmd.getName().equalsIgnoreCase("motd")) {
 			if (core.getConfig().getString("motd.motd") == null) {
+				player.sendMessage(tc2 + "Ei mitään uutta!");
 				return true;
 			}
 			player.sendMessage("");
@@ -2274,6 +2291,93 @@ public class CoreCommands implements CommandExecutor {
 			core.getConfig().set("motd.seen." + player.getName(), true);
 			core.saveConfig();
 			return true;
+		}
+		
+		// palkkiot, rewards, äänestä, vote
+		
+		if (cmd.getName().equalsIgnoreCase("palkkiot") || cmd.getName().equalsIgnoreCase("rewards") || cmd.getName().equalsIgnoreCase("äänestä") || cmd.getName().equalsIgnoreCase("vote")) {
+			
+			InventoryGUI gui = new InventoryGUI(27, "Palkkiot");
+			
+			new BukkitRunnable() {
+				public void run() {
+					
+					String dailyRewardName = "§aPäivittäinen palkkio";
+					String dailyRewardActionText = "§a » Lunasta klikkaamalla!";
+					String voteName = "§eÄänestys";
+					String voteActionText = "§e » Tulossa...";
+					String monthlyRewardName = "§eKuukausittainen palkkio";
+					String monthlyRewardActionText = "§e » Tulossa...";
+					
+					MySQLResult rewardData = MySQLUtils.get("SELECT * FROM player_rewards WHERE uuid=?", player.getUniqueId().toString());
+					if (rewardData != null) {
+						long lastDailyReward = rewardData.getLong(0, "last_daily_reward");
+						Date date = new Date(lastDailyReward);
+						Date today = new Date(System.currentTimeMillis());
+						Calendar dateCalendar = Calendar.getInstance();
+						Calendar todayCalendar = Calendar.getInstance();
+						dateCalendar.setTime(date);
+						todayCalendar.setTime(today);
+						if (dateCalendar.get(Calendar.DAY_OF_YEAR) == todayCalendar.get(Calendar.DAY_OF_YEAR) && dateCalendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR)) {
+							dailyRewardName = "§cPäivittäinen palkkio";
+							dailyRewardActionText = "§c ✖ Lunastettu!";
+						}
+					}
+					
+					gui.addItem(CoreUtils.getItem(Material.DRAGON_BREATH, dailyRewardName, Arrays.asList("", "§7Palkkio:", "§7 - tulossa", "", dailyRewardActionText), 1), 11, new InventoryGUIAction() {
+						public void onClickAsync() {
+							if (rewardCooldown.contains(player.getName())) {
+								player.sendMessage(tc3 + "Älä klikkaa niin nopeasti!");
+								return;
+							}
+							rewardCooldown.add(player.getName());
+							MySQLResult rewardData = MySQLUtils.get("SELECT * FROM player_rewards WHERE uuid=?", player.getUniqueId().toString());
+							if (rewardData != null) {
+								long lastDailyReward = rewardData.getLong(0, "last_daily_reward");
+								Date date = new Date(lastDailyReward);
+								Date today = new Date(System.currentTimeMillis());
+								Calendar dateCalendar = Calendar.getInstance();
+								Calendar todayCalendar = Calendar.getInstance();
+								dateCalendar.setTime(date);
+								todayCalendar.setTime(today);
+								if (dateCalendar.get(Calendar.DAY_OF_YEAR) == todayCalendar.get(Calendar.DAY_OF_YEAR) && dateCalendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR)) {
+									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+									player.sendMessage(tc3 + "Olet jo lunastanut tämänpäiväisen palkkiosi. Tule takaisin huomenna!");
+									rewardCooldown.remove(player.getName());
+									return;
+								}
+								MySQLUtils.set("UPDATE player_rewards SET last_daily_reward=" + System.currentTimeMillis() + " WHERE uuid=?", player.getUniqueId().toString());
+							}
+							else {
+								MySQLUtils.set("INSERT INTO player_rewards (uuid, last_daily_reward) VALUES (?, " + System.currentTimeMillis() + ")", player.getUniqueId().toString());
+							}
+							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+							player.sendMessage(tc2 + "Lunastettiin päivittäinen palkkio!");
+							// TODO palkkion antaminen
+							rewardCooldown.remove(player.getName());
+							gui.close(player);
+						}
+						public void onClick() { }
+					});
+					
+					gui.addItem(CoreUtils.getItem(Material.FIRE_CHARGE, voteName, Arrays.asList("", "§7Palkkio:", "§7 - tulossa", "", voteActionText), 1), 13, new InventoryGUIAction() {
+						public void onClickAsync() { }
+						public void onClick() {
+							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+						}
+					});
+					
+					gui.addItem(CoreUtils.getItem(Material.ENDER_CHEST, monthlyRewardName, Arrays.asList("", "§2Ritari:", "§7 - tulossa", "", "§6Aatelinen:", "§7 - tulossa", "", monthlyRewardActionText), 1), 
+							15, new InventoryGUIAction() {
+						public void onClickAsync() { }
+						public void onClick() {
+							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+						}
+					});
+				}
+			}.runTaskAsynchronously(core);
+			
+			gui.open(player);
 		}
 		
 		// tilaviesti, status
@@ -4805,7 +4909,7 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						else {
-							player.sendMessage(usage + "/holo move <x/y/z> <määrä>");
+							player.sendMessage(usage + "/holo move x/y/z <määrä>");
 						}
 					}
 					else if (args[0].equalsIgnoreCase("remove")) {
@@ -4854,6 +4958,401 @@ public class CoreCommands implements CommandExecutor {
 				}
 				else {
 					player.sendMessage(usage + "/holo create/select/edit/move/remove/tp/tphere/vis");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// armorstand, stand
+		
+		if (cmd.getName().equalsIgnoreCase("armorstand") || cmd.getName().equalsIgnoreCase("stand")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("select") || args[0].equalsIgnoreCase("sel")) {
+						
+						ArmorStand select = null;
+						
+						for (Entity entity : player.getWorld().getEntities()) {
+							if (entity.getType() == EntityType.ARMOR_STAND) {
+								ArmorStand a = (ArmorStand) entity;
+								if (a.getLocation().distance(player.getLocation()) < 20) {
+									if (select != null) {
+										if (a.getLocation().distance(player.getLocation()) < 
+												select.getLocation().distance(player.getLocation())) {
+											select = a;
+										}
+									}
+									else {
+										select = a;
+									}
+								}
+							}
+						}
+						
+						if (select != null) {
+							selectedArmorstands.put(player.getName(), select);
+							player.sendMessage(tc2 + "Valittiin sinua lähin armorstandi!");
+						}
+						else {
+							player.sendMessage(tc3 + "Ei löydetty armorstandeja lähistöltä!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("rename")) {
+						if (args.length >= 2) {
+							
+							String text = "";
+							for (int i = 1; i < args.length; i++) {
+								text = text + " " + args[i];
+							}
+							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							
+							ArmorStand a = selectedArmorstands.get(player.getName());
+							
+							if (a != null && !a.isDead()) {
+								if (text.equals("null") || text.equals("clear")) {
+									a.setCustomName(null);
+									player.sendMessage(tc2 + "Poistettiin armorstandin nimi!");
+								}
+								else {
+									a.setCustomName(text);
+									player.sendMessage(tc2 + "Asetettiin armorstandin nimeksi: §r" + text);
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/armorstand rename <nimi>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("move")) {
+						if (args.length >= 3) {
+							
+							float amount = 0;
+							int direction = 0;
+							
+							try {
+								amount = Float.parseFloat(args[2]);
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheellinen määrä!");
+								return true;
+							}
+							
+							if (args[1].equalsIgnoreCase("x")) {
+								direction = 0;
+							}
+							else if (args[1].equalsIgnoreCase("y")) {
+								direction = 1;
+							}
+							else if (args[1].equalsIgnoreCase("z")) {
+								direction = 2;
+							}
+							else {
+								player.sendMessage(tc3 + "Virheellinen suunta!");
+								return true;
+							}
+							
+							ArmorStand a = selectedArmorstands.get(player.getName());
+							
+							if (a != null && !a.isDead()) {
+								if (direction == 0) {
+									a.teleport(a.getLocation().clone().add(amount, 0, 0));
+									player.sendMessage(tc2 + "Siirrettiin valittua armorstandia " + tc1 + amount + "m" + tc2 + 
+											" akselilla " + tc1 + "x" + tc2 + "!");
+								}
+								else if (direction == 1) {
+									a.teleport(a.getLocation().clone().add(0, amount, 0));
+									player.sendMessage(tc2 + "Siirrettiin valittua armorstandia " + tc1 + amount + "m" + tc2 + 
+											" akselilla " + tc1 + "y" + tc2 + "!");
+								}
+								else if (direction == 2) {
+									a.teleport(a.getLocation().clone().add(0, 0, amount));
+									player.sendMessage(tc2 + "Siirrettiin valittua armorstandia " + tc1 + amount + "m" + tc2 + 
+											" akselilla " + tc1 + "z" + tc2 + "!");
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/armorstand move x/y/z <määrä>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("headpose") || args[0].equalsIgnoreCase("bodypose") || args[0].equalsIgnoreCase("rightarmpose") || 
+							args[0].equalsIgnoreCase("leftarmpose") || args[0].equalsIgnoreCase("rightlegpose") || args[0].equalsIgnoreCase("leftlegpose")) {
+						if (args.length >= 4) {
+							
+							double x = 0;
+							double y = 0;
+							double z = 0;
+							
+							try {
+								x = Double.parseDouble(args[1]);
+								y = Double.parseDouble(args[2]);
+								z = Double.parseDouble(args[3]);
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheelliset argumentit!");
+								return true;
+							}
+							
+							ArmorStand a = selectedArmorstands.get(player.getName());
+							
+							if (a != null && !a.isDead()) {
+								EulerAngle angle = new EulerAngle(x, y, z);
+								if (args[0].equalsIgnoreCase("headpose")) {
+									a.setHeadPose(angle);
+								}
+								else if (args[0].equalsIgnoreCase("bodypose")) {
+									a.setBodyPose(angle);
+								}
+								else if (args[0].equalsIgnoreCase("rightarmpose")) {
+									a.setRightArmPose(angle);
+								}
+								else if (args[0].equalsIgnoreCase("leftarmpose")) {
+									a.setLeftArmPose(angle);
+								}
+								else if (args[0].equalsIgnoreCase("rightlegpose")) {
+									a.setRightLegPose(angle);
+								}
+								else if (args[0].equalsIgnoreCase("leftlegpose")) {
+									a.setLeftLegPose(angle);
+								}
+								player.sendMessage(tc2 + "Asetettiin ruumiinosan orientaatioksi: " + tc1 + x + " " + y + " " + z);
+							}
+							else {
+								player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/armorstand " + args[0].toLowerCase() + " <x> <y> <z>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("remove")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.remove();
+							player.sendMessage(tc2 + "Poistettiin valittu armorstandi!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("copy")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							Location copyLocation = a.getLocation().clone().add(0.5, 0, 0);
+							ArmorStand copy = (ArmorStand) copyLocation.getWorld().spawnEntity(copyLocation, EntityType.ARMOR_STAND);
+							copy.setVisible(a.isVisible());
+							copy.setGravity(a.hasGravity());
+							copy.setBasePlate(a.hasBasePlate());
+							copy.setArms(a.hasArms());
+							copy.setInvulnerable(a.isInvulnerable());
+							copy.setCustomName(a.getCustomName());
+							copy.setCustomNameVisible(a.isCustomNameVisible());
+							copy.setGlowing(a.isGlowing());
+							copy.setSmall(a.isSmall());
+							copy.setMarker(a.isMarker());
+							copy.setItemInHand(a.getItemInHand().clone());
+							copy.setHelmet(a.getHelmet().clone());
+							copy.setChestplate(a.getChestplate().clone());
+							copy.setLeggings(a.getLeggings().clone());
+							copy.setBoots(a.getBoots().clone());
+							copy.setHeadPose(a.getHeadPose());
+							copy.setBodyPose(a.getBodyPose());
+							copy.setRightArmPose(a.getRightArmPose());
+							copy.setLeftArmPose(a.getLeftArmPose());
+							copy.setRightLegPose(a.getRightLegPose());
+							copy.setLeftLegPose(a.getLeftLegPose());
+							selectedArmorstands.put(player.getName(), copy);
+							player.sendMessage(tc2 + "Kopioitiin armorstandi ja valittiin luotu kopio!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("tp")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							player.teleport(a);
+							player.sendMessage(tc2 + "Teleportattiin valitun armorstandin luo!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("tphere")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.teleport(player);
+							player.sendMessage(tc2 + "Teleportattiin valittu armorstandi luoksesi!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("visible")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setVisible(!a.isVisible());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "näkyvyys" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("gravity")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setGravity(!a.hasGravity());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "painovoima" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("baseplate")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setBasePlate(!a.hasBasePlate());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "jalusta" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("arms")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setArms(!a.hasArms());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "kädet" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("invulnerable")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setInvulnerable(!a.isInvulnerable());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "kuolemattomuus" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("namevisible")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setCustomNameVisible(!a.isCustomNameVisible());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "nimen näkyvyys" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("glowing")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setGlowing(!a.isGlowing());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "hehku" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("small")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setSmall(!a.isSmall());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "koko" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("marker")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setMarker(!a.isMarker());
+							player.sendMessage(tc2 + "Vaihdettiin armorstandin asetusta " + tc1 + "\"marker\"" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("hand")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setItemInHand(player.getInventory().getItemInMainHand().clone());
+							player.sendMessage(tc2 + "Asetettiin armorstandin pitelemä esine kädessäsi olevaan esineeseen!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("helmet")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setHelmet(player.getInventory().getItemInMainHand().clone());
+							player.sendMessage(tc2 + "Asetettiin armorstandin päähine kädessäsi olevaan esineeseen!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("helmet")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setHelmet(player.getInventory().getItemInMainHand().clone());
+							player.sendMessage(tc2 + "Asetettiin armorstandin päähine kädessäsi olevaan esineeseen!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("chestplate")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setChestplate(player.getInventory().getItemInMainHand().clone());
+							player.sendMessage(tc2 + "Asetettiin armorstandin rintapanssari kädessäsi olevaan esineeseen!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("leggings")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setLeggings(player.getInventory().getItemInMainHand().clone());
+							player.sendMessage(tc2 + "Asetettiin armorstandin housut kädessäsi olevaan esineeseen!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("boots")) {
+						ArmorStand a = selectedArmorstands.get(player.getName());
+						if (a != null && !a.isDead()) {
+							a.setBoots(player.getInventory().getItemInMainHand().clone());
+							player.sendMessage(tc2 + "Asetettiin armorstandin jalkineet kädessäsi olevaan esineeseen!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
+						}
+					}
+					else {
+						player.sendMessage(usage + "/armorstand select/rename/move/remove/copy/tp/tphere/<ominaisuus>");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/armorstand select/rename/move/remove/copy/tp/tphere/<ominaisuus>");
 				}
 			}
 			else {
@@ -5232,6 +5731,30 @@ public class CoreCommands implements CommandExecutor {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
 				CoreUtils.setLocation(core, "music-shop", player.getLocation());
 				player.sendMessage(tc2 + "Asetettiin musiikkikaupan sijainti nykyiseen sijaintiisi!");
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+		}
+		
+		// palkkiostandi
+		
+		if (cmd.getName().equalsIgnoreCase("palkkiostandi")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				CoreUtils.setLocation(core, "reward-stand", player.getLocation());
+				player.sendMessage(tc2 + "Asetettiin \"Palkkiot\"-standin sijainti nykyiseen sijaintiisi!");
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+		}
+		
+		// apuastandi
+		
+		if (cmd.getName().equalsIgnoreCase("apuastandi")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				CoreUtils.setLocation(core, "help-stand", player.getLocation());
+				player.sendMessage(tc2 + "Asetettiin \"Apua\"-standin sijainti nykyiseen sijaintiisi!");
 			}
 			else {
 				player.sendMessage(noPermission);

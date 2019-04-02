@@ -71,7 +71,7 @@ import net.minecraft.server.v1_13_R2.IChatBaseComponent.ChatSerializer;
 
 public class CoreUtils {
 	
-	public static final long TIME_OFFSET = 7200000;
+	public static final long TIME_OFFSET = 10800000;
 	public static final double INGAME_TIME_SPEED_MULTIPLIER = 36;
 	public static final int SECONDS_TO_HOME_1 = 0; // 0 tuntia
 	public static final int SECONDS_TO_HOME_2 = 14400; // 4 tuntia
