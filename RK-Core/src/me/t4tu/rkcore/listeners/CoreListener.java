@@ -928,20 +928,6 @@ public class CoreListener implements Listener {
 			e.setCancelled(true);
 			return;
 		}
-		Location rewardLocation = CoreUtils.loadLocation(core, "reward-stand");
-		if (rewardLocation != null && rewardLocation.getWorld().getName().equals(e.getRightClicked().getWorld().getName())) {
-			if (rewardLocation.distance(e.getRightClicked().getLocation()) <= 1) {
-				e.getPlayer().performCommand("palkkiot");
-				e.setCancelled(true);
-			}
-		}
-		Location helpLocation = CoreUtils.loadLocation(core, "help-stand");
-		if (helpLocation != null && helpLocation.getWorld().getName().equals(e.getRightClicked().getWorld().getName())) {
-			if (helpLocation.distance(e.getRightClicked().getLocation()) <= 1) {
-				e.getPlayer().performCommand("apua");
-				e.setCancelled(true);
-			}
-		}
 	}
 	
 	///////////////////////////////////////////////////////////////

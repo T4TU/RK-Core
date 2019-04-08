@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -84,7 +83,6 @@ public class CoreCommands implements CommandExecutor {
 	private List<String> commandSpyPlayers;
 	private List<String> teleportingPlayers;
 	private List<String> powerTools;
-	private List<String> rewardCooldown;
 	private List<Location> tardisBlocks1;
 	private List<Location> tardisBlocks2;
 	private List<Location> tardisBlocks3;
@@ -109,7 +107,6 @@ public class CoreCommands implements CommandExecutor {
 		commandSpyPlayers = new ArrayList<String>();
 		teleportingPlayers = new ArrayList<String>();
 		powerTools = new ArrayList<String>();
-		rewardCooldown = new ArrayList<String>();
 		tardisBlocks1 = new ArrayList<Location>();
 		tardisBlocks2 = new ArrayList<Location>();
 		tardisBlocks3 = new ArrayList<Location>();
@@ -2291,93 +2288,6 @@ public class CoreCommands implements CommandExecutor {
 			core.getConfig().set("motd.seen." + player.getName(), true);
 			core.saveConfig();
 			return true;
-		}
-		
-		// palkkiot, rewards, äänestä, vote
-		
-		if (cmd.getName().equalsIgnoreCase("palkkiot") || cmd.getName().equalsIgnoreCase("rewards") || cmd.getName().equalsIgnoreCase("äänestä") || cmd.getName().equalsIgnoreCase("vote")) {
-			
-			InventoryGUI gui = new InventoryGUI(27, "Palkkiot");
-			
-			new BukkitRunnable() {
-				public void run() {
-					
-					String dailyRewardName = "§aPäivittäinen palkkio";
-					String dailyRewardActionText = "§a » Lunasta klikkaamalla!";
-					String voteName = "§eÄänestys";
-					String voteActionText = "§e » Tulossa...";
-					String monthlyRewardName = "§eKuukausittainen palkkio";
-					String monthlyRewardActionText = "§e » Tulossa...";
-					
-					MySQLResult rewardData = MySQLUtils.get("SELECT * FROM player_rewards WHERE uuid=?", player.getUniqueId().toString());
-					if (rewardData != null) {
-						long lastDailyReward = rewardData.getLong(0, "last_daily_reward");
-						Date date = new Date(lastDailyReward);
-						Date today = new Date(System.currentTimeMillis());
-						Calendar dateCalendar = Calendar.getInstance();
-						Calendar todayCalendar = Calendar.getInstance();
-						dateCalendar.setTime(date);
-						todayCalendar.setTime(today);
-						if (dateCalendar.get(Calendar.DAY_OF_YEAR) == todayCalendar.get(Calendar.DAY_OF_YEAR) && dateCalendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR)) {
-							dailyRewardName = "§cPäivittäinen palkkio";
-							dailyRewardActionText = "§c ✖ Lunastettu!";
-						}
-					}
-					
-					gui.addItem(CoreUtils.getItem(Material.DRAGON_BREATH, dailyRewardName, Arrays.asList("", "§7Palkkio:", "§7 - tulossa", "", dailyRewardActionText), 1), 11, new InventoryGUIAction() {
-						public void onClickAsync() {
-							if (rewardCooldown.contains(player.getName())) {
-								player.sendMessage(tc3 + "Älä klikkaa niin nopeasti!");
-								return;
-							}
-							rewardCooldown.add(player.getName());
-							MySQLResult rewardData = MySQLUtils.get("SELECT * FROM player_rewards WHERE uuid=?", player.getUniqueId().toString());
-							if (rewardData != null) {
-								long lastDailyReward = rewardData.getLong(0, "last_daily_reward");
-								Date date = new Date(lastDailyReward);
-								Date today = new Date(System.currentTimeMillis());
-								Calendar dateCalendar = Calendar.getInstance();
-								Calendar todayCalendar = Calendar.getInstance();
-								dateCalendar.setTime(date);
-								todayCalendar.setTime(today);
-								if (dateCalendar.get(Calendar.DAY_OF_YEAR) == todayCalendar.get(Calendar.DAY_OF_YEAR) && dateCalendar.get(Calendar.YEAR) == todayCalendar.get(Calendar.YEAR)) {
-									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Olet jo lunastanut tämänpäiväisen palkkiosi. Tule takaisin huomenna!");
-									rewardCooldown.remove(player.getName());
-									return;
-								}
-								MySQLUtils.set("UPDATE player_rewards SET last_daily_reward=" + System.currentTimeMillis() + " WHERE uuid=?", player.getUniqueId().toString());
-							}
-							else {
-								MySQLUtils.set("INSERT INTO player_rewards (uuid, last_daily_reward) VALUES (?, " + System.currentTimeMillis() + ")", player.getUniqueId().toString());
-							}
-							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
-							player.sendMessage(tc2 + "Lunastettiin päivittäinen palkkio!");
-							// TODO palkkion antaminen
-							rewardCooldown.remove(player.getName());
-							gui.close(player);
-						}
-						public void onClick() { }
-					});
-					
-					gui.addItem(CoreUtils.getItem(Material.FIRE_CHARGE, voteName, Arrays.asList("", "§7Palkkio:", "§7 - tulossa", "", voteActionText), 1), 13, new InventoryGUIAction() {
-						public void onClickAsync() { }
-						public void onClick() {
-							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-						}
-					});
-					
-					gui.addItem(CoreUtils.getItem(Material.ENDER_CHEST, monthlyRewardName, Arrays.asList("", "§2Ritari:", "§7 - tulossa", "", "§6Aatelinen:", "§7 - tulossa", "", monthlyRewardActionText), 1), 
-							15, new InventoryGUIAction() {
-						public void onClickAsync() { }
-						public void onClick() {
-							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-						}
-					});
-				}
-			}.runTaskAsynchronously(core);
-			
-			gui.open(player);
 		}
 		
 		// tilaviesti, status
@@ -5731,30 +5641,6 @@ public class CoreCommands implements CommandExecutor {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
 				CoreUtils.setLocation(core, "music-shop", player.getLocation());
 				player.sendMessage(tc2 + "Asetettiin musiikkikaupan sijainti nykyiseen sijaintiisi!");
-			}
-			else {
-				player.sendMessage(noPermission);
-			}
-		}
-		
-		// palkkiostandi
-		
-		if (cmd.getName().equalsIgnoreCase("palkkiostandi")) {
-			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				CoreUtils.setLocation(core, "reward-stand", player.getLocation());
-				player.sendMessage(tc2 + "Asetettiin \"Palkkiot\"-standin sijainti nykyiseen sijaintiisi!");
-			}
-			else {
-				player.sendMessage(noPermission);
-			}
-		}
-		
-		// apuastandi
-		
-		if (cmd.getName().equalsIgnoreCase("apuastandi")) {
-			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				CoreUtils.setLocation(core, "help-stand", player.getLocation());
-				player.sendMessage(tc2 + "Asetettiin \"Apua\"-standin sijainti nykyiseen sijaintiisi!");
 			}
 			else {
 				player.sendMessage(noPermission);

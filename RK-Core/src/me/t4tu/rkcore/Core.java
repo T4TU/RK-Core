@@ -253,10 +253,6 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("uutiset", true);
 		commands.registerCommand("news", true);
 		commands.registerCommand("motd", true);
-		commands.registerCommand("palkkiot", true);
-		commands.registerCommand("rewards", true);
-		commands.registerCommand("äänestä", true);
-		commands.registerCommand("vote", true);
 		commands.registerCommand("tilaviesti", true);
 		commands.registerCommand("status", true);
 		commands.registerCommand("kompassi", true);
@@ -333,8 +329,6 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("tutorial", false);
 		commands.registerCommand("tardis", false);
 		commands.registerCommand("musiikkikauppa", false);
-		commands.registerCommand("palkkiostandi", false);
-		commands.registerCommand("apuastandi", false);
 		commands.registerCommand("rankaise", false);
 		commands.registerCommand("h", false);
 		commands.registerCommand("huomautus", false);
