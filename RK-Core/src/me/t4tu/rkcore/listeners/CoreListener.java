@@ -63,7 +63,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -88,7 +87,6 @@ public class CoreListener implements Listener {
 	
 	private Core core;
 	private boolean maintenanceMode;
-	private List<String> calendarCooldown;
 	private List<String> stunCooldown;
 	private List<String> cannonCooldown;
 	private List<Location> fireSpreadCooldown;
@@ -96,7 +94,6 @@ public class CoreListener implements Listener {
 	public CoreListener(Core core) {
 		this.core = core;
 		maintenanceMode = false;
-		calendarCooldown = new ArrayList<String>();
 		stunCooldown = new ArrayList<String>();
 		cannonCooldown = new ArrayList<String>();
 		fireSpreadCooldown = new ArrayList<Location>();
@@ -1658,25 +1655,6 @@ public class CoreListener implements Listener {
 		if (clickedEntity instanceof ItemFrame) {
 			ItemFrame frame = (ItemFrame) clickedEntity;
 			ItemStack item = frame.getItem();
-			if (item != null && item.getType() == Material.FILLED_MAP && item.hasItemMeta()) {
-				MapMeta meta = (MapMeta) item.getItemMeta();
-				if (meta.hasMapView() && meta.getMapView().getId() == 0) { // TODO seinäkalenteri-mapin data
-					e.setCancelled(true);
-					if (!calendarCooldown.contains(player.getName())) {
-						
-						player.sendMessage(tc2 + "§oSeinällä oleva kalenteri kertoo sinulle, että tänään on\n" + tc1 + 
-								"§o " + CoreUtils.getFriendlyDateString(core.getIngameTime()) + tc2 + "§o.");
-						
-						calendarCooldown.add(player.getName());
-						
-						new BukkitRunnable() {
-							public void run() {
-								calendarCooldown.remove(player.getName());
-							}
-						}.runTaskLater(core, 40);
-					}
-				}
-			}
 			if (item != null && item.getType().toString().contains("MUSIC_DISC_")) {
 				if (e.getHand() == EquipmentSlot.HAND) {
 					Location musicShopLocation = CoreUtils.loadLocation(core, "music-shop");

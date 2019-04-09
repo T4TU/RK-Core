@@ -256,6 +256,10 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("tilaviesti", true);
 		commands.registerCommand("status", true);
 		commands.registerCommand("kompassi", true);
+		commands.registerCommand("kalenteri", true);
+		commands.registerCommand("päivämäärä", true);
+		commands.registerCommand("juhlapäivä", false);
+		commands.registerCommand("juhlapäivät", false);
 		commands.registerCommand("lähellä", true);
 		commands.registerCommand("near", true);
 		commands.registerCommand("spawn", true);

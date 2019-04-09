@@ -1328,16 +1328,16 @@ public class CoreUtils {
 			}
 			
 			String endString;
-			if (hours >= 22) {
+			if (hours >= 24) {
 				endString = "yöllä";
 			}
-			else if (hours >= 16) {
+			else if (hours >= 18) {
 				endString = "illalla";
 			}
-			else if (hours >= 10) {
+			else if (hours >= 12) {
 				endString = "päivällä";
 			}
-			else if (hours >= 4) {
+			else if (hours >= 6) {
 				endString = "aamulla";
 			}
 			else {

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -2344,6 +2346,123 @@ public class CoreCommands implements CommandExecutor {
 			}
 			else {
 				player.sendMessage(usage + "/kompassi <x> <z>");
+			}
+			return true;
+		}
+		
+		// kalenteri, päivämäärä
+		
+		if (cmd.getName().equalsIgnoreCase("kalenteri") || cmd.getName().equalsIgnoreCase("päivämäärä")) {
+			if (core.getConfig().getConfigurationSection("holidays") != null && !core.getConfig().getConfigurationSection("holidays").getKeys(false).isEmpty()) {
+				String next = null;
+				int nextDay = 0;
+				int nextMonth = 0;
+				long timeTillNext = 0;
+				for (String key : core.getConfig().getConfigurationSection("holidays").getKeys(false)) {
+					int day = core.getConfig().getInt("holidays." + key + ".day");
+					int month = core.getConfig().getInt("holidays." + key + ".month");
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+					calendar.setTimeInMillis(core.getIngameTime());
+					calendar.set(Calendar.DAY_OF_MONTH, day);
+					calendar.set(Calendar.MONTH, month);
+					if (calendar.getTimeInMillis() <= core.getIngameTime()) {
+						calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) + 1);
+					}
+					if (timeTillNext == 0 || calendar.getTimeInMillis() - core.getIngameTime() < timeTillNext) {
+						next = key;
+						nextDay = day;
+						nextMonth = month;
+						timeTillNext = calendar.getTimeInMillis() - core.getIngameTime();
+					}
+				}
+				player.sendMessage("");
+				player.sendMessage(tc2 + " Tänään on " + tc1 + CoreUtils.getFriendlyDateString(core.getIngameTime()) + tc2 + ".");
+				player.sendMessage(tc2 + " Seuraava juhlapäivä on " + tc1 + "§o" + next + tc1 + " " + nextDay + "." + nextMonth + ".");
+				player.sendMessage("");
+			}
+			else {
+				player.sendMessage("");
+				player.sendMessage(tc2 + "Tänään on " + tc1 + CoreUtils.getFriendlyDateString(core.getIngameTime()) + tc2 + ".");
+				player.sendMessage("");
+			}
+			return true;
+		}
+		
+		// juhlapäivät, juhlapäivät
+		
+		if (cmd.getName().equalsIgnoreCase("juhlapäivä") || cmd.getName().equalsIgnoreCase("juhlapäivät")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list")) {
+						player.sendMessage("");
+						player.sendMessage(tc2 + "§m----------" + tc1 + " Juhlapäivät " + tc2 + "§m----------");
+						player.sendMessage("");
+						if (core.getConfig().getConfigurationSection("holidays") != null && !core.getConfig().getConfigurationSection("holidays").getKeys(false).isEmpty()) {
+							for (String key : core.getConfig().getConfigurationSection("holidays").getKeys(false)) {
+								int day = core.getConfig().getInt("holidays." + key + ".day");
+								int month = core.getConfig().getInt("holidays." + key + ".month");
+								player.sendMessage(tc1 + " - " + tc2 + key + ", " + day + "." + month + ".");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + " Ei juhlapäiviä!");
+						}
+						player.sendMessage("");
+					}
+					else if (args[0].equalsIgnoreCase("lisää") || args[0].equalsIgnoreCase("add")) {
+						if (args.length >= 4) {
+							try {
+								int day = Integer.parseInt(args[1]);
+								int month = Integer.parseInt(args[2]);
+								String name = "";
+								for (int i = 3; i < args.length; i++) {
+									name += " " + args[i];
+								}
+								name = name.trim().replace(".", " ");
+								core.getConfig().set("holidays." + name + ".day", day);
+								core.getConfig().set("holidays." + name + ".month", month);
+								core.saveConfig();
+								player.sendMessage(tc2 + "Lisättiin uusi juhlapäivä " + tc1 + name + tc2 + "!");
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheelliset argumentit!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/juhlapäivät lisää <päivä> <kuukausi> <nimi>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("poista") || args[0].equalsIgnoreCase("remove")) {
+						if (args.length >= 2) {
+							String name = "";
+							for (int i = 1; i < args.length; i++) {
+								name += " " + args[i];
+							}
+							name = name.trim().replace(".", " ");
+							if (core.getConfig().contains("holidays." + name)) {
+								core.getConfig().set("holidays." + name, null);
+								core.saveConfig();
+								player.sendMessage(tc2 + "Poistettiin juhlapäivä!");
+							}
+							else {
+								player.sendMessage(tc3 + "Tuon nimistä juhlapäivää ei ole!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/juhlapäivät poista <nimi>");
+						}
+					}
+					else {
+						player.sendMessage(usage + "/juhlapäivät lista/lisää/poista");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/juhlapäivät lista/lisää/poista");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
 			}
 			return true;
 		}

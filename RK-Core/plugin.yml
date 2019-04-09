@@ -70,6 +70,10 @@ commands:
     tilaviesti:
     status:
     kompassi:
+    kalenteri:
+    päivämäärä:
+    juhlapäivä:
+    juhlapäivät:
     lähellä:
     near:
     spawn:
