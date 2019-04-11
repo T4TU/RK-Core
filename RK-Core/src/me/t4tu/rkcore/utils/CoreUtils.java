@@ -1284,6 +1284,32 @@ public class CoreUtils {
 		plugin.saveConfig();
 	}
 	
+	public static int getHourOfDay(long millis) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+		calendar.setTimeInMillis(millis);
+		return calendar.get(Calendar.HOUR_OF_DAY);
+	}
+	
+	public static long getNextMorningTime(long millis) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+		calendar.setTimeInMillis(millis);
+		calendar.set(Calendar.HOUR_OF_DAY, 7);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		if (calendar.getTimeInMillis() < millis) {
+			if (calendar.get(Calendar.DAY_OF_YEAR) == calendar.getActualMaximum(Calendar.DAY_OF_YEAR)) {
+				calendar.set(Calendar.DAY_OF_YEAR, 1);
+			}
+			else {
+				calendar.set(Calendar.DAY_OF_YEAR, calendar.get(Calendar.DAY_OF_YEAR) + 1);
+			}
+		}
+		return calendar.getTimeInMillis();
+	}
+	
 	public static long getMillisecondsFromStartOfDay(long millis) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeZone(TimeZone.getTimeZone("GMT+0"));
@@ -1328,16 +1354,16 @@ public class CoreUtils {
 			}
 			
 			String endString;
-			if (hours >= 24) {
+			if (hours >= 23) {
 				endString = "yöllä";
 			}
-			else if (hours >= 18) {
+			else if (hours >= 17) {
 				endString = "illalla";
 			}
-			else if (hours >= 12) {
+			else if (hours >= 11) {
 				endString = "päivällä";
 			}
-			else if (hours >= 6) {
+			else if (hours >= 5) {
 				endString = "aamulla";
 			}
 			else {

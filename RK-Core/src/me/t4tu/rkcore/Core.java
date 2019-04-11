@@ -41,7 +41,8 @@ public class Core extends JavaPlugin {
 	private Tutorial tutorial;
 	private Map<String, Long> ontimes = new HashMap<String, Long>();
 	private long ingameTime;
-	private boolean timeHalted;
+	private boolean timeHalted = false;
+	private int sleepCounter = 0;
 	
 	@Override
 	public void onEnable() {
@@ -483,6 +484,51 @@ public class Core extends JavaPlugin {
 							seconds = ontimes.get(player.getUniqueId().toString());
 						}
 						ontimes.put(player.getUniqueId().toString(), seconds + 1);
+					}
+				}
+				
+				// nukkuminen
+				
+				int playersSleeping = 0;
+				int playersNeededToSleep = Bukkit.getWorlds().get(0).getPlayers().size();
+				for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
+					if (player.isSleeping()) {
+						playersSleeping++;
+					}
+				}
+				for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
+					if (player.isSleeping()) {
+						player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§6" + playersSleeping + "§e/§6" + playersNeededToSleep + "§e pelaajaa nukkumassa"));
+					}
+				}
+				if (playersSleeping >= playersNeededToSleep) {
+					sleepCounter++;
+				}
+				else {
+					sleepCounter = 0;
+				}
+				if (sleepCounter >= 3) {
+					if (CoreUtils.getHourOfDay(ingameTime) < 19 && (Bukkit.getWorlds().get(0).hasStorm() || Bukkit.getWorlds().get(0).isThundering())) {
+						ingameTime = ingameTime + 3600000;
+						Bukkit.getWorlds().get(0).setStorm(false);
+						Bukkit.getWorlds().get(0).setThundering(false);
+						for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
+							if (player.isSleeping()) {
+								player.wakeup(true);
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit päiväunet, hypättiin sateen yli."));
+							}
+						}
+					}
+					else {
+						ingameTime = CoreUtils.getNextMorningTime(ingameTime);
+						Bukkit.getWorlds().get(0).setStorm(false);
+						Bukkit.getWorlds().get(0).setThundering(false);
+						for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
+							if (player.isSleeping()) {
+								player.wakeup(true);
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit yöunet, hypättiin yön yli."));
+							}
+						}
 					}
 				}
 			}
