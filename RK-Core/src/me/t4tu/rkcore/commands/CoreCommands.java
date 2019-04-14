@@ -2830,7 +2830,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 					else {
 						
-						InventoryGUI gui = new InventoryGUI(27, "Valitse määränpääsi...");
+						InventoryGUI gui = new InventoryGUI(45, "Valitse määränpääsi...");
 						
 						gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§a********** (Spawn)", Arrays.asList("" , 
 								"§7§o********** on koko valtakunnan", "§7§okeskus. Korkeiden muurien takana", 
@@ -2868,9 +2868,9 @@ public class CoreCommands implements CommandExecutor {
 						}
 						
 						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix1 + "************", Arrays.asList("" , 
-								"§7§o************ on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu laajoista", 
-								"§7§opelloistaan ja suuresta satamastaan. Se", "§7§oon myös valtakunnan kaupankäynnin keskus.", 
-								"", actionText1), 1), 12, new InventoryGUIAction() {
+								"§7§o************ on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu", 
+								"§7§olaajoista pelloistaan ja suuresta", "§7§osatamastaan. Se on myös valtakunnan", 
+								"§7§okaupankäynnin keskus.", "", actionText1), 1), 12, new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
 								gui.close(player);
@@ -2895,6 +2895,27 @@ public class CoreCommands implements CommandExecutor {
 							public void onClick() {
 								gui.close(player);
 								player.performCommand("matkusta kylä3"); // TODO
+							}
+						});
+						gui.addItem(CoreUtils.getItem(Material.NETHERRACK, "§aNether-maailma", Arrays.asList("" , 
+								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
+								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", "§a » Teleporttaa klikkaamalla!"), 1), 30, 
+								new InventoryGUIAction() {
+							public void onClickAsync() { }
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("matkusta nether");
+							}
+						});
+						gui.addItem(CoreUtils.getItem(Material.END_STONE, "§aEnd-maailma", Arrays.asList("" , 
+								"§7§oHuomaa, että palvelimella on §lkaksi", "§7§oEnd-maailmaa. Tähän maailmaan ei spawnaa", 
+								"§7§oEnder Dragonia eikä End-kaupunkeja.", "§7§oToisesta End-maailmasta poiketen tänne", 
+								"§7§orakentamasi rakennelmat ovat pysyviä.", "", "§a » Teleporttaa klikkaamalla!"), 1), 32, 
+								new InventoryGUIAction() {
+							public void onClickAsync() { }
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("matkusta end");
 							}
 						});
 						
