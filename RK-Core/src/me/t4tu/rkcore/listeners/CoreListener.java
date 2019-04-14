@@ -580,7 +580,7 @@ public class CoreListener implements Listener {
 					
 					// MOTD
 					
-					if (!core.getConfig().getBoolean("motd.seen." + name)) {
+					if (!core.getConfig().getBoolean("motd.seen." + name) && core.getConfig().contains("motd.motd")) {
 						new BukkitRunnable() {
 							public void run() {
 								player.performCommand("motd");
