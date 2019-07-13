@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -13,6 +12,7 @@ import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.libs.org.apache.commons.io.IOUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -172,10 +172,11 @@ public class PunishmentCommands implements CommandExecutor {
 								logAction(ChatColor.stripColor(broadcastMessage));
 								
 								String type = "mute";
+								String duration = "0";
 								String time = "" + System.currentTimeMillis();
 								String muter = sender.getName();
-								MySQLUtils.set("INSERT INTO player_mute (uuid, name, muter, reason, time) VALUES (?, ?, ?, ?, ?)", 
-										uuid, name, muter, reason, time);
+								MySQLUtils.set("INSERT INTO player_mute (uuid, name, muter, reason, duration, time) VALUES (?, ?, ?, ?, ?, ?)", 
+										uuid, name, muter, reason, duration, time);
 								MySQLUtils.set("INSERT INTO player_history (uuid, name, type, giver, reason, time) VALUES (?, ?, ?, ?, ?, ?)", 
 										uuid, name, type, muter, reason, time);
 							}

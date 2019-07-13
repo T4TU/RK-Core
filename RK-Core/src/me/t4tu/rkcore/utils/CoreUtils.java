@@ -26,12 +26,15 @@ import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftMetaBook;
+import org.bukkit.craftbukkit.v1_14_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_14_R1.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_14_R1.inventory.CraftMetaBook;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.AbstractHorse;
 import org.bukkit.entity.Donkey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Llama;
 import org.bukkit.entity.Mule;
 import org.bukkit.entity.Player;
@@ -42,6 +45,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
@@ -49,14 +53,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.utility.MinecraftReflection;
-import com.comphenix.protocol.wrappers.MinecraftKey;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import me.t4tu.rkcore.Core;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -66,8 +62,14 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
-import net.minecraft.server.v1_13_R2.IChatBaseComponent;
-import net.minecraft.server.v1_13_R2.IChatBaseComponent.ChatSerializer;
+import net.minecraft.server.v1_14_R1.BlockPosition;
+import net.minecraft.server.v1_14_R1.DataWatcher;
+import net.minecraft.server.v1_14_R1.DataWatcherRegistry;
+import net.minecraft.server.v1_14_R1.EntityItemFrame;
+import net.minecraft.server.v1_14_R1.EnumDirection;
+import net.minecraft.server.v1_14_R1.IChatBaseComponent;
+import net.minecraft.server.v1_14_R1.PacketPlayOutEntityMetadata;
+import net.minecraft.server.v1_14_R1.IChatBaseComponent.ChatSerializer;
 
 public class CoreUtils {
 	
@@ -482,6 +484,10 @@ public class CoreUtils {
 		return item;
 	}
 	
+	public static void startTutorial(Player player) {
+		core.getTutorial().startTutorial(player);
+	}
+	
 	public static void updateVanish() {
 		for (Player pl : Bukkit.getOnlinePlayers()) {
 			for (Player pla : Bukkit.getOnlinePlayers()) {
@@ -774,18 +780,15 @@ public class CoreUtils {
 		return bar1 + bar2;
 	}
 	
-	// TODO
+	public static boolean isNPC(Entity e) {
+		if (e.hasMetadata("NPC") || e.getScoreboardTags().contains("RK-NPC")) {
+			return true;
+		}
+		return false;
+	}
+	
 	public static boolean isNPCAndNamed(Entity e, String s) {
-//		if (e.hasMetadata("NPC")) {
-//			if (CitizensAPI.getNPCRegistry().isNPC(e)) {
-//				NPC npc = CitizensAPI.getNPCRegistry().getNPC(e);
-//				if (npc.getFullName().equals(s)) {
-//					return true;
-//				}
-//			}
-//		}
-//		return false;
-		if (e.hasMetadata("NPC") && e.getCustomName() != null && e.getCustomName().equals(s)) {
+		if ((e.hasMetadata("NPC") || e.getScoreboardTags().contains("RK-NPC")) && e.getCustomName() != null && e.getCustomName().equals(s)) {
 			return true;
 		}
 		return false;
@@ -954,41 +957,31 @@ public class CoreUtils {
 	}
 	
 	public static void openBook(Player p, String title, String author, String... pages) {
-		int slot = p.getInventory().getHeldItemSlot();
-		ItemStack old = p.getInventory().getItem(slot);
-		p.getInventory().setItem(slot, getBook(title, author, pages));
-		try {
-			PacketContainer pc = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.CUSTOM_PAYLOAD);
-			pc.getModifier().writeDefaults();
-			ByteBuf bf = Unpooled.buffer(256);
-			bf.setByte(0, (byte) 0);
-			bf.writerIndex(1);
-			pc.getModifier().write(1, MinecraftReflection.getPacketDataSerializer(bf));
-			pc.getMinecraftKeys().write(0, new MinecraftKey("book_open"));
-			ProtocolLibrary.getProtocolManager().sendServerPacket(p, pc);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		p.getInventory().setItem(slot, old);
+		p.openBook(getBook(title, author, pages));
 	}
 	
 	public static void openBookJson(Player p, String title, String author, BaseComponent...components) {
-		int slot = p.getInventory().getHeldItemSlot();
-		ItemStack old = p.getInventory().getItem(slot);
-		p.getInventory().setItem(slot, getBookJson(title, author, components));
-		try {
-			PacketContainer pc = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.CUSTOM_PAYLOAD);
-			pc.getModifier().writeDefaults();
-			ByteBuf bf = Unpooled.buffer(256);
-			bf.setByte(0, (byte) 0);
-			bf.writerIndex(1);
-			pc.getModifier().write(1, MinecraftReflection.getPacketDataSerializer(bf));
-			pc.getMinecraftKeys().write(0, new MinecraftKey("book_open"));
-			ProtocolLibrary.getProtocolManager().sendServerPacket(p, pc);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		p.getInventory().setItem(slot, old);
+		p.openBook(getBookJson(title, author, components));
+	}
+	
+	@SuppressWarnings("deprecation")
+	public static void sendItemFrameMapPacket(Player player, ItemFrame frame, int mapId) {
+		
+		Location location = frame.getLocation();
+		
+		EntityItemFrame entityFrame = new EntityItemFrame(((CraftPlayer) player).getHandle().getWorld(), 
+				new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()), EnumDirection.valueOf(frame.getFacing().toString()));
+		
+		ItemStack map = new ItemStack(Material.FILLED_MAP);
+		MapMeta meta = (MapMeta) map.getItemMeta();
+		meta.setMapId(mapId);
+		map.setItemMeta(meta);
+		
+		DataWatcher dataWatcher = entityFrame.getDataWatcher();
+		dataWatcher.set(DataWatcherRegistry.g.a(7), CraftItemStack.asNMSCopy(map));
+		
+		PacketPlayOutEntityMetadata packet = new PacketPlayOutEntityMetadata(frame.getEntityId(), dataWatcher, true);
+		((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
 	}
 	
 	public static boolean isNotAir(ItemStack item) {
@@ -1622,7 +1615,38 @@ public class CoreUtils {
 		return s;
 	}
 	
-	public static TextComponent getAcceptDeny(String beginning, String space, String acceptDescription, String denyDescription, 
+	public static float scaleYaw(float yaw) {
+		while (yaw >= 360) {
+			yaw -= 360;
+		}
+		while (yaw < 0) {
+			yaw += 360;
+		}
+		return yaw;
+	}
+	
+	public static List<String> newlineLore(List<String> oldLore) {
+		List<String> newLore = new ArrayList<String>();
+		for (String line : oldLore) {
+			String[] parts = line.split("\n");
+			if (parts.length > 1) {
+				for (String part : parts) {
+					newLore.add(part);
+				}
+			}
+			else {
+				newLore.add(line);
+			}
+		}
+		return newLore;
+	}
+	
+	public static TextComponent getAcceptDeny(String beginning, String space, String accept, String deny, String acceptDescription, String denyDescription, 
+			String acceptCommand, String denyCommand) {
+		return getAcceptDeny(beginning, space, "", accept, deny, acceptDescription, denyDescription, acceptCommand, denyCommand);
+	}
+	
+	public static TextComponent getAcceptDeny(String beginning, String space, String ending, String accept, String deny, String acceptDescription, String denyDescription, 
 			String acceptCommand, String denyCommand) {
 		
 		ClickEvent acceptClickEvent = new ClickEvent(Action.RUN_COMMAND, acceptCommand);
@@ -1633,11 +1657,12 @@ public class CoreUtils {
 				new ComponentBuilder(denyDescription).create());
 		
 		TextComponent baseComponent = new TextComponent(beginning);
-		BaseComponent[] acceptComponents = new ComponentBuilder("§a§l[HYVÄKSY]")
+		BaseComponent[] acceptComponents = new ComponentBuilder(accept)
 				.event(acceptClickEvent).event(acceptHoverEvent).create();
 		BaseComponent[] spaceComponents = new ComponentBuilder(space).create();
-		BaseComponent[] denyComponents = new ComponentBuilder("§c§l[HYLKÄÄ]")
+		BaseComponent[] denyComponents = new ComponentBuilder(deny)
 				.event(denyClickEvent).event(denyHoverEvent).create();
+		BaseComponent[] endingComponents = new ComponentBuilder(ending).create();
 		
 		for (BaseComponent component : acceptComponents) {
 			baseComponent.addExtra(component);
@@ -1646,6 +1671,9 @@ public class CoreUtils {
 			baseComponent.addExtra(component);
 		}
 		for (BaseComponent component : denyComponents) {
+			baseComponent.addExtra(component);
+		}
+		for (BaseComponent component : endingComponents) {
 			baseComponent.addExtra(component);
 		}
 		

@@ -107,7 +107,6 @@ public class MySQLUtils {
 			preparedStatement.close();
 			if (b) {
 				b = false;
-				Bukkit.getConsoleSender().sendMessage("Ongelma näyttäisi ratkenneen yhdistämällä uudelleen!");
 			}
 			if (!resultRows.isEmpty()) {
 				return new MySQLResult(resultRows);
@@ -116,18 +115,23 @@ public class MySQLUtils {
 				return null;
 			}
 		}
-		catch (SQLException e) {
-			e.printStackTrace();
-			if (!b) {
-				b = true;
-				Bukkit.getConsoleSender().sendMessage("MySQL-virhe! Yritetään yhdistää tietokantaan uudelleen...");
-				closeConnection();
-				openConnection();
-				return get(query, strings);
+		catch (Exception e) {
+			if (core.isNoSQL()) {
+				Bukkit.getConsoleSender().sendMessage("SQL-kysely epäonnistui, palvelin on rajoitetussa tilassa.");
+				return null;
 			}
 			else {
-				Bukkit.getConsoleSender().sendMessage("Ongelma ei ratkennut yhdistämällä uudelleen...");
-				return null;
+				e.printStackTrace();
+				if (!b) {
+					b = true;
+					Bukkit.getConsoleSender().sendMessage("MySQL-virhe! Yritetään yhdistää tietokantaan uudelleen...");
+					closeConnection();
+					openConnection();
+					return get(query, strings);
+				}
+				else {
+					return null;
+				}
 			}
 		}
 	}
@@ -149,22 +153,26 @@ public class MySQLUtils {
 			preparedStatement.close();
 			if (b) {
 				b = false;
-				Bukkit.getConsoleSender().sendMessage("Ongelma näyttäisi ratkenneen yhdistämällä uudelleen!");
 			}
 			return i;
 		}
-		catch (SQLException e) {
-			e.printStackTrace();
-			if (!b) {
-				b = true;
-				Bukkit.getConsoleSender().sendMessage("MySQL-virhe! Yritetään yhdistää tietokantaan uudelleen...");
-				closeConnection();
-				openConnection();
-				return set(query, strings);
+		catch (Exception e) {
+			if (core.isNoSQL()) {
+				Bukkit.getConsoleSender().sendMessage("SQL-kysely epäonnistui, palvelin on rajoitetussa tilassa.");
+				return 0;
 			}
 			else {
-				Bukkit.getConsoleSender().sendMessage("Ongelma ei ratkennut yhdistämällä uudelleen...");
-				return 0;
+				e.printStackTrace();
+				if (!b) {
+					b = true;
+					Bukkit.getConsoleSender().sendMessage("MySQL-virhe! Yritetään yhdistää tietokantaan uudelleen...");
+					closeConnection();
+					openConnection();
+					return set(query, strings);
+				}
+				else {
+					return 0;
+				}
 			}
 		}
 	}

@@ -6,6 +6,7 @@ depend: [ProtocolLib, LangUtils]
 api-version: 1.13
 commands:
     reconnect:
+    setupmysql:
     updateplayerdata:
     playerlookup:
     kickall:
@@ -47,6 +48,9 @@ commands:
     ?:
     säännöt:
     rules:
+    discord:
+    bugi:
+    bug:
     s:
     sa:
     a:
@@ -123,6 +127,8 @@ commands:
     lempinimi:
     nick:
     fix:
+    name:
+    lore:
     setamount:
     pt:
     lightfix:
@@ -144,9 +150,11 @@ commands:
     holo:
     armorstand:
     stand:
+    vnpc:
     tutorial:
     tardis:
     musiikkikauppa:
+    matka:
     rankaise:
     h:
     huomautus:

@@ -30,6 +30,7 @@ import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -45,6 +46,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.VillagerCareerChangeEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
@@ -60,11 +62,14 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.spigotmc.event.entity.EntityDismountEvent;
@@ -90,6 +95,7 @@ public class CoreListener implements Listener {
 	private List<String> stunCooldown;
 	private List<String> cannonCooldown;
 	private List<Location> fireSpreadCooldown;
+	private List<Villager> npcLook;
 	
 	public CoreListener(Core core) {
 		this.core = core;
@@ -97,6 +103,7 @@ public class CoreListener implements Listener {
 		stunCooldown = new ArrayList<String>();
 		cannonCooldown = new ArrayList<String>();
 		fireSpreadCooldown = new ArrayList<Location>();
+		npcLook = new ArrayList<Villager>();
 		Bukkit.getPluginManager().registerEvents(this, core);
 	}
 	
@@ -110,6 +117,10 @@ public class CoreListener implements Listener {
 	
 	public List<Location> getFireSpreadCooldown() {
 		return fireSpreadCooldown;
+	}
+	
+	public List<Villager> getNPCLook() {
+		return npcLook;
 	}
 	
 	///////////////////////////////////////////////////////////////
@@ -275,7 +286,7 @@ public class CoreListener implements Listener {
 		
 		// jos IP-osoite estetty
 		
-		if (MySQLUtils.contains("SELECT * FROM ipbans WHERE ip=?", ip)) {
+		if (!core.isNoSQL() && MySQLUtils.contains("SELECT * FROM ipbans WHERE ip=?", ip)) {
 			String joined_uuids = MySQLUtils.get("SELECT * FROM ipbans WHERE ip=?", ip).getStringNotNull(0, "joined_uuids");
 			if (!joined_uuids.contains(uuid)) {
 				joined_uuids = joined_uuids + uuid + ";";
@@ -297,6 +308,10 @@ public class CoreListener implements Listener {
 			e.disallow(Result.KICK_OTHER, "§c§m----------§c§l Huoltokatko §c§m----------\n§c\n§cPalvelimella suoritetaan "
 					+ "huoltotoimenpiteitä, ja tämän takia palvelimelle liittyminen on väliaikaisesti estetty."
 					+ "\n§c\n§c§m--------------------------------");
+			return;
+		}
+		
+		if (core.isNoSQL()) {
 			return;
 		}
 		
@@ -375,7 +390,29 @@ public class CoreListener implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onPlayerJoin(PlayerJoinEvent e) {
 		
+		String tc1 = CoreUtils.getHighlightColor();
+		String tc2 = CoreUtils.getBaseColor();
+		
 		e.setJoinMessage(null);
+		
+		if (core.isNoSQL()) {
+			Player player = e.getPlayer();
+			String name = player.getName();
+			core.getConfig().set("users." + name + ".chat_prefix", "");
+			core.getConfig().set("users." + name + ".chat_color", "&7");
+			core.getConfig().set("users." + name + ".rank", "default");
+			core.getConfig().set("users." + name + ".status", "<tilaviesti>");
+			core.saveConfig();
+			for (Player p : Bukkit.getOnlinePlayers()) {
+					p.sendMessage("§7" + name + " liittyi palvelimelle.");
+			}
+			CoreUtils.updatePermissions(player);
+			CoreUtils.updateTabForAll();
+			CoreUtils.updateVanish();
+			CoreUtils.setAfkCounter(player, 0);
+			player.sendMessage("§cEi yhteyttä MySQL-tietokantaan! Palvelin on rajoitetussa tilassa.");
+			return;
+		}
 		
 		new BukkitRunnable() {
 			
@@ -388,9 +425,6 @@ public class CoreListener implements Listener {
 			String uuid = player.getUniqueId().toString();
 			String uuidWithoutDashes = uuid.replace("-", "");
 			String ip = player.getAddress().toString().substring(1).split(":")[0];
-			
-			String tc1 = CoreUtils.getHighlightColor();
-			String tc2 = CoreUtils.getBaseColor();
 			
 			public void run() {
 				
@@ -588,6 +622,25 @@ public class CoreListener implements Listener {
 						}.runTask(core);
 					}
 					
+					// tiketit
+					
+					if (CoreUtils.hasRank(player, "valvoja")) {
+						int counter = 0;
+						if (core.getConfig().getConfigurationSection("tickets") == null) {
+							return;
+						}
+						for (String s : core.getConfig().getConfigurationSection("tickets").getKeys(false)) {
+							if (!core.getConfig().getBoolean("tickets." + s + ".suljettu")) {
+								counter++;
+							}
+						}
+						if (counter > 0) {
+							player.sendMessage("");
+							player.sendMessage(" §6§lHuomio! §eYhteensä §6" + counter + "§e tikettiä on hoitamatta!");
+							player.sendMessage("");
+						}
+					}
+					
 					// posti
 					
 					new BukkitRunnable() {
@@ -665,6 +718,7 @@ public class CoreListener implements Listener {
 						new BukkitRunnable() {
 							public void run() {
 								player.teleport(startpoint);
+								player.setGameMode(GameMode.SURVIVAL);
 							}
 						}.runTask(core);
 					}
@@ -694,6 +748,50 @@ public class CoreListener implements Listener {
 		String tc2 = CoreUtils.getBaseColor();
 		
 		e.setQuitMessage(null);
+		
+		if (core.getCoreCommands().getTravelingPlayers().contains(e.getPlayer().getName())) {
+			e.getPlayer().setGameMode(GameMode.SURVIVAL);
+			e.getPlayer().teleport(e.getPlayer().getWorld().getSpawnLocation());
+		}
+		
+		if (core.isNoSQL()) {
+			Player player = e.getPlayer();
+			String name = player.getName();
+			core.getConfig().set("users." + name, null);
+			core.saveConfig();
+			core.getCoreCommands().getVanishedPlayers().remove(player.getName());
+			core.getCoreCommands().getGodPlayers().remove(player.getName());
+			core.getCoreCommands().getSpyPlayers().remove(player.getName());
+			core.getCoreCommands().getCommandSpyPlayers().remove(player.getName());
+			core.getCoreCommands().getMailWritingPlayers().remove(player.getName());
+			CoreUtils.getBuilderPowers().remove(player.getName());
+			CoreUtils.getAdminPowers().remove(player.getName());
+			CoreUtils.getAfkCounter().remove(player.getName());
+			CoreUtils.getHaltAfkCounter().remove(player.getName());
+			core.getCoreCommands().getPermissions().remove(player.getName());
+			CoreUtils.updateVanish();
+			Party party = core.getPartyManager().getPartyOfPlayer(player);
+			if (party != null) {
+				ListIterator<String> iterator = party.getMembers().listIterator();
+				while (iterator.hasNext()) {
+					String member = iterator.next();
+					if (member.equals(player.getUniqueId().toString())) {
+						iterator.remove();
+						for (Player playerMember : party.getMembersAsPlayers()) {
+							playerMember.sendMessage(tc1 + player.getName() + tc2 + " poistui partysta!");
+						}
+						if (party.getMembersAsPlayers().isEmpty()) {
+							core.getPartyManager().getParties().remove(party);
+						}
+						break;
+					}
+				}
+			}
+			for (Player p : Bukkit.getOnlinePlayers()) {
+				p.sendMessage("§7" + name + " poistui palvelimelta.");
+			}
+			return;
+		}
 		
 		new BukkitRunnable() {
 			
@@ -732,6 +830,7 @@ public class CoreListener implements Listener {
 				core.getCoreCommands().getSpyPlayers().remove(player.getName());
 				core.getCoreCommands().getCommandSpyPlayers().remove(player.getName());
 				core.getCoreCommands().getMailWritingPlayers().remove(player.getName());
+				core.getCoreCommands().getTravelingPlayers().remove(player.getName());
 				CoreUtils.getBuilderPowers().remove(player.getName());
 				CoreUtils.getAdminPowers().remove(player.getName());
 				CoreUtils.getAfkCounter().remove(player.getName());
@@ -804,8 +903,8 @@ public class CoreListener implements Listener {
 	@EventHandler
 	public void onGamemodeChange(PlayerGameModeChangeEvent e) {
 		Player player = e.getPlayer();
-		if (((player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE) && (e.getNewGameMode() == GameMode.CREATIVE || e.getNewGameMode() == GameMode.SPECTATOR)) || 
-				((player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) && (e.getNewGameMode() == GameMode.SURVIVAL || e.getNewGameMode() == GameMode.ADVENTURE))) {
+		if (((player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE || player.getGameMode() == GameMode.SPECTATOR) && e.getNewGameMode() == GameMode.CREATIVE) || 
+				(player.getGameMode() == GameMode.CREATIVE && (e.getNewGameMode() == GameMode.SURVIVAL || e.getNewGameMode() == GameMode.ADVENTURE || e.getNewGameMode() == GameMode.SPECTATOR))) {
 			if (core.getConfig().contains("inventories." + player.getUniqueId().toString())) {
 				ItemStack[] contents = CoreUtils.loadInventory(core, "inventories." + player.getUniqueId().toString());
 				CoreUtils.setInventory(core, "inventories." + player.getUniqueId().toString(), player.getInventory().getContents());
@@ -833,6 +932,19 @@ public class CoreListener implements Listener {
 					e.getEntity().teleport(e.getEntity().getLocation().add(0, 1.5, 0));
 				}
 			}.runTask(core);
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onEntityDismount
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onPlayerToggleSneak(PlayerToggleSneakEvent e) {
+		if (core.getCoreCommands().getTravelingPlayers().contains(e.getPlayer().getName())) {
+			e.setCancelled(true);
 		}
 	}
 	
@@ -929,6 +1041,19 @@ public class CoreListener implements Listener {
 	
 	///////////////////////////////////////////////////////////////
 	//
+	//          onVillagerCareerChange
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onVillagerCareerChange(VillagerCareerChangeEvent e) {
+		if (CoreUtils.isNPC(e.getEntity())) {
+			e.setCancelled(true);
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
 	//          onPlayerFoodLevelChange
 	//
 	///////////////////////////////////////////////////////////////
@@ -954,12 +1079,18 @@ public class CoreListener implements Listener {
 			if (core.getCoreCommands().getGodPlayers().contains(e.getEntity().getName())) {
 				e.setCancelled(true);
 			}
+			if (core.getTutorial().getPlayersInTutorial().contains(e.getEntity().getName())) {
+				e.setCancelled(true);
+			}
 		}
 		if (e.getEntity() instanceof ArmorStand) {
 			ArmorStand a = (ArmorStand) e.getEntity();
 			if (a.isCustomNameVisible() && !a.hasAI()) {
 				e.setCancelled(true);
 			}
+		}
+		if (CoreUtils.isNPC(e.getEntity())) {
+			e.setCancelled(true);
 		}
 	}
 	
@@ -1140,18 +1271,21 @@ public class CoreListener implements Listener {
 							else if (cause == DamageCause.PROJECTILE && text.contains("<killer>")) {
 								EntityDamageByEntityEvent event = (EntityDamageByEntityEvent) player.getLastDamageCause();
 								Projectile projectile = (Projectile) event.getDamager();
-								Entity shooter = (Entity) projectile.getShooter();
-								String killer = LanguageHelper.getEntityName(shooter, "fi_fi");
-								if (shooter.getCustomName() != null) {
-									killer = shooter.getCustomName();
-									if (Bukkit.getPluginManager().getPlugin("RK-Mobs") != null) {
-										Mob mob = Mobs.getMobManager().getMob(shooter);
-										if (mob != null) {
-											killer = mob.getDisplayName();
+								ProjectileSource source = projectile.getShooter();
+								if (source instanceof Entity) {
+									Entity shooter = (Entity) source;
+									String killer = LanguageHelper.getEntityName(shooter, "fi_fi");
+									if (shooter.getCustomName() != null) {
+										killer = shooter.getCustomName();
+										if (Bukkit.getPluginManager().getPlugin("RK-Mobs") != null) {
+											Mob mob = Mobs.getMobManager().getMob(shooter);
+											if (mob != null) {
+												killer = mob.getDisplayName();
+											}
 										}
 									}
+									deathNotes.add(text.replace("<victim>", player.getName()).replace("<killer>", killer));
 								}
-								deathNotes.add(text.replace("<victim>", player.getName()).replace("<killer>", killer));
 							}
 							else {
 								deathNotes.add(text.replace("<victim>", player.getName()));
@@ -1195,6 +1329,9 @@ public class CoreListener implements Listener {
 			if (!e.getFrom().getWorld().getName().equals(e.getTo().getWorld().getName()) || e.getFrom().distance(e.getTo()) > 10) {
 				CoreUtils.setLocation(core, "users." + e.getPlayer().getName() + ".back", e.getFrom());
 			}
+		}
+		if (e.getCause() == TeleportCause.SPECTATE) {
+			e.setCancelled(true);
 		}
 	}
 	
@@ -1652,6 +1789,10 @@ public class CoreListener implements Listener {
 		String tc1 = CoreUtils.getHighlightColor();
 		String tc2 = CoreUtils.getBaseColor();
 		
+		if (CoreUtils.isNPC(clickedEntity)) {
+			e.setCancelled(true);
+		}
+		
 		if (clickedEntity instanceof ItemFrame) {
 			ItemFrame frame = (ItemFrame) clickedEntity;
 			ItemStack item = frame.getItem();
@@ -1689,6 +1830,29 @@ public class CoreListener implements Listener {
 						if (party.getMembers().contains(target.getUniqueId().toString())) {
 							player.openInventory(target.getInventory());
 							target.sendMessage("§7§o" + player.getName() + " avasi reppusi.");
+						}
+					}
+				}
+			}
+		}
+		
+		if (!core.getCoreCommands().getTravelingPlayers().contains(player.getName()) && CoreUtils.isNPC(clickedEntity)) {
+			if (e.getHand() == EquipmentSlot.HAND) {
+				if (core.getConfig().getConfigurationSection("trips") != null && 
+						!core.getConfig().getConfigurationSection("trips").getKeys(false).isEmpty()) {
+					for (String s : core.getConfig().getConfigurationSection("trips").getKeys(false)) {
+						String npcName = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + s + ".npc-name"));
+						if (CoreUtils.isNPCAndNamed(clickedEntity, npcName)) {
+							String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + s + ".initial-message"));
+							player.sendMessage("");
+							player.sendMessage(message);
+							player.sendMessage("");
+							player.spigot().sendMessage(CoreUtils.getAcceptDeny("§7 > ", "§7 / ", "§7 < ", "§aKyllä", "§cEi", 
+									"§7Klikkaa vastataksesi \"§aKyllä§7\"", "§7Klikkaa vastataksesi \"§cEi§7\"", 
+									"/matka confirm " + s, "/matka deny " + s));
+							player.sendMessage("");
+							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_AMBIENT, 1, 1);
+							break;
 						}
 					}
 				}

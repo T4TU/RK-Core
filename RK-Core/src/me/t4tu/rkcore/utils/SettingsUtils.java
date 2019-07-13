@@ -25,7 +25,7 @@ public class SettingsUtils {
 	}
 	
 	public static boolean getSetting(Player player, String setting) {
-		return core.getConfig().getBoolean("users." + player.getName() + ".settings." + setting);
+		return core.getConfig().getBoolean("users." + player.getName() + ".settings." + setting, true);
 	}
 	
 	public static void setSetting(Player player, String setting, boolean value) {

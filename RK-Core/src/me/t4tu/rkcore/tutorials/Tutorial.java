@@ -12,6 +12,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -73,7 +74,6 @@ public class Tutorial implements Listener {
 				public void run() {
 					if (!player.isOnline()) {
 						guide.remove();
-						player.setGameMode(GameMode.SURVIVAL);
 						playersInTutorial.remove(player.getName());
 						cancel();
 						return;
@@ -97,9 +97,11 @@ public class Tutorial implements Listener {
 						player.sendTitle("§a§lRoyal Kingdom", "", 20, 40, 20);
 						player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 100, 0.1f);
 					}
-					if (i >= 200 + 100 * tutorialStages.size()) {
+					if (i == 200 + 100 * tutorialStages.size()) {
 						guide.remove();
 						player.setGameMode(GameMode.SURVIVAL);
+					}
+					if (i >= 260 + 100 * tutorialStages.size()) {
 						playersInTutorial.remove(player.getName());
 						new BukkitRunnable() {
 							public void run() {
@@ -109,13 +111,15 @@ public class Tutorial implements Listener {
 						cancel();
 						return;
 					}
-					if (i >= 200 && i % 100 == 0) {
+					if (i >= 200 && i % 100 == 0 && c < tutorialStages.size()) {
 						TutorialStage stage = tutorialStages.get(c);
-						guide.remove();
-						player.teleport(stage.getLocation());
-						guide = spawnGuideAt(stage.getLocation());
-						player.setGameMode(GameMode.SPECTATOR);
-						player.setSpectatorTarget(guide);
+						if (c == 0 || !tutorialStages.get(c - 1).getLocation().equals(stage.getLocation())) {
+							guide.remove();
+							player.teleport(stage.getLocation());
+							guide = spawnGuideAt(stage.getLocation());
+							player.setGameMode(GameMode.SPECTATOR);
+							player.setSpectatorTarget(guide);
+						}
 						player.sendTitle(stage.getTitle(), stage.getSubtitle(), 10, 70, 10);
 						c++;
 					}
@@ -144,6 +148,14 @@ public class Tutorial implements Listener {
 	public void onPlayerToggleSneak(PlayerToggleSneakEvent e) {
 		if (playersInTutorial.contains(e.getPlayer().getName())) {
 			e.setCancelled(true);
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent e) {
+		if (playersInTutorial.contains(e.getPlayer().getName())) {
+			e.setCancelled(true);
+			e.getPlayer().sendMessage(CoreUtils.getErrorBaseColor() + "Et voi käyttää komentoja esittelyn aikana!");
 		}
 	}
 }

@@ -38,6 +38,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -61,11 +62,14 @@ import me.t4tu.rkcore.parties.PartyRequest;
 import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.FriendRequest;
 import me.t4tu.rkcore.utils.GuildRequest;
+import me.t4tu.rkcore.utils.MapAnimation;
+import me.t4tu.rkcore.utils.MySQLCreator;
 import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.ReflectionUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
 import me.t4tu.rkcore.utils.TeleportRequest;
+import me.t4tu.rkeconomy.Economy;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -85,6 +89,7 @@ public class CoreCommands implements CommandExecutor {
 	private List<String> commandSpyPlayers;
 	private List<String> teleportingPlayers;
 	private List<String> powerTools;
+	private List<String> travelingPlayers;
 	private List<Location> tardisBlocks1;
 	private List<Location> tardisBlocks2;
 	private List<Location> tardisBlocks3;
@@ -92,6 +97,7 @@ public class CoreCommands implements CommandExecutor {
 	private Map<String, PermissionAttachment> permissions;
 	private Map<String, ArmorStand> selectedHolograms;
 	private Map<String, ArmorStand> selectedArmorstands;
+	private Map<String, Villager> selectedNPCs;
 	private Block b1;
 	private Block b2;
 	private int autoRestartTaskId;
@@ -109,6 +115,7 @@ public class CoreCommands implements CommandExecutor {
 		commandSpyPlayers = new ArrayList<String>();
 		teleportingPlayers = new ArrayList<String>();
 		powerTools = new ArrayList<String>();
+		travelingPlayers = new ArrayList<String>();
 		tardisBlocks1 = new ArrayList<Location>();
 		tardisBlocks2 = new ArrayList<Location>();
 		tardisBlocks3 = new ArrayList<Location>();
@@ -116,6 +123,7 @@ public class CoreCommands implements CommandExecutor {
 		permissions = new HashMap<String, PermissionAttachment>();
 		selectedHolograms = new HashMap<String, ArmorStand>();
 		selectedArmorstands = new HashMap<String, ArmorStand>();
+		selectedNPCs = new HashMap<String, Villager>();
 		b1 = null;
 		b2 = null;
 		autoRestartTaskId = -1;
@@ -161,6 +169,10 @@ public class CoreCommands implements CommandExecutor {
 	
 	public List<String> getPowerTools() {
 		return powerTools;
+	}
+	
+	public List<String> getTravelingPlayers() {
+		return travelingPlayers;
 	}
 	
 	public List<Location> getTardisBlocks(int i) {
@@ -246,6 +258,25 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// setupmysql
+		
+		if (cmd.getName().equalsIgnoreCase("setupmysql")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 1 && args[0].equalsIgnoreCase("confirm")) {
+					sender.sendMessage(tc2 + "Rakennetaan tietokantaa...");
+					MySQLCreator.setupMySQL();
+					sender.sendMessage(tc2 + "Valmis!");
+				}
+				else {
+					sender.sendMessage(tc2 + "Oletko varma? Vahvista kirjoittamalla " + tc1 + "/setupmysql confirm" + tc2 + ".");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
 		// updateplayerdata
 		
 		if (cmd.getName().equalsIgnoreCase("updateplayerdata")) {
@@ -270,7 +301,11 @@ public class CoreCommands implements CommandExecutor {
 								CoreUtils.updatePermissions(target);
 								CoreUtils.updateNotes(target);
 								CoreUtils.updateTabForAll();
-								target.updateCommands();
+								new BukkitRunnable() {
+									public void run() {
+										target.updateCommands();
+									}
+								}.runTask(core);
 								sender.sendMessage(tc2 + "Päivitettiin pelaajan " + tc1 + name + tc2 + " tiedot!");
 							}
 						}.runTaskAsynchronously(core);
@@ -1013,7 +1048,11 @@ public class CoreCommands implements CommandExecutor {
 									core.getConfig().set("users." + player.getName() + ".rank", newInfoData.getString(0, "rank"));
 									core.saveConfig();
 									CoreUtils.updateTabForAll();
-									player.updateCommands();
+									new BukkitRunnable() {
+										public void run() {
+											player.updateCommands();
+										}
+									}.runTask(core);
 								}
 								String newPrefix = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_prefix"));
 								String newColor = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_color"));
@@ -1758,114 +1797,119 @@ public class CoreCommands implements CommandExecutor {
 						MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE name=?", args[0]);
 						if (infoData != null && statsData != null) {
 							
-							String id = infoData.getString(0, "id");
-							String name = infoData.getString(0, "name");
-							String uuid = infoData.getString(0, "uuid");
-							String ip = infoData.getString(0, "ip");
-							String rank = infoData.getString(0, "rank");
-							String status = statsData.getStringNotNull(0, "status");
-							long seconds = infoData.getLong(0, "seconds");
-							long lastSeen = infoData.getLong(0, "last_seen");
-							if (core.getOntimes().containsKey(uuid)) {
-								seconds += core.getOntimes().get(uuid);
-							}
-							String timePlayed = CoreUtils.getHoursAndMinsFromMillis(seconds * 1000);
-							SimpleDateFormat f = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-							String lastTimeOnline = f.format(new Date(lastSeen + CoreUtils.TIME_OFFSET));
-							String[] wrappedStatus = ChatPaginator.wordWrap(status, 30);
-							
-							InventoryGUI gui = new InventoryGUI(54, "Profiili: " + name);
-							
-							List<String> lore = new ArrayList<String>();
-							lore.add("");
-							lore.add("§aArvo: §7" + CoreUtils.firstUpperCase(rank).replace("Default", "Pelaaja"));
-							lore.add("§aPelannut: §7" + timePlayed);
-							if (Bukkit.getPlayerExact(name) != null) {
-								lore.add("§aViimeksi nähty: §7Nyt");
-							}
-							else {
-								lore.add("§aViimeksi nähty: §7" + lastTimeOnline);
-							}
-							lore.add("§aTilaviesti:");
-							lore.add("");
-							for (int i = 0; i < wrappedStatus.length; i++) {
-								lore.add("§7§o" + ChatColor.stripColor(wrappedStatus[i]));
-							}
-							
-							gui.addItem(CoreUtils.getSkull("§a" + name, lore, name), 13, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() { }
-							});
-							
-							List<String> comingSoon = Arrays.asList("", "§7Tulossa pian...");
-							
-							gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§aAmmatti", comingSoon, 1), 29, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() { }
-							});
-							
-							gui.addItem(CoreUtils.getItem(Material.DIAMOND, "§aSaavutukset", comingSoon, 1), 31, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() { }
-							});
-							
-							gui.addItem(CoreUtils.getItem(Material.TOTEM_OF_UNDYING, "§aTilastot", comingSoon, 1), 33, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() { }
-							});
-							
-							gui.addItem(CoreUtils.getItem(Material.BARRIER, "§cSulje valikko", null, 1), 49, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() {
-									gui.close(player);
-									player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+							new BukkitRunnable() {
+								public void run() {
+									
+									String id = infoData.getString(0, "id");
+									String name = infoData.getString(0, "name");
+									String uuid = infoData.getString(0, "uuid");
+									String ip = infoData.getString(0, "ip");
+									String rank = infoData.getString(0, "rank");
+									String status = statsData.getStringNotNull(0, "status");
+									long seconds = infoData.getLong(0, "seconds");
+									long lastSeen = infoData.getLong(0, "last_seen");
+									if (core.getOntimes().containsKey(uuid)) {
+										seconds += core.getOntimes().get(uuid);
+									}
+									String timePlayed = CoreUtils.getHoursAndMinsFromMillis(seconds * 1000);
+									SimpleDateFormat f = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+									String lastTimeOnline = f.format(new Date(lastSeen + CoreUtils.TIME_OFFSET));
+									String[] wrappedStatus = ChatPaginator.wordWrap(status, 30);
+									
+									InventoryGUI gui = new InventoryGUI(54, "Profiili: " + name);
+									
+									List<String> lore = new ArrayList<String>();
+									lore.add("");
+									lore.add("§aArvo: §7" + CoreUtils.firstUpperCase(rank).replace("Default", "Pelaaja"));
+									lore.add("§aPelannut: §7" + timePlayed);
+									if (Bukkit.getPlayerExact(name) != null) {
+										lore.add("§aViimeksi nähty: §7Nyt");
+									}
+									else {
+										lore.add("§aViimeksi nähty: §7" + lastTimeOnline);
+									}
+									lore.add("§aTilaviesti:");
+									lore.add("");
+									for (int i = 0; i < wrappedStatus.length; i++) {
+										lore.add("§7§o" + ChatColor.stripColor(wrappedStatus[i]));
+									}
+									
+									gui.addItem(CoreUtils.getSkull("§a" + name, lore, name), 13, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									List<String> comingSoon = Arrays.asList("", "§7Tulossa pian...");
+									
+									gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§aAmmatti", comingSoon, 1), 29, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.DIAMOND, "§aSaavutukset", comingSoon, 1), 31, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.TOTEM_OF_UNDYING, "§aTilastot", comingSoon, 1), 33, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.BARRIER, "§cSulje valikko", null, 1), 49, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() {
+											gui.close(player);
+											player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+										}
+									});
+									
+									if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+										List<String> adminLore = new ArrayList<String>();
+										adminLore.add("");
+										adminLore.add("§aID: §7" + id);
+										adminLore.add("§aUUID: §7" + uuid);
+										adminLore.add("§aIP: §7" + ip);
+										adminLore.add("");
+										adminLore.add("§7 » Näytä huomautukset klikkaamalla!");
+										gui.addItem(CoreUtils.getItem(Material.PAPER, "§aYlläpitotiedot", adminLore, 1), 11, new InventoryGUIAction() {
+											public void onClickAsync() { }
+											public void onClick() {
+												gui.close(player);
+												player.performCommand("huomautus " + name);
+											}
+										});
+									}
+									else if (CoreUtils.hasRank(player, "valvoja")) {
+										List<String> adminLore = new ArrayList<String>();
+										adminLore.add("");
+										adminLore.add("§7 » Näytä huomautukset klikkaamalla!");
+										gui.addItem(CoreUtils.getItem(Material.PAPER, "§aHuomautukset", adminLore, 1), 11, new InventoryGUIAction() {
+											public void onClickAsync() { }
+											public void onClick() {
+												gui.close(player);
+												player.performCommand("huomautus " + name);
+											}
+										});
+									}
+									
+									if (CoreUtils.hasRank(player, "valvoja")) {
+										List<String> moderatorLore = new ArrayList<String>();
+										moderatorLore.add("");
+										moderatorLore.add("§7 » Näytä tiedot klikkaamalla!");
+										gui.addItem(CoreUtils.getItem(Material.WRITABLE_BOOK, "§aRangaistustiedot", moderatorLore, 1), 15, 
+												new InventoryGUIAction() {
+											public void onClickAsync() { }
+											public void onClick() {
+												gui.close(player);
+												player.performCommand("rankaise " + name);
+											}
+										});
+									}
+									
+									gui.open(player);
 								}
-							});
-							
-							if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-								List<String> adminLore = new ArrayList<String>();
-								adminLore.add("");
-								adminLore.add("§aID: §7" + id);
-								adminLore.add("§aUUID: §7" + uuid);
-								adminLore.add("§aIP: §7" + ip);
-								adminLore.add("");
-								adminLore.add("§7 » Näytä huomautukset klikkaamalla!");
-								gui.addItem(CoreUtils.getItem(Material.PAPER, "§aYlläpitotiedot", adminLore, 1), 11, new InventoryGUIAction() {
-									public void onClickAsync() { }
-									public void onClick() {
-										gui.close(player);
-										player.performCommand("huomautus " + name);
-									}
-								});
-							}
-							else if (CoreUtils.hasRank(player, "valvoja")) {
-								List<String> adminLore = new ArrayList<String>();
-								adminLore.add("");
-								adminLore.add("§7 » Näytä huomautukset klikkaamalla!");
-								gui.addItem(CoreUtils.getItem(Material.PAPER, "§aHuomautukset", adminLore, 1), 11, new InventoryGUIAction() {
-									public void onClickAsync() { }
-									public void onClick() {
-										gui.close(player);
-										player.performCommand("huomautus " + name);
-									}
-								});
-							}
-							
-							if (CoreUtils.hasRank(player, "valvoja")) {
-								List<String> moderatorLore = new ArrayList<String>();
-								moderatorLore.add("");
-								moderatorLore.add("§7 » Näytä tiedot klikkaamalla!");
-								gui.addItem(CoreUtils.getItem(Material.WRITABLE_BOOK, "§aRangaistustiedot", moderatorLore, 1), 15, 
-										new InventoryGUIAction() {
-									public void onClickAsync() { }
-									public void onClick() {
-										gui.close(player);
-										player.performCommand("rankaise " + name);
-									}
-								});
-							}
-							
-							gui.open(player);
+							}.runTask(core);
 						}
 						else {
 							player.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
@@ -1885,14 +1929,8 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage("");
 			player.sendMessage(tc2 + "§m----------" + tc1 + " Apua " + tc2 + "§m----------");
 			player.sendMessage("");
-			player.sendMessage(tc2 + " Tutustu nettisivuihimme osoitteessa:"); // TODO
-			player.sendMessage(tc1 + " http://esimerkki.fi");
-			player.sendMessage("");
-			player.sendMessage(tc2 + " Hukassa? Löydät ohjeita moneen eri tilanteeseen tietopankistamme:");
-			player.sendMessage(tc1 + " http://esimerkki.fi/tietoa");
-			player.sendMessage("");
-			player.sendMessage(tc2 + " Liity Discord-palvelimellemme:");
-			player.sendMessage(tc1 + " https://discord.gg/xzstZDt");
+			player.sendMessage(tc2 + " Hukassa? Löydät tietoa ja ohjeita tietopankistamme:");
+			player.sendMessage(tc1 + " http://royalkingdom.fi/tietoa"); // TODO
 			player.sendMessage("");
 			player.sendMessage(tc2 + " Asiaa henkilökunnalle? Komennolla " + tc1 + "/a <viesti>" + tc2 + " voit lähettää yksityisen viestin paikalla olevalle "
 					+ "henkilökunnalle. Henkilökuntamme auttaa sinua mielellään!");
@@ -1906,8 +1944,34 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage("");
 			player.sendMessage(tc2 + "§m----------" + tc1 + " Säännöt " + tc2 + "§m----------");
 			player.sendMessage("");
-			player.sendMessage(tc2 + " Pelaamalla palvelimellamme hyväksyt säännöt:");
-			player.sendMessage(tc1 + " http://esimerkki.fi/tietoa/säännöt"); // TODO
+			player.sendMessage(tc2 + " Löydät palvelimen säännöt tietopankistamme:");
+			player.sendMessage(tc1 + " http://royalkingdom.fi/tietoa/säännöt"); // TODO
+			player.sendMessage("");
+			return true;
+		}
+		
+		// discord
+		
+		if (cmd.getName().equalsIgnoreCase("discord")) {
+			player.sendMessage("");
+			player.sendMessage(tc2 + "§m----------" + tc1 + " Discord " + tc2 + "§m----------");
+			player.sendMessage("");
+			player.sendMessage(tc2 + " Liity Discord-palvelimellemme tästä linkistä:");
+			player.sendMessage(tc1 + " https://discord.gg/xzstZDt");
+			player.sendMessage("");
+			return true;
+		}
+		
+		// bugi, bug
+		
+		if (cmd.getName().equalsIgnoreCase("bugi") || cmd.getName().equalsIgnoreCase("bug")) {
+			player.sendMessage("");
+			player.sendMessage(tc2 + "§m----------" + tc1 + " Ilmoita bugi " + tc2 + "§m----------");
+			player.sendMessage("");
+			player.sendMessage(tc2 + " Mikäli löydät palvelimelta bugeja (virheitä), voit ilmoittaa niistä henkilökunnalle");
+			player.sendMessage(tc1 + " 1) " + tc2 + "palvelimen chatissa tai komennolla " + tc1 + "/a");
+			player.sendMessage(tc1 + " 2) " + tc2 + "Discord-palvelimellamme " + tc1 + "(/discord)");
+			player.sendMessage(tc1 + " 3) " + tc2 + "tiketin avulla " + tc1 + "(/tiketti)" + tc2 + ".");
 			player.sendMessage("");
 			return true;
 		}
@@ -1993,7 +2057,8 @@ public class CoreCommands implements CommandExecutor {
 					player.sendMessage("§2§lSinä -> Henkilökunta §a" + message);
 				}
 				else {
-					player.sendMessage(tc3 + "Valitettavasti ketään henkilökunnasta ei ole paikalla tällä hetkellä!"); // TODO
+					player.sendMessage(tc3 + "Valitettavasti ketään henkilökunnasta ei ole paikalla tällä hetkellä! Voit ottaa yhteyttä henkilökuntaan esimerkiksi Discord-palvelimellamme " 
+							+ tc4 + "(/discord)" + tc3 + " tai luoda asiasta tiketin komennolla " + tc4 + "/tiketti" + tc3 + ".");
 				}
 			}
 			else {
@@ -2467,32 +2532,27 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
-		// lähellä, near TODO
+		// lähellä, near
 		
 		if (cmd.getName().equalsIgnoreCase("lähellä") || cmd.getName().equalsIgnoreCase("near")) {
-			if (CoreUtils.hasRank(player, "ritari")) {
-				boolean b = false;
-				player.sendMessage("");
-				player.sendMessage(tc2 + "§m----------" + tc1 + " Pelaajat lähistöllä " + tc2 + "§m----------");
-				player.sendMessage("");
-				for (Player p : player.getWorld().getPlayers()) {
-					if (player != p) {
-						if (player.getLocation().distance(p.getLocation()) < 150 && (!vanishedPlayers.contains(p.getName()) || 
-								CoreUtils.hasRank(player, "valvoja"))) {
-							player.sendMessage(tc1 + " - " + tc2 + p.getName() + ": §o" + (int) (player.getLocation()
-									.distance(p.getLocation())) + "m");
-							b = true;
-						}
+			boolean b = false;
+			player.sendMessage("");
+			player.sendMessage(tc2 + "§m----------" + tc1 + " Pelaajat lähistöllä " + tc2 + "§m----------");
+			player.sendMessage("");
+			for (Player p : player.getWorld().getPlayers()) {
+				if (player != p) {
+					if (player.getLocation().distance(p.getLocation()) < 150 && (!vanishedPlayers.contains(p.getName()) || 
+							CoreUtils.hasRank(player, "valvoja"))) {
+						player.sendMessage(tc1 + " - " + tc2 + p.getName() + ": §o" + (int) (player.getLocation()
+								.distance(p.getLocation())) + "m");
+						b = true;
 					}
 				}
-				if (!b) {
-					player.sendMessage(tc3 + " Ei pelaajia lähistöllä!");
-				}
-				player.sendMessage("");
 			}
-			else {
-				player.spigot().sendMessage(CoreUtils.getVipNeededMessage());
+			if (!b) {
+				player.sendMessage(tc3 + " Ei pelaajia lähistöllä!");
 			}
+			player.sendMessage("");
 			return true;
 		}
 		
@@ -2572,7 +2632,11 @@ public class CoreCommands implements CommandExecutor {
 						
 						InventoryGUI gui = new InventoryGUI(27, "Kotipisteet");
 						
-						gui.open(player);
+						new BukkitRunnable() {
+							public void run() {
+								gui.open(player);
+							}
+						}.runTask(core);
 						
 						gui.addItem(CoreUtils.getHomeItem(player, 1), 10, new InventoryGUIAction() {
 							public void onClickAsync() {}
@@ -2741,60 +2805,60 @@ public class CoreCommands implements CommandExecutor {
 		// matkusta, warp
 		
 		if (cmd.getName().equalsIgnoreCase("matkusta") || cmd.getName().equalsIgnoreCase("warp")) {
-			new BukkitRunnable() {
-				public void run() {
-					if (args.length >= 1) {
-						if (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list")) {
-							player.sendMessage("");
-							player.sendMessage(tc2 + "§m----------" + tc1 + " Matkustuspisteet " + tc2 + "§m----------");
-							player.sendMessage("");
-							player.sendMessage(tc2 + " Käytettävissä olevat matkustuspisteet:");
-							player.sendMessage("");
-							if (core.getConfig().getConfigurationSection("warps") != null && !core.getConfig().getConfigurationSection("warps").getKeys(false).isEmpty()) {
-								String warps = "";
-								for (String warp : core.getConfig().getConfigurationSection("warps").getKeys(false)) {
-									warps += " " + warp;
-								}
-								warps = warps.trim().replace(" ", ", ");
-								player.sendMessage(tc2 + " " + warps);
-							}
-							else {
-								player.sendMessage(tc3 + " Ei matkustuspisteitä!");
-							}
-							player.sendMessage("");
+			if (args.length >= 1) {
+				if (args[0].equalsIgnoreCase("lista") || args[0].equalsIgnoreCase("list")) {
+					player.sendMessage("");
+					player.sendMessage(tc2 + "§m----------" + tc1 + " Matkustuspisteet " + tc2 + "§m----------");
+					player.sendMessage("");
+					player.sendMessage(tc2 + " Käytettävissä olevat matkustuspisteet:");
+					player.sendMessage("");
+					if (core.getConfig().getConfigurationSection("warps") != null && !core.getConfig().getConfigurationSection("warps").getKeys(false).isEmpty()) {
+						String warps = "";
+						for (String warp : core.getConfig().getConfigurationSection("warps").getKeys(false)) {
+							warps += " " + warp;
 						}
-						else if (args[0].equalsIgnoreCase("kaupungit")) {
-							
-							InventoryGUI gui = new InventoryGUI(27, "Valitse määränpääsi...");
-							
-							gui.addItem(CoreUtils.getItem(Material.ARROW, "§c« Palaa takaisin", null, 1), 0, new InventoryGUIAction() {
-								public void onClickAsync() { }
-								public void onClick() {
-									gui.close(player);
-									player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-									player.performCommand("matkusta");
-								}
-							});
-							
-							if (core.getConfig().getConfigurationSection("warps") != null && !core.getConfig().getConfigurationSection("warps").getKeys(false).isEmpty()) {
-								int slot = 10;
-								for (String warp : core.getConfig().getConfigurationSection("warps").getKeys(false)) {
-									String cityName = core.getConfig().getString("warps." + warp + ".city-name");
-									if (cityName != null) {
-										gui.addItem(CoreUtils.getItem(Material.APPLE, "§a" + cityName, Arrays.asList("", "§a » Teleporttaa klikkaamalla!"), 1), slot++, new InventoryGUIAction() {
-											public void onClickAsync() { }
-											public void onClick() {
-												gui.close(player);
-												player.performCommand("matkusta " + warp);
-											}
-										});
+						warps = warps.trim().replace(" ", ", ");
+						player.sendMessage(tc2 + " " + warps);
+					}
+					else {
+						player.sendMessage(tc3 + " Ei matkustuspisteitä!");
+					}
+					player.sendMessage("");
+				}
+				else if (args[0].equalsIgnoreCase("kaupungit")) {
+					
+					InventoryGUI gui = new InventoryGUI(27, "Valitse määränpääsi...");
+					
+					gui.addItem(CoreUtils.getItem(Material.ARROW, "§c« Palaa takaisin", null, 1), 0, new InventoryGUIAction() {
+						public void onClickAsync() { }
+						public void onClick() {
+							gui.close(player);
+							player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+							player.performCommand("matkusta");
+						}
+					});
+					
+					if (core.getConfig().getConfigurationSection("warps") != null && !core.getConfig().getConfigurationSection("warps").getKeys(false).isEmpty()) {
+						int slot = 10;
+						for (String warp : core.getConfig().getConfigurationSection("warps").getKeys(false)) {
+							String cityName = core.getConfig().getString("warps." + warp + ".city-name");
+							if (cityName != null) {
+								gui.addItem(CoreUtils.getItem(Material.APPLE, "§a" + cityName, Arrays.asList("", "§a » Teleporttaa klikkaamalla!"), 1), slot++, new InventoryGUIAction() {
+									public void onClickAsync() { }
+									public void onClick() {
+										gui.close(player);
+										player.performCommand("matkusta " + warp);
 									}
-								}
+								});
 							}
-							
-							gui.open(player);
 						}
-						else {
+					}
+					
+					gui.open(player);
+				}
+				else {
+					new BukkitRunnable() {
+						public void run() {
 							String warp = "";
 							for (String word : args) {
 								warp = warp + " " + word;
@@ -2827,21 +2891,26 @@ public class CoreCommands implements CommandExecutor {
 								player.sendMessage(tc3 + "Tuntematon matkustuspiste!");
 							}
 						}
+					}.runTaskAsynchronously(core);
+				}
+			}
+			else {
+				
+				InventoryGUI gui = new InventoryGUI(45, "Valitse määränpääsi...");
+				
+				gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§a********** (Spawn)", Arrays.asList("" , 
+						"§7§o********** on koko valtakunnan", "§7§okeskus. Korkeiden muurien takana", 
+						"§7§okohoaa vielä korkeampi linna, jonka", "§7§osuojissa itse kuningas asustaa.", "", 
+						"§a » Teleporttaa klikkaamalla!"), 1), 10, new InventoryGUIAction() {
+					public void onClickAsync() { }
+					public void onClick() {
+						gui.close(player);
+						player.performCommand("spawn");
 					}
-					else {
-						
-						InventoryGUI gui = new InventoryGUI(45, "Valitse määränpääsi...");
-						
-						gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§a********** (Spawn)", Arrays.asList("" , 
-								"§7§o********** on koko valtakunnan", "§7§okeskus. Korkeiden muurien takana", 
-								"§7§okohoaa vielä korkeampi linna, jonka", "§7§osuojissa itse kuningas asustaa.", "", 
-								"§a » Teleporttaa klikkaamalla!"), 1), 10, new InventoryGUIAction() {
-							public void onClickAsync() { }
-							public void onClick() {
-								gui.close(player);
-								player.performCommand("spawn");
-							}
-						});
+				});
+				
+				new BukkitRunnable() {
+					public void run() {
 						
 						String colorPrefix1 = "§c";
 						String actionText1 = "§c ✖ Lukittu!";
@@ -2920,7 +2989,7 @@ public class CoreCommands implements CommandExecutor {
 						});
 						
 						gui.addItem(CoreUtils.getItem(Material.CHEST, "§aPelaajien kaupungit", Arrays.asList("" , 
-								"§7§oTässä listassa on pelaajien rakentamia", "§7§okyliä, jotka ovat hakeneet ja saaneet", 
+								"§7§oTässä listassa on pelaajien rakentamia", "§7§okyliä, jotka ovat hakemalla saaneet", 
 								"§7§okaupungin arvonimen.", "", "§a » Näytä klikkaamalla!"), 1), 16, new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
@@ -2932,8 +3001,8 @@ public class CoreCommands implements CommandExecutor {
 						
 						gui.open(player);
 					}
-				}
-			}.runTaskAsynchronously(core);
+				}.runTask(core);
+			}
 			return true;
 		}
 		
@@ -3725,15 +3794,77 @@ public class CoreCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("fix")) {
 			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
 				ItemStack item = player.getInventory().getItemInMainHand();
-				if (item != null && item.hasItemMeta()) {
+				if (item.getItemMeta() instanceof Damageable) {
 					ItemMeta meta = item.getItemMeta();
 					Damageable damageable = (Damageable) meta;
 					damageable.setDamage(0);
 					item.setItemMeta(meta);
-					player.sendMessage(tc2 + "Korjasit kädessäsi olevan esineen!");
+					player.sendMessage(tc2 + "Korjattiin kädessäsi oleva esine!");
 				}
 				else {
 					player.sendMessage(tc3 + "Tätä esinettä ei voi korjata!");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// name
+		
+		if (cmd.getName().equalsIgnoreCase("name")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					String name = "";
+					for (String arg : args) {
+						name += " " + arg;
+					}
+					name = ChatColor.translateAlternateColorCodes('&', name.trim());
+					ItemStack item = player.getInventory().getItemInMainHand();
+					if (CoreUtils.isNotAir(item)) {
+						ItemMeta meta = item.getItemMeta();
+						meta.setDisplayName(name);
+						item.setItemMeta(meta);
+						player.sendMessage(tc2 + "Uudelleennimettiin kädessäsi oleva esine!");
+					}
+					else {
+						player.sendMessage(tc3 + "Pidä kädessäsi jotakin esinettä!");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/name <nimi>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// lore
+		
+		if (cmd.getName().equalsIgnoreCase("lore")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					String lore = "";
+					for (String arg : args) {
+						lore += " " + arg;
+					}
+					lore = ChatColor.translateAlternateColorCodes('&', lore.trim());
+					ItemStack item = player.getInventory().getItemInMainHand();
+					if (CoreUtils.isNotAir(item)) {
+						ItemMeta meta = item.getItemMeta();
+						meta.setLore(Arrays.asList(lore.split("\\\\n")));
+						item.setItemMeta(meta);
+						player.sendMessage(tc2 + "Muutettiin kädessäsi olevan esineen teksti!");
+					}
+					else {
+						player.sendMessage(tc3 + "Pidä kädessäsi jotakin esinettä!");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/lore <teksti>");
 				}
 			}
 			else {
@@ -5357,16 +5488,6 @@ public class CoreCommands implements CommandExecutor {
 							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
 						}
 					}
-					else if (args[0].equalsIgnoreCase("helmet")) {
-						ArmorStand a = selectedArmorstands.get(player.getName());
-						if (a != null && !a.isDead()) {
-							a.setHelmet(player.getInventory().getItemInMainHand().clone());
-							player.sendMessage(tc2 + "Asetettiin armorstandin päähine kädessäsi olevaan esineeseen!");
-						}
-						else {
-							player.sendMessage(tc3 + "Sinulla ei ole armorstandia valittuna!");
-						}
-					}
 					else if (args[0].equalsIgnoreCase("chestplate")) {
 						ArmorStand a = selectedArmorstands.get(player.getName());
 						if (a != null && !a.isDead()) {
@@ -5409,6 +5530,252 @@ public class CoreCommands implements CommandExecutor {
 				player.sendMessage(noPermission);
 			}
 			return true;
+		}
+		
+		// vnpc
+		
+		if (cmd.getName().equalsIgnoreCase("vnpc")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("create")) {
+						if (args.length >= 2) {
+							
+							String name = "";
+							for (int i = 1; i < args.length; i++) {
+								name = name + " " + args[i];
+							}
+							name = ChatColor.translateAlternateColorCodes('&', name.trim());
+							
+							Villager v = (Villager) player.getWorld().spawnEntity(player.getLocation(), EntityType.VILLAGER);
+							v.setCustomName(name);
+							v.setCustomNameVisible(true);
+							v.setRemoveWhenFarAway(false);
+							v.setInvulnerable(true);
+							v.setAI(false);
+							v.addScoreboardTag("RK-NPC");
+							
+							selectedNPCs.put(player.getName(), v);
+							player.sendMessage(tc2 + "Luotiin uusi NPC ja valittiin se!");
+						}
+						else {
+							player.sendMessage(usage + "/vnpc create <nimi>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("select") || args[0].equalsIgnoreCase("sel")) {
+						
+						Villager select = null;
+						
+						for (Entity entity : player.getWorld().getEntities()) {
+							if (entity.getType() == EntityType.VILLAGER) {
+								Villager v = (Villager) entity;
+								if (v.getLocation().distance(player.getLocation()) < 20) {
+									if (select != null) {
+										if (v.getLocation().distance(player.getLocation()) < 
+												select.getLocation().distance(player.getLocation())) {
+											select = v;
+										}
+									}
+									else {
+										select = v;
+									}
+								}
+							}
+						}
+						
+						if (select != null) {
+							selectedNPCs.put(player.getName(), select);
+							player.sendMessage(tc2 + "Valittiin sinua lähin NPC!");
+						}
+						else {
+							player.sendMessage(tc3 + "Ei löydetty NPC:itä lähistöltä!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("rename")) {
+						if (args.length >= 2) {
+							
+							String text = "";
+							for (int i = 1; i < args.length; i++) {
+								text = text + " " + args[i];
+							}
+							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							
+							Villager v = selectedNPCs.get(player.getName());
+							
+							if (v != null && !v.isDead()) {
+								if (text.equals("null") || text.equals("clear")) {
+									v.setCustomName(null);
+									player.sendMessage(tc2 + "Poistettiin NPC:n nimi!");
+								}
+								else {
+									v.setCustomName(text);
+									player.sendMessage(tc2 + "Asetettiin NPC:n nimeksi: §r" + text);
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/vnpc rename <nimi>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("remove")) {
+						Villager v = selectedNPCs.get(player.getName());
+						if (v != null && !v.isDead()) {
+							v.remove();
+							player.sendMessage(tc2 + "Poistettiin valittu NPC!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("tp")) {
+						Villager v = selectedNPCs.get(player.getName());
+						if (v != null && !v.isDead()) {
+							player.teleport(v);
+							player.sendMessage(tc2 + "Teleportattiin valitun NPC:n luo!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("tphere")) {
+						Villager v = selectedNPCs.get(player.getName());
+						if (v != null && !v.isDead()) {
+							v.teleport(player);
+							player.sendMessage(tc2 + "Teleportattiin valittu NPC luoksesi!");
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("silent")) {
+						Villager v = selectedNPCs.get(player.getName());
+						if (v != null && !v.isDead()) {
+							if (v.isSilent()) {
+								v.setSilent(false);
+								player.sendMessage(tc2 + "Valittu NPC ei ole enää hiljainen!");
+							}
+							else {
+								v.setSilent(true);
+								player.sendMessage(tc2 + "Valittu NPC on nyt hiljainen!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("baby")) {
+						Villager v = selectedNPCs.get(player.getName());
+						if (v != null && !v.isDead()) {
+							if (v.isAdult()) {
+								v.setBaby();
+								player.sendMessage(tc2 + "Valittu NPC on nyt lapsi!");
+							}
+							else {
+								v.setAdult();
+								player.sendMessage(tc2 + "Valittu NPC on nyt aikuinen!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("look")) {
+						Villager v = selectedNPCs.get(player.getName());
+						if (v != null && !v.isDead()) {
+							if (v.getScoreboardTags().contains("RK-look")) {
+								v.removeScoreboardTag("RK-look");
+								core.getCoreListener().getNPCLook().remove(v);
+								player.sendMessage(tc2 + "Valittu NPC ei enää katso kohti pelaajia!");
+							}
+							else {
+								v.addScoreboardTag("RK-look");
+								core.getCoreListener().getNPCLook().add(v);
+								player.sendMessage(tc2 + "Valittu NPC katsoo nyt kohti pelaajia!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("type")) {
+						if (args.length >= 2) {
+							Villager v = selectedNPCs.get(player.getName());
+							if (v != null && !v.isDead()) {
+								try {
+									Villager.Type type = Villager.Type.valueOf(args[1].toUpperCase());
+									v.setVillagerType(type);
+									player.sendMessage(tc2 + "Valittu NPC on nyt tyyppiä " + tc1 + CoreUtils.firstUpperCase(type.toString().toLowerCase()) + tc2 + "!");
+								}
+								catch (IllegalArgumentException e) {
+									player.sendMessage(tc3 + "\"" + args[1] + "\" ei ole mahdollinen vaihtoehto!");
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/vnpc type desert/jungle/plains/savanna/snow/swamp/taiga");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("profession")) {
+						if (args.length >= 2) {
+							Villager v = selectedNPCs.get(player.getName());
+							if (v != null && !v.isDead()) {
+								try {
+									Villager.Profession profession = Villager.Profession.valueOf(args[1].toUpperCase());
+									v.setProfession(profession);
+									player.sendMessage(tc2 + "Valittu NPC on nyt ammatiltaan " + tc1 + CoreUtils.firstUpperCase(profession.toString().toLowerCase()) + tc2 + "!");
+								}
+								catch (IllegalArgumentException e) {
+									player.sendMessage(tc3 + "\"" + args[1] + "\" ei ole mahdollinen vaihtoehto!");
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/vnpc profession none/armorer/butcher/cartographer/cleric/farmer/fisherman/fletcher/leatherworker/librarian/mason/nitwit/shepherd/toolsmith/weaponsmith");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("level")) {
+						if (args.length >= 2) {
+							Villager v = selectedNPCs.get(player.getName());
+							if (v != null && !v.isDead()) {
+								try {
+									int level = Integer.parseInt(args[1]);
+									v.setVillagerLevel(level);
+									player.sendMessage(tc2 + "Valittu NPC on nyt tasolla " + tc1 + level + tc2 + "!");
+								}
+								catch (NumberFormatException e) {
+									player.sendMessage(tc3 + "\"" + args[1] + "\" ei ole mahdollinen vaihtoehto!");
+								}
+								catch (IllegalArgumentException e) {
+									player.sendMessage(tc3 + "\"" + args[1] + "\" ei ole mahdollinen vaihtoehto!");
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Sinulla ei ole NPC:tä valittuna!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/vnpc level 1/2/3/4/5");
+						}
+					}
+					else {
+						player.sendMessage(usage + "/vnpc create/select/rename/remove/tp/tphere/silent/baby/look/type/profession/level");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/vnpc create/select/rename/remove/tp/tphere/silent/baby/look/type/profession/level");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
 		}
 		
 		// tutorial
@@ -5785,6 +6152,220 @@ public class CoreCommands implements CommandExecutor {
 			else {
 				player.sendMessage(noPermission);
 			}
+			return true;
+		}
+		
+		// matka
+		
+		if (cmd.getName().equalsIgnoreCase("matka")) {
+			if (args.length >= 1) {
+				if (args[0].equalsIgnoreCase("confirm")) {
+					if (args.length >= 2) {
+						try {
+							int id = Integer.parseInt(args[1]);
+							MapAnimation animation = core.getMapAnimationManager().getAnimationById(id);
+							if (core.getConfig().contains("trips." + id) && animation != null) {
+								String npcName = core.getConfig().getString("trips." + id + ".npc-name");
+								boolean b = false;
+								for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
+									if (CoreUtils.isNPCAndNamed(entity, ChatColor.translateAlternateColorCodes('&', npcName))) {
+										b = true;
+										break;
+									}
+								}
+								if (b && !travelingPlayers.contains(player.getName())) {
+									String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + id + ".confirm-message"));
+									player.sendMessage("");
+									player.sendMessage(message);
+									player.sendMessage("");
+									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_YES, 1, 1);
+									travelingPlayers.add(player.getName());
+									new BukkitRunnable() {
+										int i = 0;
+										public void run() {
+											if (!player.isOnline() || player.isDead()) {
+												cancel();
+												return;
+											}
+											if (i == 0) {
+												Location location = CoreUtils.loadLocation(core, "trip.dark-room");
+												if (location != null) {
+													player.teleport(location);
+													animation.prepareFirstFrame(player);
+												}
+											}
+											else if (i == 1) {
+												Location location = CoreUtils.loadLocation(core, "trip.armor-stand");
+												if (location != null) {
+													for (ArmorStand stand : location.getWorld().getEntitiesByClass(ArmorStand.class)) {
+														if (stand.getLocation().distance(location) <= 1) {
+															player.setGameMode(GameMode.SPECTATOR);
+															player.teleport(stand.getLocation());
+															player.setSpectatorTarget(stand);
+															player.playSound(player.getLocation(), Sound.MUSIC_DISC_CHIRP, 10, 1);
+															animation.play(player, 20);
+															break;
+														}
+													}
+												}
+											}
+											else if (i == 2 + animation.getFrames().size()) {
+												Location location = CoreUtils.loadLocation(core, "trips." + id + ".location");
+												if (location != null) {
+													player.stopSound(Sound.MUSIC_DISC_CHIRP);
+													player.setGameMode(GameMode.SURVIVAL);
+													player.teleport(location);
+													player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 30, 0, true, false));
+												}
+											}
+											else if (i >= 3 + animation.getFrames().size()) {
+												String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + id + ".done-message"));
+												player.sendMessage("");
+												player.sendMessage(message);
+												player.sendMessage("");
+												player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_YES, 1, 1);
+												travelingPlayers.remove(player.getName());
+												cancel();
+											}
+											i++;
+										}
+									}.runTaskTimer(core, 40, 20);
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Virheellinen komento!");
+							}
+						}
+						catch (NumberFormatException e) {
+							player.sendMessage(tc3 + "Virheellinen komento!");
+						}
+					}
+					else {
+						player.sendMessage(noPermission);
+					}
+				}
+				else if (args[0].equalsIgnoreCase("deny")) {
+					if (args.length >= 2) {
+						try {
+							int id = Integer.parseInt(args[1]);
+							if (core.getConfig().contains("trips." + id)) {
+								String npcName = core.getConfig().getString("trips." + id + ".npc-name");
+								boolean b = false;
+								for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
+									if (CoreUtils.isNPCAndNamed(entity, ChatColor.translateAlternateColorCodes('&', npcName))) {
+										b = true;
+										break;
+									}
+								}
+								if (b) {
+									String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + id + ".deny-message"));
+									player.sendMessage("");
+									player.sendMessage(message);
+									player.sendMessage("");
+									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_AMBIENT, 1, 1);
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Virheellinen komento!");
+							}
+						}
+						catch (NumberFormatException e) {
+							player.sendMessage(tc3 + "Virheellinen komento!");
+						}
+					}
+					else {
+						player.sendMessage(noPermission);
+					}
+				}
+				else if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+					if (args[0].equalsIgnoreCase("lista")) {
+						player.sendMessage("");
+						player.sendMessage(tc2 + "§m----------" + tc1 + " Matkat " + tc2 + "§m----------");
+						player.sendMessage("");
+						if (core.getConfig().getConfigurationSection("trips") != null && 
+								!core.getConfig().getConfigurationSection("trips").getKeys(false).isEmpty()) {
+							for (String s : core.getConfig().getConfigurationSection("trips").getKeys(false)) {
+								String npcName = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + s + ".npc-name"));
+								player.sendMessage(tc2 + " - " + tc1 + "#" + s + tc2 + " NPC: \"" + npcName + tc2 + "\"");
+							}
+							player.sendMessage("");
+						}
+						else {
+							player.sendMessage(tc3 + " Ei matkoja!");
+							player.sendMessage("");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("lisää")) {
+						if (args.length >= 3) {
+							try {
+								int id = Integer.parseInt(args[1]);
+								String npcName = args[2].replace("_", " ");
+								if (!core.getConfig().contains("trips." + id)) {
+									core.getConfig().set("trips." + id + ".npc-name", npcName);
+									core.getConfig().set("trips." + id + ".initial-message", "&a<Nimi>: &7Jos haluat, voin kyyditä sinut kohteeseen <kohde>. Miltä kuulostaa?");
+									core.getConfig().set("trips." + id + ".confirm-message", "&a<Nimi>: &7Selvä, hyppää kyytiin!");
+									core.getConfig().set("trips." + id + ".deny-message", "&a<Nimi>: &7No, jos tarvitset kyytiä, tiedät mistä etsiä.");
+									core.getConfig().set("trips." + id + ".done-message", "&a<Nimi>: &7Tervetuloa kohteeseen <kohde>! Toivottavasti nautit matkasta!");
+									core.saveConfig();
+									CoreUtils.setLocation(core, "trips." + id + ".location", player.getLocation());
+									player.sendMessage(tc2 + "Lisättiin matka " + tc1 + "#" + id + tc2 + "!");
+								}
+								else {
+									player.sendMessage(tc3 + "Matka on jo olemassa tällä ID:llä!");
+								}
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheellinen ID!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/matka lisää <ID> <NPC:n nimi>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("poista")) {
+						if (args.length >= 2) {
+							try {
+								int id = Integer.parseInt(args[1]);
+								if (core.getConfig().contains("trips." + id)) {
+									core.getConfig().set("trips." + id, null);
+									core.saveConfig();
+									player.sendMessage(tc2 + "Poistettiin matka " + tc1 + "#" + id + tc2 + "!");
+								}
+								else {
+									player.sendMessage(tc3 + "Ei löydetty matkaa antamallasi ID:llä!");
+								}
+							}
+							catch (NumberFormatException e) {
+								player.sendMessage(tc3 + "Virheellinen ID!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/matka poista <ID>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("asetapimeähuone")) {
+						CoreUtils.setLocation(core, "trip.dark-room", player.getLocation());
+						player.sendMessage(tc2 + "Asetettiin \"pimeähuoneen\" sijainti nykyiseen sijaintiisi!");
+					}
+					else if (args[0].equalsIgnoreCase("asetaarmorstand")) {
+						CoreUtils.setLocation(core, "trip.armor-stand", player.getLocation());
+						player.sendMessage(tc2 + "Asetettiin armor standin sijainti nykyiseen sijaintiisi!");
+					}
+					else {
+						player.sendMessage(usage + "/matka lista/lisää/poista/asetapimeähuone/asetaarmorstand");
+					}
+				}
+				else {
+					player.sendMessage(noPermission);
+				}
+			}
+			else if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				player.sendMessage(usage + "/matka lista/lisää/poista/asetapimeähuone/asetaarmorstand");
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
 		}
 		
 		// rankaise, h
@@ -5802,7 +6383,11 @@ public class CoreCommands implements CommandExecutor {
 								
 								InventoryGUI gui = new InventoryGUI(54, "Rankaise: " + name);
 								
-								gui.open(player);
+								new BukkitRunnable() {
+									public void run() {
+										gui.open(player);
+									}
+								}.runTask(core);
 								
 								// TODO
 								
@@ -6108,6 +6693,9 @@ public class CoreCommands implements CommandExecutor {
 											MySQLUtils.set("DELETE FROM player_fines WHERE id=?", id);
 											player.sendMessage(tc2 + "Maksoit pois " + tc1 + amount + "£" + tc2 + " arvoisen sakkomaksun!");
 											player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+											if (Bukkit.getPluginManager().getPlugin("RK-Economy") != null) {
+												Economy.setStateMoney(Economy.getStateMoney() + amount);
+											}
 										}
 										else {
 											player.sendMessage(tc3 + "Tililläsi ei ole tarpeeksi rahaa tämän sakkomaksun maksamiseen!");
@@ -6381,12 +6969,12 @@ public class CoreCommands implements CommandExecutor {
 				player.sendMessage("");
 				player.sendMessage(tc2 + "§m----------" + tc1 + " Tiketti " + tc2 + "§m----------");
 				player.sendMessage("");
-				player.sendMessage(tc2 + " Mikäli talosi tai muu rakennelmasi on hajotettu jonkun muun pelaajan toimesta ilman lupaasi, "
-						+ "voit ilmoittaa siitä henkilökunnallemme luomalla uuden " + tc1 + "tiketin" + tc2 + ". Kun teet tiketin, muista " + 
-						tc1 + "seisoa hajotetun paikan vieressä" + tc2 + "!");
+				player.sendMessage(tc2 + " Tikettien avulla voit pyytää henkilökunnalta apua erilaisissa tilanteissa. Mikäli esimerkiksi joku "
+						+ "on hajottanut rakennelmasi ilman lupaasi, voit ilmoittaa siitä meille tiketillä, jolloin me korjaamme vahingot. "
+						+ "Tällaisissa tapauksissa " + tc1 + "muista tehdä tiketti kyseisessä paikassa" + tc2 + ".");
 				player.sendMessage("");
 				player.sendMessage(tc2 + " Luodaksesi uuden tiketin, kirjoita:");
-				player.sendMessage(tc1 + "  /tiketti <mitä on hajotettu>");
+				player.sendMessage(tc1 + "  /tiketti <asiasi>");
 				player.sendMessage("");
 			}
 			return true;
@@ -6676,7 +7264,7 @@ public class CoreCommands implements CommandExecutor {
 								target.sendMessage("§6§m----------------------------------------");
 								target.sendMessage("§e " + player.getName() + " lähetti sinulle kaveripyynnön!");
 								
-								target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", 
+								target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", "§a§l[HYVÄKSY]", "§c§l[HYLKÄÄ]", 
 										"§aHyväksy tämä kaveripyyntö klikkaamalla!", "§cHylkää tämä kaveripyyntö klikkaamalla!", 
 										"/k hyväksy " + player.getName(), "/k hylkää " + player.getName()));
 								
@@ -6971,7 +7559,7 @@ public class CoreCommands implements CommandExecutor {
 									target.sendMessage("§6§m----------------------------------------");
 									target.sendMessage("§e " + player.getName() + " haluaisi teleportata luoksesi.");
 									
-									target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", 
+									target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", "§a§l[HYVÄKSY]", "§c§l[HYLKÄÄ]", 
 											"§aHyväksy tämä teleporttauspyyntö klikkaamalla!", "§cHylkää tämä teleporttauspyyntö klikkaamalla!", 
 											"/k tp hyväksy " + player.getName(), "/k tp hylkää " + player.getName()));
 									
@@ -7264,7 +7852,7 @@ public class CoreCommands implements CommandExecutor {
 									target.sendMessage("§6§m----------------------------------------");
 									target.sendMessage("§e " + player.getName() + " lähetti sinulle kutsun kiltaansa!");
 									
-									target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", 
+									target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", "§a§l[HYVÄKSY]", "§c§l[HYLKÄÄ]", 
 											"§aHyväksy tämä kutsu klikkaamalla!", "§cHylkää tämä kutsu klikkaamalla!", 
 											"/kilta hyväksy " + player.getName(), "/kilta hylkää " + player.getName()));
 									
@@ -8001,7 +8589,7 @@ public class CoreCommands implements CommandExecutor {
 						target.sendMessage("§6§m----------------------------------------");
 						target.sendMessage("§e " + player.getName() + " kutsui sinut partyynsa!");
 						
-						target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", 
+						target.spigot().sendMessage(CoreUtils.getAcceptDeny(" ", "§e - ", "§a§l[HYVÄKSY]", "§c§l[HYLKÄÄ]", 
 								"§aHyväksy tämä partykutsu klikkaamalla!", "§cHylkää tämä partykutsu klikkaamalla!", 
 								"/party hyväksy " + player.getName(), "/party hylkää " + player.getName()));
 						
