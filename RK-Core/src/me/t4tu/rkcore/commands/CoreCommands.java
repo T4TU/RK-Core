@@ -384,7 +384,7 @@ public class CoreCommands implements CommandExecutor {
 									String status = statsData.getString(0, "status");
 									
 									sender.sendMessage("§eRahat: §r" + money);
-									sender.sendMessage("§eAmmatti: §r" + profession); // TODO
+									sender.sendMessage("§eAmmatti: §r" + profession);
 									sender.sendMessage("§eAmmatti vaihdettu: §r" + professionLastChangedString);
 									sender.sendMessage("§evisited_1: §r" + visited1);
 									sender.sendMessage("§evisited_2: §r" + visited2);
@@ -6683,19 +6683,15 @@ public class CoreCommands implements CommandExecutor {
 								String id = args[1];
 								MySQLResult finesData = MySQLUtils.get("SELECT * FROM player_fines WHERE name=? AND id=?", player.getName(), id);
 								if (finesData != null) {
-									int amount = finesData.getInt(0, "amount");
-									MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE name=?", player.getName());
-									if (statsData != null) {
-										int money = statsData.getInt(0, "money");
+									if (Bukkit.getPluginManager().getPlugin("RK-Economy") != null) {
+										int amount = finesData.getInt(0, "amount") * 10;
+										int money = Economy.getMoney(player);
 										if (money >= amount) {
-											MySQLUtils.set("UPDATE player_stats SET money=? WHERE money=? AND name=?", (money - amount) + "", 
-													money + "", player.getName());
+											Economy.setMoney(player, money - amount);
 											MySQLUtils.set("DELETE FROM player_fines WHERE id=?", id);
-											player.sendMessage(tc2 + "Maksoit pois " + tc1 + amount + "£" + tc2 + " arvoisen sakkomaksun!");
+											player.sendMessage(tc2 + "Maksoit pois " + tc1 + finesData.getInt(0, "amount") + "£" + tc2 + " arvoisen sakkomaksun!");
 											player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
-											if (Bukkit.getPluginManager().getPlugin("RK-Economy") != null) {
-												Economy.setStateMoney(Economy.getStateMoney() + amount);
-											}
+											Economy.setStateMoney(Economy.getStateMoney() + amount);
 										}
 										else {
 											player.sendMessage(tc3 + "Tililläsi ei ole tarpeeksi rahaa tämän sakkomaksun maksamiseen!");
