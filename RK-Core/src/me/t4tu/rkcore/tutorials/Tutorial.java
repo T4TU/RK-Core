@@ -109,6 +109,13 @@ public class Tutorial implements Listener {
 							}
 						}.runTaskAsynchronously(core);
 						cancel();
+						if (!core.getConfig().getBoolean("motd.seen." + player.getName()) && core.getConfig().contains("motd.motd")) {
+							new BukkitRunnable() {
+								public void run() {
+									player.performCommand("motd");
+								}
+							}.runTask(core);
+						}
 						return;
 					}
 					if (i >= 200 && i % 100 == 0 && c < tutorialStages.size()) {

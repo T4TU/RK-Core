@@ -719,6 +719,11 @@ public class CoreListener implements Listener {
 							public void run() {
 								player.teleport(startpoint);
 								player.setGameMode(GameMode.SURVIVAL);
+								player.sendMessage("");
+								player.sendMessage("§e§l Tervetuloa, " + player.getName() + "!");
+								player.sendMessage("");
+								player.sendMessage("§e Aloita seikkailusi hyppäämällä portaaliin!");
+								player.sendMessage("");
 							}
 						}.runTask(core);
 					}
