@@ -704,7 +704,7 @@ public class CoreListener implements Listener {
 								player.sendMessage("");
 								player.sendMessage("§c§m---------------§4 Sakkomaksut §c§m---------------");
 								player.sendMessage("");
-								player.sendMessage("§c Sinulla on yhteensä §4" + amount + "£§c edestä maksamattomia sakkoja!");
+								player.sendMessage("§c Sinulla on yhteensä §4" + amount + "кк§c edestä maksamattomia sakkoja!");
 								player.sendMessage("");
 								player.sendMessage("§c Voit maksaa sakkosi komennolla §4/sakot");
 								player.sendMessage("");

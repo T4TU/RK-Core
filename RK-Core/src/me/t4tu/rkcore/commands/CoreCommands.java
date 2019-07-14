@@ -1608,10 +1608,10 @@ public class CoreCommands implements CommandExecutor {
 									MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
 									MySQLResult jailData = MySQLUtils.get("SELECT * FROM player_jail WHERE uuid=?", uuidWithoutDashes);
 									if (banData != null || jailData != null) {
-										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "£ " + tc2 + "§m" + reason);
+										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "кк " + tc2 + "§m" + reason);
 									}
 									else {
-										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "£ " + tc2 + reason);
+										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "кк " + tc2 + reason);
 									}
 								}
 							}
@@ -6689,7 +6689,7 @@ public class CoreCommands implements CommandExecutor {
 										if (money >= amount) {
 											Economy.setMoney(player, money - amount);
 											MySQLUtils.set("DELETE FROM player_fines WHERE id=?", id);
-											player.sendMessage(tc2 + "Maksoit pois " + tc1 + finesData.getInt(0, "amount") + "£" + tc2 + " arvoisen sakkomaksun!");
+											player.sendMessage(tc2 + "Maksoit pois " + tc1 + finesData.getInt(0, "amount") + "кк" + tc2 + " suuruisen sakkomaksun!");
 											player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
 											Economy.setStateMoney(Economy.getStateMoney() + amount);
 										}
@@ -6751,7 +6751,7 @@ public class CoreCommands implements CommandExecutor {
 														+ "VALUES (?, ?, ?, ?, ?, ?, ?)", name, uuid, amount + "", player.getName(), reason, 
 														duration + "", System.currentTimeMillis() + "");
 												
-												player.sendMessage(tc2 + "Määrättiin " + tc1 + amount + "£" + tc2 + " sakkoa pelaajalle " + 
+												player.sendMessage(tc2 + "Määrättiin " + tc1 + amount + "кк" + tc2 + " sakkoa pelaajalle " + 
 														tc1 + name + tc2 + "!");
 												
 												Player p = Bukkit.getPlayer(name);
@@ -6760,7 +6760,7 @@ public class CoreCommands implements CommandExecutor {
 													p.sendMessage("");
 													p.sendMessage(tc3 + "§m---------------" + tc4 + " Sakkomaksu " + tc3 + "§m---------------");
 													p.sendMessage("");
-													p.sendMessage(tc3 + " Sinulle on määrätty maksettavaksi " + tc4 + amount + "£" + tc3 + 
+													p.sendMessage(tc3 + " Sinulle on määrätty maksettavaksi " + tc4 + amount + "кк" + tc3 + 
 															" sakkoa!");
 													p.sendMessage("");
 													TextComponent text = new TextComponent(tc3 + " Lisätietoja tästä sakkomaksusta saat komennolla " + tc4 + "/sakot" + tc3 + " tai klikkaamalla tästä.");
@@ -6810,11 +6810,11 @@ public class CoreCommands implements CommandExecutor {
 												new Date(time + CoreUtils.TIME_OFFSET));
 										
 										TextComponent t1 = new TextComponent(tc1 + " - ");
-										TextComponent t2 = new TextComponent(tc1 + amount + "£: ");
+										TextComponent t2 = new TextComponent(tc1 + amount + "кк: ");
 										TextComponent t3 = new TextComponent(tc2 + reason);
 										t3.setColor(ChatColor.getByChar(tc2.charAt(1)));
 										t3.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-												new ComponentBuilder(tc1 + "ID: " + tc2 + id + "\n" + tc1 + "Summa: " + tc2 + amount + "£\n" + 
+												new ComponentBuilder(tc1 + "ID: " + tc2 + id + "\n" + tc1 + "Summa: " + tc2 + amount + "кк\n" + 
 														tc1 + "Antanut: " + tc2 + giver + "\n" + tc1 + "Annettu: " + tc2 + givenDate + "\n" + 
 														tc1 + "Erääntyy: " + tc2 + expirationDate).create()));
 										t1.addExtra(t2);
@@ -6851,14 +6851,14 @@ public class CoreCommands implements CommandExecutor {
 								
 								ClickEvent clickEvent = new ClickEvent(Action.RUN_COMMAND, "/sakko maksa " + id);
 								HoverEvent hoverEvent = new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-										new ComponentBuilder(tc4 + "Summa: " + tc3 + amount + "£\n" + tc4 + "Erääntyy: " + 
+										new ComponentBuilder(tc4 + "Summa: " + tc3 + amount + "кк\n" + tc4 + "Erääntyy: " + 
 												tc3 + date + "\n\n" + tc3 + "Maksa tämä sakkomaksu klikkaamalla!").create());
 								
 								TextComponent t1 = new TextComponent(tc4 + " - ");
 								t1.setColor(ChatColor.getByChar(tc4.charAt(1)));
 								t1.setClickEvent(clickEvent);
 								t1.setHoverEvent(hoverEvent);
-								TextComponent t2 = new TextComponent(tc4 + amount + "£: ");
+								TextComponent t2 = new TextComponent(tc4 + amount + "кк: ");
 								t2.setColor(ChatColor.getByChar(tc4.charAt(1)));
 								t2.setClickEvent(clickEvent);
 								t2.setHoverEvent(hoverEvent);
