@@ -15,6 +15,7 @@ commands:
     autorestart:
     config:
     sql:
+    statistics:
     list:
     who:
     pelaajat:

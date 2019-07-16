@@ -78,6 +78,8 @@ import com.meowj.langutils.lang.LanguageHelper;
 
 import me.t4tu.rkcore.Core;
 import me.t4tu.rkcore.parties.Party;
+import me.t4tu.rkcore.statistics.Statistic;
+import me.t4tu.rkcore.statistics.StatisticsEntry;
 import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
@@ -276,8 +278,6 @@ public class CoreListener implements Listener {
 	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onPlayerPreLogin(AsyncPlayerPreLoginEvent e) {
-		
-		// TODO async
 		
 		String name = e.getName();
 		String uuid = e.getUniqueId().toString();
@@ -500,6 +500,7 @@ public class CoreListener implements Listener {
 					MySQLUtils.set("INSERT INTO player_info (name, uuid, ip, last_seen) "
 							+ "VALUES (?, ?, ?, " + System.currentTimeMillis() + ")", name, uuid, ip);
 					MySQLUtils.set("UPDATE global SET uniquejoins=uniquejoins+1");
+					core.getStatisticsManager().incrementStatistic(new StatisticsEntry(Statistic.PLAYERS_JOINED, 1));
 					firstTimeJoining = true;
 				}
 				

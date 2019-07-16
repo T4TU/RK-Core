@@ -25,6 +25,10 @@ import me.t4tu.rkcore.listeners.ChatListener;
 import me.t4tu.rkcore.listeners.CoreListener;
 import me.t4tu.rkcore.parties.PartyManager;
 import me.t4tu.rkcore.punishments.PunishmentCommands;
+import me.t4tu.rkcore.statistics.Statistic;
+import me.t4tu.rkcore.statistics.StatisticsEntry;
+import me.t4tu.rkcore.statistics.StatisticsManager;
+import me.t4tu.rkcore.statistics.StatisticsViewer;
 import me.t4tu.rkcore.tutorials.Tutorial;
 import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.MapAnimationManager;
@@ -44,6 +48,8 @@ public class Core extends JavaPlugin {
 	private PartyManager partyManager;
 	private Tutorial tutorial;
 	private MapAnimationManager mapAnimationManager;
+	private StatisticsManager statisticsManager;
+	private StatisticsViewer statisticsViewer;
 	private Map<String, Long> ontimes = new HashMap<String, Long>();
 	private long ingameTime;
 	private boolean timeHalted = false;
@@ -57,7 +63,6 @@ public class Core extends JavaPlugin {
 		
 		CoreUtils.setCore(this);
 		SettingsUtils.setCore(this);
-		//ReflectionUtils.setCore(this);
 		InventoryGUI.setCore(this);
 		ReflectionUtils.loadScoreboardTeams();
 		MySQLUtils.setCore(this);
@@ -74,6 +79,8 @@ public class Core extends JavaPlugin {
 		partyManager = new PartyManager();
 		tutorial = new Tutorial(this);
 		mapAnimationManager = new MapAnimationManager(this);
+		statisticsManager = new StatisticsManager(this);
+		statisticsViewer = new StatisticsViewer(this);
 		
 		registerCoreCommands(coreCommands);
 		registerPunishmentCommands(punishmentCommands);
@@ -114,6 +121,7 @@ public class Core extends JavaPlugin {
 				}
 			}
 			ontimes.clear();
+			statisticsManager.saveCacheToDatabase();
 			MySQLUtils.closeConnection();
 		}
 		
@@ -153,6 +161,14 @@ public class Core extends JavaPlugin {
 	
 	public MapAnimationManager getMapAnimationManager() {
 		return mapAnimationManager;
+	}
+	
+	public StatisticsManager getStatisticsManager() {
+		return statisticsManager;
+	}
+	
+	public StatisticsViewer getStatisticsViewer() {
+		return statisticsViewer;
 	}
 	
 	public Map<String, Long> getOntimes() {
@@ -221,6 +237,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("autorestart", false);
 		commands.registerCommand("config", false);
 		commands.registerCommand("sql", false);
+		commands.registerCommand("statistics", false);
 		commands.registerCommand("list", true);
 		commands.registerCommand("who", true);
 		commands.registerCommand("pelaajat", true);
@@ -475,49 +492,6 @@ public class Core extends JavaPlugin {
 			}
 		}.runTaskTimer(this, 0, 100);
 		
-		if (!noSQL) {
-			new BukkitRunnable() {
-				public void run() {
-					
-					// vangitut pelajaat
-					
-					for (Player player : Bukkit.getOnlinePlayers()) {
-						long expires = getConfig().getLong("users." + player.getName() + ".jail.duration");
-						if (expires != 0) {
-							if (System.currentTimeMillis() >= expires) {
-								getConfig().set("users." + player.getName() + ".jail", null);
-								saveConfig();
-								punishmentCommands.releaseFromJail(player);
-								new BukkitRunnable() {
-									public void run() {
-										MySQLUtils.set("DELETE FROM player_jail WHERE uuid=?", player.getUniqueId().toString().replace("-", ""));
-									}
-								}.runTaskAsynchronously(Core.this);
-							}
-						}
-					}
-					
-					// hiljennetyt pelajaat
-					
-					for (Player player : Bukkit.getOnlinePlayers()) {
-						long expires = getConfig().getLong("users." + player.getName() + ".mute.duration");
-						if (expires != 0) {
-							if (System.currentTimeMillis() >= expires) {
-								getConfig().set("users." + player.getName() + ".mute", null);
-								saveConfig();
-								punishmentCommands.sendUnmuteInfo(player);
-								new BukkitRunnable() {
-									public void run() {
-										MySQLUtils.set("DELETE FROM player_mute WHERE uuid=?", player.getUniqueId().toString().replace("-", ""));
-									}
-								}.runTaskAsynchronously(Core.this);
-							}
-						}
-					}
-				}
-			}.runTaskTimer(this, 100, 100);
-		}
-		
 		new BukkitRunnable() {
 			public void run() {
 				for (Player player : Bukkit.getOnlinePlayers()) {
@@ -666,6 +640,66 @@ public class Core extends JavaPlugin {
 					ontimes.clear();
 				}
 			}.runTaskTimerAsynchronously(this, 1200, 1200);
+			
+			new BukkitRunnable() {
+				public void run() {
+					
+					// tilastot
+					
+					int players = 0;
+					int staff = 0;
+					for (Player player : Bukkit.getOnlinePlayers()) {
+						if (CoreUtils.hasRank(player, "valvoja")) {
+							staff++;
+						}
+						players++;
+					}
+					statisticsManager.logStatistic(new StatisticsEntry(Statistic.PLAYERS_ONLINE, players));
+					statisticsManager.logStatistic(new StatisticsEntry(Statistic.STAFF_ONLINE, staff));
+					statisticsManager.saveCacheToDatabase();
+				}
+			}.runTaskTimerAsynchronously(this, 12000, 12000);
+			
+			new BukkitRunnable() {
+				public void run() {
+					
+					// vangitut pelajaat
+					
+					for (Player player : Bukkit.getOnlinePlayers()) {
+						long expires = getConfig().getLong("users." + player.getName() + ".jail.duration");
+						if (expires != 0) {
+							if (System.currentTimeMillis() >= expires) {
+								getConfig().set("users." + player.getName() + ".jail", null);
+								saveConfig();
+								punishmentCommands.releaseFromJail(player);
+								new BukkitRunnable() {
+									public void run() {
+										MySQLUtils.set("DELETE FROM player_jail WHERE uuid=?", player.getUniqueId().toString().replace("-", ""));
+									}
+								}.runTaskAsynchronously(Core.this);
+							}
+						}
+					}
+					
+					// hiljennetyt pelajaat
+					
+					for (Player player : Bukkit.getOnlinePlayers()) {
+						long expires = getConfig().getLong("users." + player.getName() + ".mute.duration");
+						if (expires != 0) {
+							if (System.currentTimeMillis() >= expires) {
+								getConfig().set("users." + player.getName() + ".mute", null);
+								saveConfig();
+								punishmentCommands.sendUnmuteInfo(player);
+								new BukkitRunnable() {
+									public void run() {
+										MySQLUtils.set("DELETE FROM player_mute WHERE uuid=?", player.getUniqueId().toString().replace("-", ""));
+									}
+								}.runTaskAsynchronously(Core.this);
+							}
+						}
+					}
+				}
+			}.runTaskTimer(this, 100, 100);
 		}
 		
 		new BukkitRunnable() {

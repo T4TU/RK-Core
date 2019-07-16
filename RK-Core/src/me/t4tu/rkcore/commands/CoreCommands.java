@@ -59,6 +59,10 @@ import me.t4tu.rkcore.inventories.InventoryGUI;
 import me.t4tu.rkcore.inventories.InventoryGUIAction;
 import me.t4tu.rkcore.parties.Party;
 import me.t4tu.rkcore.parties.PartyRequest;
+import me.t4tu.rkcore.statistics.ComplexPlayerStatisticsEntry;
+import me.t4tu.rkcore.statistics.PlayerStatisticsEntry;
+import me.t4tu.rkcore.statistics.Statistic;
+import me.t4tu.rkcore.statistics.StatisticsEntry;
 import me.t4tu.rkcore.utils.CoreUtils;
 import me.t4tu.rkcore.utils.FriendRequest;
 import me.t4tu.rkcore.utils.GuildRequest;
@@ -746,6 +750,109 @@ public class CoreCommands implements CommandExecutor {
 				else {
 					sender.sendMessage(usage + "/sql get/set <query>");
 				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// statistics
+		
+		if (cmd.getName().equalsIgnoreCase("statistics")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				new BukkitRunnable() {
+					public void run() {
+						if (args.length >= 1) {
+							if (args[0].equalsIgnoreCase("save")) {
+								sender.sendMessage(tc2 + "Pakotetaan uusimpien tilastojen tallennus tietokantaan...");
+								core.getStatisticsManager().saveCacheToDatabase();
+								sender.sendMessage(tc2 + "Tallennus valmis!");
+							}
+							else if (args[0].equalsIgnoreCase("view")) {
+								core.getStatisticsViewer().viewCommand(sender, args, tc1, tc2, tc3, tc4, usage);
+							}
+							else if (args[0].equalsIgnoreCase("log") || args[0].equalsIgnoreCase("increment")) {
+								if (args.length >= 4) {
+									try {
+										String table = args[1];
+										Statistic statistic = Statistic.valueOf(args[2].toUpperCase());
+										int value = Integer.parseInt(args[3]);
+										StatisticsEntry entry;
+										if (table.equals("simple")) {
+											entry = new StatisticsEntry(statistic, value);
+										}
+										else if (table.equals("player")) {
+											if (args.length >= 5) {
+												String uuid = CoreUtils.nameToUuid(args[4]);
+												if (uuid != null) {
+													entry = new PlayerStatisticsEntry(statistic, value, uuid);
+												}
+												else {
+													sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+													return;
+												}
+											}
+											else {
+												sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " " + table + " <tilasto> <arvo> <pelaaja>");
+												return;
+											}
+										}
+										else if (table.equals("player_complex")) {
+											if (args.length >= 6) {
+												String uuid = CoreUtils.nameToUuid(args[4]);
+												if (uuid != null) {
+													try {
+														int data = Integer.parseInt(args[5]);
+														entry = new ComplexPlayerStatisticsEntry(statistic, value, uuid, data);
+													}
+													catch (NumberFormatException e) {
+														sender.sendMessage(tc3 + "Virheellinen data!");
+														return;
+													}
+												}
+												else {
+													sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+													return;
+												}
+											}
+											else {
+												sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " " + table + " <tilasto> <arvo> <pelaaja> <data>");
+												return;
+											}
+										}
+										else {
+											sender.sendMessage(tc3 + "Virheellinen tilaston tyyppi!");
+											return;
+										}
+										if (args[0].equalsIgnoreCase("log")) {
+											core.getStatisticsManager().logStatistic(entry);
+										}
+										else {
+											core.getStatisticsManager().incrementStatistic(entry);
+										}
+										sender.sendMessage(tc2 + "Onnistui!");
+									}
+									catch (NumberFormatException e) {
+										sender.sendMessage(tc3 + "Virheellinen arvo!");
+									}
+									catch (IllegalArgumentException e) {
+										sender.sendMessage(tc3 + "Ei löydetty tilastoa \"" + tc4 + args[2].toUpperCase() + tc3 + "\"!");
+									}
+								}
+								else {
+									sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " <tyyppi> <tilasto> <arvo>");
+								}
+							}
+							else {
+								sender.sendMessage(usage + "/statistics save/view/log/increment");
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/statistics save/view/log/increment");
+						}
+					}
+				}.runTaskAsynchronously(core);
 			}
 			else {
 				sender.sendMessage(noPermission);
