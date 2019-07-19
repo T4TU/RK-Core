@@ -4414,7 +4414,7 @@ public class CoreCommands implements CommandExecutor {
 				else if (args.length == 1) {
 					Player target = Bukkit.getPlayer(args[0]);
 					if (target != null) {
-						player.sendMessage(tc2 + "Pelaajan " + tc1 + target.getName() + tc2 + " kokemustaso: " + tc1 + target.getExp());
+						player.sendMessage(tc2 + "Pelaajan " + tc1 + target.getName() + tc2 + " kokemustaso: " + tc1 + target.getLevel());
 					}
 					else {
 						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
