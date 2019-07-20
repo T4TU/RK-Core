@@ -341,6 +341,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("echest", false);
 		commands.registerCommand("swapinventories", false);
 		commands.registerCommand("evokkimoodi", false);
+		commands.registerCommand("endinaattori", false);
 		commands.registerCommand("tp", false);
 		commands.registerCommand("tpo", false);
 		commands.registerCommand("tphere", false);
@@ -748,7 +749,7 @@ public class Core extends JavaPlugin {
 				}
 				
 				for (Player player : Bukkit.getOnlinePlayers()) {
-					player.setPlayerListHeaderFooter(s, "§a RoyalKingdom.net9.fi ");
+					player.setPlayerListHeaderFooter(s, "§a mc.royalkingdom.fi "); // TODO
 				}
 			}
 		}.runTaskTimer(this, 20, 2);

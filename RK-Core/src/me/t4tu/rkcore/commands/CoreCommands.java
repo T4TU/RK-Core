@@ -2037,7 +2037,7 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage(tc2 + "§m----------" + tc1 + " Apua " + tc2 + "§m----------");
 			player.sendMessage("");
 			player.sendMessage(tc2 + " Hukassa? Löydät tietoa ja ohjeita tietopankistamme:");
-			player.sendMessage(tc1 + " http://royalkingdom.fi/tietoa"); // TODO
+			player.sendMessage(tc1 + " http://www.royalkingdom.fi/tietoa"); // TODO
 			player.sendMessage("");
 			player.sendMessage(tc2 + " Asiaa henkilökunnalle? Komennolla " + tc1 + "/a <viesti>" + tc2 + " voit lähettää yksityisen viestin paikalla olevalle "
 					+ "henkilökunnalle. Henkilökuntamme auttaa sinua mielellään!");
@@ -2052,7 +2052,7 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage(tc2 + "§m----------" + tc1 + " Säännöt " + tc2 + "§m----------");
 			player.sendMessage("");
 			player.sendMessage(tc2 + " Löydät palvelimen säännöt tietopankistamme:");
-			player.sendMessage(tc1 + " http://royalkingdom.fi/tietoa/säännöt"); // TODO
+			player.sendMessage(tc1 + " http://www.royalkingdom.fi/tietoa/säännöt"); // TODO
 			player.sendMessage("");
 			return true;
 		}
@@ -3658,6 +3658,82 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// endinaattori
+		
+		if (cmd.getName().equalsIgnoreCase("endinaattori")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 2 && args[0].equalsIgnoreCase("portaltp")) {
+					Location location = CoreUtils.loadLocation(core, "endinaattori.portals." + args[1]);
+					if (location != null) {
+						player.setAllowFlight(true);
+						player.setFlying(true);
+						player.teleport(location.add(0, 1, 0));
+						player.sendMessage(tc2 + "Sinut teleportattiin käytetyn End-portaalin luokse!");
+					}
+					else {
+						player.sendMessage(tc3 + "Virheellinen sijainti!");
+					}
+				}
+				else if (args.length >= 2 && args[0].equalsIgnoreCase("dragontp")) {
+					Location location = CoreUtils.loadLocation(core, "endinaattori.dragons." + args[1]);
+					if (location != null) {
+						player.setAllowFlight(true);
+						player.setFlying(true);
+						player.teleport(location);
+						player.sendMessage(tc2 + "Sinut teleportattiin tapetun Ender Dragonin luokse!");
+					}
+					else {
+						player.sendMessage(tc3 + "Virheellinen sijainti!");
+					}
+				}
+				else if (args.length >= 1 && args[0].equalsIgnoreCase("tyhjennä")) {
+					core.getConfig().set("endinaattori.portals", null);
+					core.getConfig().set("endinaattori.dragons", null);
+					core.saveConfig();
+					player.sendMessage(tc2 + "Tyhjennettiin Endinaattori 9000™!");
+				}
+				else {
+					player.sendMessage("");
+					player.sendMessage(tc2 + "§m----------" + tc1 + " Endinaattori 9000™ " + tc2 + "§m----------");
+					player.sendMessage("");
+					player.sendMessage(tc1 + " Käytetyt End-portaalit:");
+					player.sendMessage("");
+					if (core.getConfig().getConfigurationSection("endinaattori.portals") != null && 
+							!core.getConfig().getConfigurationSection("endinaattori.portals").getKeys(false).isEmpty()) {
+						for (String key : core.getConfig().getConfigurationSection("endinaattori.portals").getKeys(false)) {
+							BaseComponent[] components = new ComponentBuilder(tc2 + " - " + tc1 + "#" + key + tc2 + " (Teleporttaa klikkaamalla)")
+									.event(new ClickEvent(Action.RUN_COMMAND, "/endinaattori portaltp " + key)).create();
+							player.spigot().sendMessage(components);
+						}
+					}
+					else {
+						player.sendMessage(tc3 + "  Ei käytettyjä End-portaaleita!");
+					}
+					player.sendMessage("");
+					player.sendMessage(tc1 + " Tapetut Ender Dragonit:");
+					player.sendMessage("");
+					if (core.getConfig().getConfigurationSection("endinaattori.dragons") != null && 
+							!core.getConfig().getConfigurationSection("endinaattori.dragons").getKeys(false).isEmpty()) {
+						for (String key : core.getConfig().getConfigurationSection("endinaattori.dragons").getKeys(false)) {
+							BaseComponent[] components = new ComponentBuilder(tc2 + " - " + tc1 + "#" + key + tc2 + " (Teleporttaa klikkaamalla)")
+									.event(new ClickEvent(Action.RUN_COMMAND, "/endinaattori dragontp " + key)).create();
+							player.spigot().sendMessage(components);
+						}
+					}
+					else {
+						player.sendMessage(tc3 + "  Ei tapettuja Ender Dragoneita!");
+					}
+					player.sendMessage("");
+					player.sendMessage(tc2 + " Tyhjennä komennolla " + tc1 + "/endinaattori tyhjennä");
+					player.sendMessage("");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
 		// tp, tpo
 		
 		if (cmd.getName().equalsIgnoreCase("tp") || cmd.getName().equalsIgnoreCase("tpo")) {
@@ -4604,10 +4680,9 @@ public class CoreCommands implements CommandExecutor {
 									!core.getConfig().getConfigurationSection("gates").getKeys(false).isEmpty()) {
 								for (String s : core.getConfig().getConfigurationSection("gates").getKeys(false)) {
 									String world = core.getConfig().getString("gates." + s + ".location-1.world");
-									TextComponent t = new TextComponent(tc2 + " - " + tc1 + "#" + s + tc2 + " maailmassa '" + world + "' " + 
-											tc1 + "[Teleporttaa klikkaamalla]");
-									t.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/portti tp " + s));
-									player.spigot().sendMessage(t);
+									BaseComponent[] components = new ComponentBuilder(tc2 + " - " + tc1 + "#" + s + tc2 + " maailmassa " + tc1 + world + tc2 + " (Teleporttaa klikkaamalla)")
+											.event(new ClickEvent(Action.RUN_COMMAND, "/portti tp " + s)).create();
+									player.spigot().sendMessage(components);
 								}
 								player.sendMessage("");
 							}
@@ -4868,11 +4943,9 @@ public class CoreCommands implements CommandExecutor {
 						player.sendMessage(tc2 + "§m----------" + tc1 + " Maailmat " + tc2 + "§m----------");
 						player.sendMessage("");
 						for (World world : Bukkit.getWorlds()) {
-							TextComponent textComponent = new TextComponent(tc2 + " - " + tc1 + world.getName() + tc2 + " [Teleporttaa klikkaamalla]");
-							textComponent.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-									new ComponentBuilder(tc1 + "Teleporttaa tähän maailmaan klikkaamalla!").create()));
-							textComponent.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/maailma tp " + world.getName()));
-							player.spigot().sendMessage(textComponent);
+							BaseComponent[] components = new ComponentBuilder(tc2 + " - " + tc1 + world.getName() + tc2 + " (Teleporttaa klikkaamalla)")
+									.event(new ClickEvent(Action.RUN_COMMAND, "/maailma tp " + world.getName())).create();
+							player.spigot().sendMessage(components);
 						}
 						player.sendMessage("");
 						player.sendMessage(tc2 + " Olet tällä hetkellä maailmassa " + tc1 + player.getWorld().getName() + tc2 + ".");

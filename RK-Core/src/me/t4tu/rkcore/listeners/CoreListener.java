@@ -14,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.World.Environment;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
@@ -43,6 +44,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -59,6 +61,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -611,7 +614,7 @@ public class CoreListener implements Listener {
 						public void run() {
 							player.sendTitle("§a§lRoyal Kingdom", "§7Tervetuloa takaisin, " + name, 20, 40, 20);
 						}
-					}.runTaskLaterAsynchronously(core, 20);
+					}.runTaskLater(core, 20);
 					
 					// MOTD
 					
@@ -626,18 +629,30 @@ public class CoreListener implements Listener {
 					// tiketit
 					
 					if (CoreUtils.hasRank(player, "valvoja")) {
-						int counter = 0;
-						if (core.getConfig().getConfigurationSection("tickets") == null) {
-							return;
-						}
-						for (String s : core.getConfig().getConfigurationSection("tickets").getKeys(false)) {
-							if (!core.getConfig().getBoolean("tickets." + s + ".suljettu")) {
-								counter++;
+						if (core.getConfig().getConfigurationSection("tickets") != null) {
+							int counter = 0;
+							for (String s : core.getConfig().getConfigurationSection("tickets").getKeys(false)) {
+								if (!core.getConfig().getBoolean("tickets." + s + ".suljettu")) {
+									counter++;
+								}
+							}
+							if (counter > 0) {
+								player.sendMessage("");
+								player.sendMessage(" §6§lHuomio! §eYhteensä §6" + counter + "§e tikettiä on hoitamatta!");
+								player.sendMessage("");
 							}
 						}
-						if (counter > 0) {
+					}
+					
+					// endinaattori
+					
+					if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+						if ((core.getConfig().getConfigurationSection("endinaattori.portals") != null && !core.getConfig().getConfigurationSection("endinaattori.portals").getKeys(false).isEmpty()) || 
+								(core.getConfig().getConfigurationSection("endinaattori.dragons") != null && !core.getConfig().getConfigurationSection("endinaattori.dragons").getKeys(false).isEmpty())) {
 							player.sendMessage("");
-							player.sendMessage(" §6§lHuomio! §eYhteensä §6" + counter + "§e tikettiä on hoitamatta!");
+							player.sendMessage(" §5§lEndinaattori 9000§5™:");
+							player.sendMessage("");
+							player.sendMessage(" §dEnd-maailma ja/tai -portaalit ovat resetin tarpeessa! Käytä komentoa §5/endinaattori§d.");
 							player.sendMessage("");
 						}
 					}
@@ -1319,6 +1334,52 @@ public class CoreListener implements Listener {
 		for (Player p : Bukkit.getOnlinePlayers()) {
 			if (SettingsUtils.getSetting(p, "show_death_messages")) {
 				p.sendMessage(deathNote);
+			}
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onEntityDeath
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onEntityDeath(EntityDeathEvent e) {
+		if (e.getEntityType() == EntityType.ENDER_DRAGON) {
+			int newKey = 1;
+			if (core.getConfig().getConfigurationSection("endinaattori.dragons") != null) {
+				newKey += core.getConfig().getConfigurationSection("endinaattori.dragons").getKeys(false).size();
+			}
+			CoreUtils.setLocation(core, "endinaattori.dragons." + newKey, e.getEntity().getLocation());
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////
+	//
+	//          onPlayerPortal
+	//
+	///////////////////////////////////////////////////////////////
+	
+	@EventHandler
+	public void onPlayerPortal(PlayerPortalEvent e) {
+		if (e.getCause() == TeleportCause.END_PORTAL && e.getTo().getWorld().getEnvironment() == Environment.THE_END) {
+			boolean alreadyLogged = false;
+			int newKey = 1;
+			if (core.getConfig().getConfigurationSection("endinaattori.portals") != null && 
+					!core.getConfig().getConfigurationSection("endinaattori.portals").getKeys(false).isEmpty()) {
+				for (String key : core.getConfig().getConfigurationSection("endinaattori.portals").getKeys(false)) {
+					Location location = CoreUtils.loadLocation(core, "endinaattori.portals." + key);
+					if (location != null) {
+						if (location.getWorld().getName().equals(e.getFrom().getWorld().getName()) && location.distance(e.getFrom()) < 5) {
+							alreadyLogged = true;
+						}
+					}
+					newKey++;
+				}
+			}
+			if (!alreadyLogged) {
+				CoreUtils.setLocation(core, "endinaattori.portals." + newKey, e.getFrom());
 			}
 		}
 	}
