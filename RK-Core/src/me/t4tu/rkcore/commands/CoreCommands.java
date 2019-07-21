@@ -2973,7 +2973,7 @@ public class CoreCommands implements CommandExecutor {
 							warp = warp.trim().replace(" ", "_").toLowerCase();
 							Location location = CoreUtils.loadLocation(core, "warps." + warp + ".location");
 							if (location != null) {
-								MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3 FROM player_stats WHERE name=?", player.getName());
+								MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3, visited_nether, visited_end FROM player_stats WHERE name=?", player.getName());
 								if (visitedData != null) {
 									if (warp.equalsIgnoreCase("kylä") && !visitedData.getBoolean(0, "visited_1")) { // TODO
 										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
@@ -2988,6 +2988,16 @@ public class CoreCommands implements CommandExecutor {
 									if (warp.equalsIgnoreCase("kylä3") && !visitedData.getBoolean(0, "visited_3")) { // TODO
 										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 										player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä käyttöösi!");
+										return;
+									}
+									if (warp.equalsIgnoreCase("nether") && !visitedData.getBoolean(0, "visited_nether")) {
+										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+										player.sendMessage(tc3 + "Sinun täytyy matkustaa Netheriin portaalin kautta vähintään kerran ennen kuin voit käyttää tätä matkustuspistettä!");
+										return;
+									}
+									if (warp.equalsIgnoreCase("end") && !visitedData.getBoolean(0, "visited_end")) {
+										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+										player.sendMessage(tc3 + "Sinun täytyy tappaa Ender Dragon \"normaalissa\" End-maailmassa vähintään kerran ennen kuin voit käyttää tätä matkustuspistettä!");
 										return;
 									}
 								}
@@ -3025,8 +3035,12 @@ public class CoreCommands implements CommandExecutor {
 						String actionText2 = "§c ✖ Lukittu!";
 						String colorPrefix3 = "§c";
 						String actionText3 = "§c ✖ Lukittu!";
+						String colorPrefixNether = "§c";
+						String actionTextNether = "§c ✖ Lukittu!";
+						String colorPrefixEnd = "§c";
+						String actionTextEnd = "§c ✖ Lukittu!";
 						
-						MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3 FROM player_stats WHERE name=?", 
+						MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3, visited_nether, visited_end FROM player_stats WHERE name=?", 
 								player.getName());
 						if (visitedData != null) {
 							if (visitedData.getBoolean(0, "visited_1")) {
@@ -3040,6 +3054,14 @@ public class CoreCommands implements CommandExecutor {
 							if (visitedData.getBoolean(0, "visited_3")) {
 								colorPrefix3 = "§a";
 								actionText3 = "§a » Teleporttaa klikkaamalla!";
+							}
+							if (visitedData.getBoolean(0, "visited_nether")) {
+								colorPrefixNether = "§a";
+								actionTextNether = "§a » Teleporttaa klikkaamalla!";
+							}
+							if (visitedData.getBoolean(0, "visited_end")) {
+								colorPrefixEnd = "§a";
+								actionTextEnd = "§a » Teleporttaa klikkaamalla!";
 							}
 						}
 						
@@ -3073,9 +3095,10 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("matkusta kylä3"); // TODO
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.NETHERRACK, "§aNether-maailma", Arrays.asList("" , 
-								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
-								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", "§a » Teleporttaa klikkaamalla!"), 1), 30, 
+						gui.addItem(CoreUtils.getItem(Material.NETHERRACK, colorPrefixNether + "Nether", Arrays.asList("" , 
+								"§7§oTämän matkustuspisteen avulla voit siirtyä", "§7§onopeasti Netheriin mistä päin palvelinta", 
+								"§7§otahansa. Saat matkustuspisteen kättöösi,", "§7§okun olet ensin vieraillut Netherissä", 
+								"§7§oportaalin avulla vähintään kerran.", "", actionTextNether), 1), 30, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
@@ -3083,10 +3106,11 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("matkusta nether");
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.END_STONE, "§aEnd-maailma", Arrays.asList("" , 
-								"§7§oHuomaa, että palvelimella on §lkaksi", "§7§oEnd-maailmaa. Tähän maailmaan ei spawnaa", 
-								"§7§oEnder Dragonia eikä End-kaupunkeja.", "§7§oToisesta End-maailmasta poiketen tänne", 
-								"§7§orakentamasi rakennelmat ovat pysyviä.", "", "§a » Teleporttaa klikkaamalla!"), 1), 32, 
+						gui.addItem(CoreUtils.getItem(Material.END_STONE, colorPrefixEnd + "End", Arrays.asList("" , 
+								"§7§oTämä on §ltoinen§7§o palvelimen kahdesta End-", "§7§omaailmasta. Tänne ei spawnaa Ender Dragonia", 
+								"§7§oeikä End-kaupunkeja. Toisin kuin normaalissa", "§7§oEnd-maailmassa, joka resetoidaan aika ajoin,", 
+								"§7§otähän maailmaan rakentamasi rakennelmat ovat", "§7§opysyviä. Normaaliin End-maailmaan pääset", 
+								"§7§otavalliseen tapaan portaalin kautta.", "", actionTextEnd), 1), 32, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {

@@ -1347,11 +1347,23 @@ public class CoreListener implements Listener {
 	@EventHandler
 	public void onEntityDeath(EntityDeathEvent e) {
 		if (e.getEntityType() == EntityType.ENDER_DRAGON) {
+			
 			int newKey = 1;
 			if (core.getConfig().getConfigurationSection("endinaattori.dragons") != null) {
 				newKey += core.getConfig().getConfigurationSection("endinaattori.dragons").getKeys(false).size();
 			}
 			CoreUtils.setLocation(core, "endinaattori.dragons." + newKey, e.getEntity().getLocation());
+			
+			new BukkitRunnable() {
+				public void run() {
+					for (Player player : e.getEntity().getWorld().getPlayers()) {
+						if (!MySQLUtils.contains("SELECT visited_end FROM player_stats WHERE uuid=? AND visited_end=1", player.getUniqueId().toString())) {
+							MySQLUtils.set("UPDATE player_stats SET visited_end=1 WHERE uuid=?", player.getUniqueId().toString());
+							player.sendMessage("§2Voit nyt käyttää matkustuspistettä \"End\" /matkusta-valikossa!");
+						}
+					}
+				}
+			}.runTaskAsynchronously(core);
 		}
 	}
 	
@@ -1361,7 +1373,7 @@ public class CoreListener implements Listener {
 	//
 	///////////////////////////////////////////////////////////////
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGH)
 	public void onPlayerPortal(PlayerPortalEvent e) {
 		if (e.getCause() == TeleportCause.END_PORTAL && e.getTo().getWorld().getEnvironment() == Environment.THE_END) {
 			boolean alreadyLogged = false;
@@ -1381,6 +1393,16 @@ public class CoreListener implements Listener {
 			if (!alreadyLogged) {
 				CoreUtils.setLocation(core, "endinaattori.portals." + newKey, e.getFrom());
 			}
+		}
+		else if (!e.isCancelled() && e.getCause() == TeleportCause.NETHER_PORTAL && e.getTo().getWorld().getEnvironment() == Environment.NETHER) {
+			new BukkitRunnable() {
+				public void run() {
+					if (!MySQLUtils.contains("SELECT visited_nether FROM player_stats WHERE uuid=? AND visited_nether=1", e.getPlayer().getUniqueId().toString())) {
+						MySQLUtils.set("UPDATE player_stats SET visited_nether=1 WHERE uuid=?", e.getPlayer().getUniqueId().toString());
+						e.getPlayer().sendMessage("§2Voit nyt käyttää matkustuspistettä \"Nether\" /matkusta-valikossa!");
+					}
+				}
+			}.runTaskAsynchronously(core);
 		}
 	}
 	
