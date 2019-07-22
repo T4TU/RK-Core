@@ -19,26 +19,27 @@ import net.minecraft.server.v1_14_R1.ScoreboardTeam;
 public class ReflectionUtils {
 	
 	private static net.minecraft.server.v1_14_R1.Scoreboard board = new net.minecraft.server.v1_14_R1.Scoreboard();
-	public static ScoreboardTeam vankilassa = new ScoreboardTeam(board, "5vankilassa");
+	public static ScoreboardTeam vankilassa = new ScoreboardTeam(board, "7vankilassa");
 	public static ScoreboardTeam def = new ScoreboardTeam(board, "6default");
 	public static ScoreboardTeam ritari = new ScoreboardTeam(board, "5ritari");
 	public static ScoreboardTeam aatelinen = new ScoreboardTeam(board, "4aatelinen");
 	public static ScoreboardTeam arkkitehti = new ScoreboardTeam(board, "3arkkitehti");
 	public static ScoreboardTeam valvoja = new ScoreboardTeam(board, "2valvoja");
 	public static ScoreboardTeam moderaattori = new ScoreboardTeam(board, "1moderaattori");
-	public static ScoreboardTeam ylläpitäjä = new ScoreboardTeam(board, "0ylläpitäjä");
+	public static ScoreboardTeam ylläpitäjä = new ScoreboardTeam(board, "0yllapitaja");
 	public static ScoreboardTeam upsidedown = new ScoreboardTeam(board, "upsidedown");
 	
 	public static void loadScoreboardTeams() {
 		
 		Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
 		
-		Team t0 = scoreboard.getTeam("5vankilassa");
+		Team t0 = scoreboard.getTeam("7vankilassa");
 		if (t0 == null) {
-			t0 = scoreboard.registerNewTeam("5vankilassa");
+			t0 = scoreboard.registerNewTeam("7vankilassa");
 		}
 		t0.setPrefix("§4§l ✖ §8§m");
 		t0.setColor(ChatColor.GRAY);
+		t0.setCanSeeFriendlyInvisibles(false);
 		
 		Team t1 = scoreboard.getTeam("6default");
 		if (t1 == null) {
@@ -46,6 +47,7 @@ public class ReflectionUtils {
 		}
 		t1.setPrefix("§7 ");
 		t1.setColor(ChatColor.GRAY);
+		t1.setCanSeeFriendlyInvisibles(false);
 		
 		Team t2 = scoreboard.getTeam("5ritari");
 		if (t2 == null) {
@@ -53,6 +55,7 @@ public class ReflectionUtils {
 		}
 		t2.setPrefix("§2§l ▶ §7");
 		t2.setColor(ChatColor.GRAY);
+		t2.setCanSeeFriendlyInvisibles(false);
 		
 		Team t3 = scoreboard.getTeam("4aatelinen");
 		if (t3 == null) {
@@ -60,6 +63,7 @@ public class ReflectionUtils {
 		}
 		t3.setPrefix("§6§l ▶ §7");
 		t3.setColor(ChatColor.GRAY);
+		t3.setCanSeeFriendlyInvisibles(false);
 		
 		Team t4 = scoreboard.getTeam("3arkkitehti");
 		if (t4 == null) {
@@ -67,6 +71,7 @@ public class ReflectionUtils {
 		}
 		t4.setPrefix("§e ✸ §7");
 		t4.setColor(ChatColor.GRAY);
+		t4.setCanSeeFriendlyInvisibles(false);
 		
 		Team t5 = scoreboard.getTeam("2valvoja");
 		if (t5 == null) {
@@ -74,6 +79,7 @@ public class ReflectionUtils {
 		}
 		t5.setPrefix("§c ✸ §7");
 		t5.setColor(ChatColor.GRAY);
+		t5.setCanSeeFriendlyInvisibles(false);
 		
 		Team t6 = scoreboard.getTeam("1moderaattori");
 		if (t6 == null) {
@@ -81,13 +87,15 @@ public class ReflectionUtils {
 		}
 		t6.setPrefix("§c ✸ §7");
 		t6.setColor(ChatColor.GRAY);
+		t6.setCanSeeFriendlyInvisibles(false);
 		
-		Team t7 = scoreboard.getTeam("0ylläpitäjä");
+		Team t7 = scoreboard.getTeam("0yllapitaja");
 		if (t7 == null) {
-			t7 = scoreboard.registerNewTeam("0ylläpitäjä");
+			t7 = scoreboard.registerNewTeam("0yllapitaja");
 		}
 		t7.setPrefix("§4 ✸ §7");
 		t7.setColor(ChatColor.GRAY);
+		t7.setCanSeeFriendlyInvisibles(false);
 		
 		Team t8 = scoreboard.getTeam("upsidedown");
 		if (t8 == null) {
