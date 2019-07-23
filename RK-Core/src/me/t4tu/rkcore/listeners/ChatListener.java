@@ -274,5 +274,6 @@ public class ChatListener implements Listener {
 	
 	private Map<String, String> macros = new HashMap<String, String>(); {
 		macros.put("*shrug*", "¯\\_(ツ)_/¯");
+		macros.put("*kk*", "кк");
 	}
 }
