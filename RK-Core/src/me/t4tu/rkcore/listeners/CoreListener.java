@@ -1843,7 +1843,7 @@ public class CoreListener implements Listener {
 				for (int i = 0; i < 3; i++) {
 					String name = names[i];
 					Location location = CoreUtils.loadLocation(core, "tardis." + name + ".interior-location");
-					if (location != null && location.distance(e.getClickedBlock().getLocation()) < 4) {
+					if (location != null && location.getWorld().getName().equals(e.getClickedBlock().getWorld().getName()) && location.distance(e.getClickedBlock().getLocation()) < 4) {
 						e.setCancelled(true);
 						Location currentLocation = CoreUtils.loadLocation(core, "tardis." + name + ".current-location");
 						if (currentLocation != null && core.getCoreCommands().canTardisMove(i)) {
