@@ -2975,7 +2975,7 @@ public class CoreCommands implements CommandExecutor {
 							if (location != null) {
 								MySQLResult visitedData = MySQLUtils.get("SELECT visited_1, visited_2, visited_3, visited_nether, visited_end FROM player_stats WHERE name=?", player.getName());
 								if (visitedData != null) {
-									if (warp.equalsIgnoreCase("kylä") && !visitedData.getBoolean(0, "visited_1")) { // TODO
+									if (warp.equalsIgnoreCase("port_rotfield") && !visitedData.getBoolean(0, "visited_1")) {
 										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 										player.sendMessage(tc3 + "Et ole vielä ansainnut tätä matkustuspistettä käyttöösi!");
 										return;
@@ -3015,9 +3015,10 @@ public class CoreCommands implements CommandExecutor {
 				
 				InventoryGUI gui = new InventoryGUI(45, "Valitse määränpääsi...");
 				
-				gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§a********** (Spawn)", Arrays.asList("" , 
-						"§7§o********** on koko valtakunnan", "§7§okeskus. Korkeiden muurien takana", 
-						"§7§okohoaa vielä korkeampi linna, jonka", "§7§osuojissa itse kuningas asustaa.", "", 
+				gui.addItem(CoreUtils.getItem(Material.NETHER_STAR, "§aFort Royal (Spawn)", Arrays.asList("" , 
+						"§7§oFort Royal on koko valtakunnan", "§7§okeskus. Kaupungin muurien suojassa", 
+						"§7§okohoaa itse Kuninkaan linna.", "§7§oKaupungin ulkopuolelta löytyy myös", 
+						"§7§oturnajaisareena, jossa voit", "§7§ohaastaa muut pelaajat taisteluun.", "", 
 						"§a » Teleporttaa klikkaamalla!"), 1), 10, new InventoryGUIAction() {
 					public void onClickAsync() { }
 					public void onClick() {
@@ -3065,19 +3066,18 @@ public class CoreCommands implements CommandExecutor {
 							}
 						}
 						
-						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix1 + "************", Arrays.asList("" , 
-								"§7§o************ on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu", 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix1 + "Port Rotfield", Arrays.asList("" , 
+								"§7§oPort Rotfield on rauhallinen kaupunki", "§7§omeren rannalla. Se on tunnettu", 
 								"§7§olaajoista pelloistaan ja suuresta", "§7§osatamastaan. Se on myös valtakunnan", 
 								"§7§okaupankäynnin keskus.", "", actionText1), 1), 12, new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
 								gui.close(player);
-								player.performCommand("matkusta kylä"); // TODO
+								player.performCommand("matkusta port_rotfield");
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix2 + "************", Arrays.asList("" , 
-								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
-								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText2), 1), 13, 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix2 + "???", Arrays.asList("" , 
+								"§7§oTulossa...", "", actionText2), 1), 13, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
@@ -3085,9 +3085,8 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("matkusta kylä2"); // TODO
 							}
 						});
-						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix3 + "************", Arrays.asList("" , 
-								"§7§oLorem ipsum dolor sit amet,", "§7§oconsectetur adipiscing elit.", 
-								"§7§oSed fermentum blandit ante", "§7§oac tristique", "", actionText3), 1), 14, 
+						gui.addItem(CoreUtils.getItem(Material.MAP, colorPrefix3 + "???", Arrays.asList("" , 
+								"§7§oTulossa...", "", actionText3), 1), 14, 
 								new InventoryGUIAction() {
 							public void onClickAsync() { }
 							public void onClick() {
