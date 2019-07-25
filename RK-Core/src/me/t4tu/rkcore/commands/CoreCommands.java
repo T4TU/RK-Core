@@ -2064,7 +2064,7 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage(tc2 + "§m----------" + tc1 + " Discord " + tc2 + "§m----------");
 			player.sendMessage("");
 			player.sendMessage(tc2 + " Liity Discord-palvelimellemme tästä linkistä:");
-			player.sendMessage(tc1 + " https://discord.gg/xzstZDt");
+			player.sendMessage(tc1 + " https://discord.gg/q9Eh6fH");
 			player.sendMessage("");
 			return true;
 		}
