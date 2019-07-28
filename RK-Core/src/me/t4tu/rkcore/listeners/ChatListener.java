@@ -106,8 +106,6 @@ public class ChatListener implements Listener {
 			return;
 		}
 		
-		// TODO kysely
-		
 		// jos chat-viestit piilotettu
 		
 		if (!SettingsUtils.getSetting(player, "show_chat")) {

@@ -37,6 +37,7 @@ import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.ReflectionUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 
 public class Core extends JavaPlugin {
@@ -673,11 +674,16 @@ public class Core extends JavaPlugin {
 								getConfig().set("users." + player.getName() + ".jail", null);
 								saveConfig();
 								punishmentCommands.releaseFromJail(player);
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("").create());
 								new BukkitRunnable() {
 									public void run() {
 										MySQLUtils.set("DELETE FROM player_jail WHERE uuid=?", player.getUniqueId().toString().replace("-", ""));
 									}
 								}.runTaskAsynchronously(Core.this);
+							}
+							else {
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("§cRangaistusta jäljellä: §4" + 
+										CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis())).create());
 							}
 						}
 					}
@@ -691,16 +697,21 @@ public class Core extends JavaPlugin {
 								getConfig().set("users." + player.getName() + ".mute", null);
 								saveConfig();
 								punishmentCommands.sendUnmuteInfo(player);
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("").create());
 								new BukkitRunnable() {
 									public void run() {
 										MySQLUtils.set("DELETE FROM player_mute WHERE uuid=?", player.getUniqueId().toString().replace("-", ""));
 									}
 								}.runTaskAsynchronously(Core.this);
 							}
+							else {
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("§cRangaistusta jäljellä: §4" + 
+										CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis())).create());
+							}
 						}
 					}
 				}
-			}.runTaskTimer(this, 100, 100);
+			}.runTaskTimer(this, 40, 40);
 		}
 		
 		new BukkitRunnable() {
