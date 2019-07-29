@@ -1545,7 +1545,7 @@ public class CoreUtils {
 		String s = (hourString + " " + minString).trim();
 		
 		if (s.isEmpty()) {
-			s = "0 minuuttia";
+			s = "alle minuutti";
 		}
 		
 		return s;
@@ -1609,7 +1609,7 @@ public class CoreUtils {
 		String s = (dayString + " " + hourString + " " + minString).replace("  ", " ").trim();
 		
 		if (s.isEmpty()) {
-			s = "0 minuuttia";
+			s = "alle minuutti";
 		}
 		
 		return s;

@@ -62,15 +62,28 @@ public class PunishmentCommands implements CommandExecutor {
 						}
 						reason = reason.trim();
 						
+						boolean silent = false;
+						if (reason.endsWith(" -s")) {
+							silent = true;
+							reason = reason.substring(0, reason.length() - 3);
+						}
+						
 						target.kickPlayer("§c§m--------------------------------\n§c \n§cSinut potkaistiin pois palvelimelta seuraavalla syyllä:"
 								+ "\n§c \n§c§o" + reason + "\n§c \n§c§m--------------------------------");
 						
 						String broadcastMessage = "§c" + sender.getName() + " potkaisi palvelimelta pelaajan " + target.getName() + 
 								" syyllä '" + reason + "'";
+						String playerBroadcastMessage = "§7" + target.getName() + " potkaistiin pois palvelimelta.";
 						
 						for (Player player : Bukkit.getOnlinePlayers()) {
-							if (CoreUtils.hasRank(player, "valvoja")) {
+							if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 								player.sendMessage(broadcastMessage);
+							}
+							else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+								player.sendMessage("§c(Hiljainen) " + broadcastMessage);
+							}
+							else if (!silent) {
+								player.sendMessage(playerBroadcastMessage);
 							}
 						}
 						Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -96,7 +109,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}
 				}
 				else {
-					sender.sendMessage(usage + "/kick <pelaaja> <syy>");
+					sender.sendMessage(usage + "/kick <pelaaja> <syy> [-s]");
 				}
 			}
 			else {
@@ -118,6 +131,12 @@ public class PunishmentCommands implements CommandExecutor {
 								reason = reason + " " + args[i];
 							}
 							reason = reason.trim();
+							
+							boolean silent = false;
+							if (reason.endsWith(" -s")) {
+								silent = true;
+								reason = reason.substring(0, reason.length() - 3);
+							}
 							
 							String name;
 							String uuid;
@@ -161,10 +180,17 @@ public class PunishmentCommands implements CommandExecutor {
 								
 								String broadcastMessage = "§c" + sender.getName() + " hiljensi pelaajan " + name 
 										+ " syyllä '" + reason + "'";
+								String playerBroadcastMessage = "§7" + name + " hiljennettiin.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§c(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -187,7 +213,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/mute <pelaaja> <syy>");
+					sender.sendMessage(usage + "/mute <pelaaja> <syy> [-s]");
 				}
 			}
 			else {
@@ -209,6 +235,12 @@ public class PunishmentCommands implements CommandExecutor {
 								reason = reason + " " + args[i];
 							}
 							reason = reason.trim();
+							
+							boolean silent = false;
+							if (reason.endsWith(" -s")) {
+								silent = true;
+								reason = reason.substring(0, reason.length() - 3);
+							}
 							
 							long expires = System.currentTimeMillis();
 							
@@ -291,10 +323,17 @@ public class PunishmentCommands implements CommandExecutor {
 								
 								String broadcastMessage = "§c" + sender.getName() + " hiljensi pelaajan " + name 
 										+ " ajaksi '" + args[1] + args[2] + "' syyllä '" + reason + "'";
+								String playerBroadcastMessage = "§7" + name + " hiljennettiin.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§c(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -317,7 +356,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/tempmute <pelaaja> <kesto> s/min/h/d/w/mon/y <syy>");
+					sender.sendMessage(usage + "/tempmute <pelaaja> <kesto> s/min/h/d/w/mon/y <syy> [-s]");
 				}
 			}
 			else {
@@ -333,6 +372,11 @@ public class PunishmentCommands implements CommandExecutor {
 				if (args.length >= 1) {
 					new BukkitRunnable() {
 						public void run() {
+							
+							boolean silent = false;
+							if (args.length >= 2 && args[1].equals("-s")) {
+								silent = true;
+							}
 							
 							String name;
 							String uuid;
@@ -372,10 +416,17 @@ public class PunishmentCommands implements CommandExecutor {
 								}
 								
 								String broadcastMessage = "§a" + sender.getName() + " poisti hiljennyksen pelaajalta " + name;
+								String playerBroadcastMessage = "§7Pelaajan " + name + " hiljennys poistettiin.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§a(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -396,7 +447,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/unmute <pelaaja>");
+					sender.sendMessage(usage + "/unmute <pelaaja> [-s]");
 				}
 			}
 			else {
@@ -418,6 +469,12 @@ public class PunishmentCommands implements CommandExecutor {
 								reason = reason + " " + args[i];
 							}
 							reason = reason.trim();
+							
+							boolean silent = false;
+							if (reason.endsWith(" -s")) {
+								silent = true;
+								reason = reason.substring(0, reason.length() - 3);
+							}
 							
 							String name;
 							String uuid;
@@ -461,10 +518,17 @@ public class PunishmentCommands implements CommandExecutor {
 								
 								String broadcastMessage = "§c" + sender.getName() + " vangitsi pelaajan " + name 
 										+ " syyllä '" + reason + "'";
+								String playerBroadcastMessage = "§7" + name + " vangittiin.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§c(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -487,7 +551,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/jail <pelaaja> <syy>");
+					sender.sendMessage(usage + "/jail <pelaaja> <syy> [-s]");
 				}
 			}
 			else {
@@ -509,6 +573,12 @@ public class PunishmentCommands implements CommandExecutor {
 								reason = reason + " " + args[i];
 							}
 							reason = reason.trim();
+							
+							boolean silent = false;
+							if (reason.endsWith(" -s")) {
+								silent = true;
+								reason = reason.substring(0, reason.length() - 3);
+							}
 							
 							long expires = System.currentTimeMillis();
 							
@@ -591,10 +661,17 @@ public class PunishmentCommands implements CommandExecutor {
 								
 								String broadcastMessage = "§c" + sender.getName() + " vangitsi pelaajan " + name 
 										+ " ajaksi '" + args[1] + args[2] + "' syyllä '" + reason + "'";
+								String playerBroadcastMessage = "§7" + name + " vangittiin.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§c(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -617,7 +694,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/tempjail <pelaaja> <kesto> s/min/h/d/w/mon/y <syy>");
+					sender.sendMessage(usage + "/tempjail <pelaaja> <kesto> s/min/h/d/w/mon/y <syy> [-s]");
 				}
 			}
 			else {
@@ -633,6 +710,11 @@ public class PunishmentCommands implements CommandExecutor {
 				if (args.length >= 1) {
 					new BukkitRunnable() {
 						public void run() {
+							
+							boolean silent = false;
+							if (args.length >= 2 && args[1].equals("-s")) {
+								silent = true;
+							}
 							
 							String name;
 							String uuid;
@@ -672,10 +754,17 @@ public class PunishmentCommands implements CommandExecutor {
 								}
 								
 								String broadcastMessage = "§a" + sender.getName() + " vapautti vankilasta pelaajan " + name;
+								String playerBroadcastMessage = "§7" + name + " vapautettiin vankilasta.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§a(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -696,7 +785,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/unjail <pelaaja>");
+					sender.sendMessage(usage + "/unjail <pelaaja> [-s]");
 				}
 			}
 			else {
@@ -718,6 +807,12 @@ public class PunishmentCommands implements CommandExecutor {
 								reason = reason + " " + args[i];
 							}
 							reason = reason.trim();
+							
+							boolean silent = false;
+							if (reason.endsWith(" -s")) {
+								silent = true;
+								reason = reason.substring(0, reason.length() - 3);
+							}
 							
 							String name;
 							String uuid;
@@ -760,10 +855,17 @@ public class PunishmentCommands implements CommandExecutor {
 								
 								String broadcastMessage = "§c" + sender.getName() + " antoi porttikiellon pelaajalle " + name 
 										+ " syyllä '" + reason + "'";
+								String playerBroadcastMessage = "§7" + name + " sai porttikiellon palvelimelle.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§c(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -786,7 +888,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/ban <pelaaja> <syy>");
+					sender.sendMessage(usage + "/ban <pelaaja> <syy> [-s]");
 				}
 			}
 			else {
@@ -808,6 +910,12 @@ public class PunishmentCommands implements CommandExecutor {
 								reason = reason + " " + args[i];
 							}
 							reason = reason.trim();
+							
+							boolean silent = false;
+							if (reason.endsWith(" -s")) {
+								silent = true;
+								reason = reason.substring(0, reason.length() - 3);
+							}
 							
 							long expires = System.currentTimeMillis();
 							
@@ -889,10 +997,17 @@ public class PunishmentCommands implements CommandExecutor {
 								
 								String broadcastMessage = "§c" + sender.getName() + " antoi porttikiellon pelaajalle " + name 
 										+ " ajaksi '" + args[1] + args[2] + "' syyllä '" + reason + "'";
+								String playerBroadcastMessage = "§7" + name + " sai porttikiellon palvelimelle.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§c(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -915,7 +1030,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/tempban <pelaaja> <kesto> s/min/h/d/w/mon/y <syy>");
+					sender.sendMessage(usage + "/tempban <pelaaja> <kesto> s/min/h/d/w/mon/y <syy> [-s]");
 				}
 			}
 			else {
@@ -931,6 +1046,11 @@ public class PunishmentCommands implements CommandExecutor {
 				if (args.length >= 1) {
 					new BukkitRunnable() {
 						public void run() {
+							
+							boolean silent = false;
+							if (args.length >= 2 && args[1].equals("-s")) {
+								silent = true;
+							}
 							
 							String name;
 							String uuid;
@@ -959,10 +1079,17 @@ public class PunishmentCommands implements CommandExecutor {
 							if (banData != null) {
 								
 								String broadcastMessage = "§a" + sender.getName() + " poisti porttikiellon pelaajalta " + name;
+								String playerBroadcastMessage = "§7Pelaajan " + name + " porttikielto poistettiin.";
 								
 								for (Player player : Bukkit.getOnlinePlayers()) {
-									if (CoreUtils.hasRank(player, "valvoja")) {
+									if (CoreUtils.hasRank(player, "valvoja") && !silent) {
 										player.sendMessage(broadcastMessage);
+									}
+									else if (CoreUtils.hasRank(player, "ylläpitäjä") || player.getName().equals(sender.getName())) {
+										player.sendMessage("§a(Hiljainen) " + broadcastMessage);
+									}
+									else if (!silent) {
+										player.sendMessage(playerBroadcastMessage);
 									}
 								}
 								Bukkit.getConsoleSender().sendMessage(broadcastMessage);
@@ -983,7 +1110,7 @@ public class PunishmentCommands implements CommandExecutor {
 					}.runTaskAsynchronously(core);
 				}
 				else {
-					sender.sendMessage(usage + "/unban <pelaaja>");
+					sender.sendMessage(usage + "/unban <pelaaja> [-s]");
 				}
 			}
 			else {
@@ -1136,7 +1263,7 @@ public class PunishmentCommands implements CommandExecutor {
 		player.sendMessage("§c  Syy: §7§o" + reason);
 		player.sendMessage("");
 		if (expires != 0) {
-			player.sendMessage("§c  Aikaa vapautumiseen: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis()));
+			player.sendMessage("§c  Aikaa vapautumiseen: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis() + 2000));
 		}
 		else {
 			player.sendMessage("§c  Vankilatuomiosi on §nelinkautinen§c.");
@@ -1174,7 +1301,7 @@ public class PunishmentCommands implements CommandExecutor {
 		player.sendMessage("§c  Syy: §7§o" + reason);
 		player.sendMessage("");
 		if (expires != 0) {
-			player.sendMessage("§c  Aikaa jäljellä: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis()));
+			player.sendMessage("§c  Hiljennystä jäljellä: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis() + 2000));
 		}
 		else {
 			player.sendMessage("§c  Hiljennyksesi on §nikuinen§c.");
