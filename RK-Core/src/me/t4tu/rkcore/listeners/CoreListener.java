@@ -367,17 +367,15 @@ public class CoreListener implements Listener {
 			}
 			if (!unbanned) {
 				// porttikielto voimassa, estetään liittyminen
+				String reason = banData.getString(0, "reason").equals("-") ? "" : "\n§c\n§cSyy: §7§o" + banData.getString(0, "reason");
 				if (banDuration != 0) {
-					e.disallow(Result.KICK_OTHER, "§c§m--------------------------------\n§c \n§cSinulle on annettu porttikielto "
-							+ "tälle palvelimelle seuraavalla syyllä:\n§c \n§c§o" + banData.getString(0, "reason") 
-							+ "\n§c \n§c \n§7Aikaa jäjellä: " + CoreUtils.getDaysAndHoursAndMinsFromMillis(banDuration - System.currentTimeMillis()) 
-							+ ".\n§c \n§c§m--------------------------------");
+					e.disallow(Result.KICK_OTHER, "§c§m--------------------------------\n§c\n§cSinulle on annettu porttikielto tälle palvelimelle." + reason + 
+							"\n§c\n§cPorttikieltoa jäjellä: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(banDuration - System.currentTimeMillis()) 
+							+ "\n§c\n§c§m--------------------------------");
 				}
 				else {
-					e.disallow(Result.KICK_OTHER, "§c§m--------------------------------\n§c \n§cSinulle on annettu porttikielto "
-							+ "tälle palvelimelle seuraavalla syyllä:\n§c \n§c§o" + banData.getString(0, "reason") 
-							+ "\n§c \n§c \n§7Tämä porttikielto on ikuinen." 
-							+ "\n§c \n§c§m--------------------------------");
+					e.disallow(Result.KICK_OTHER, "§c§m--------------------------------\n§c\n§cSinulle on annettu porttikielto tälle palvelimelle." + reason + 
+							"\n§c\n§cTämä porttikielto on ikuinen.\n§c\n§c§m--------------------------------");
 				}
 				return;
 			}

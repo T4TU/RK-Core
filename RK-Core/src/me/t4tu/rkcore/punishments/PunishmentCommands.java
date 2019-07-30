@@ -68,8 +68,10 @@ public class PunishmentCommands implements CommandExecutor {
 							reason = reason.substring(0, reason.length() - 3);
 						}
 						
-						target.kickPlayer("§c§m--------------------------------\n§c \n§cSinut potkaistiin pois palvelimelta seuraavalla syyllä:"
-								+ "\n§c \n§c§o" + reason + "\n§c \n§c§m--------------------------------");
+						String reasonMessage = reason.equals("-") ? "" : "\n§c\n§cSyy: §7§o" + reason;
+						
+						target.kickPlayer("§c§m--------------------------------\n§c\n§cSinut potkaistiin pois palvelimelta."
+								+ reasonMessage + "\n§c\n§c§m--------------------------------");
 						
 						String broadcastMessage = "§c" + sender.getName() + " potkaisi palvelimelta pelaajan " + target.getName() + 
 								" syyllä '" + reason + "'";
@@ -842,13 +844,11 @@ public class PunishmentCommands implements CommandExecutor {
 								
 								Player target = Bukkit.getPlayer(name);
 								if (target != null) {
-									final String finalReason = reason;
+									String reasonMessage = reason.equals("-") ? "" : "\n§c\n§cSyy: §7§o" + reason;
 									new BukkitRunnable() {
 										public void run() {
-											target.kickPlayer("§c§m--------------------------------\n§c \n§cSinulle on annettu porttikielto " 
-													+ "tälle palvelimelle seuraavalla syyllä:\n§c \n§c§o" + finalReason  
-													+ "\n§c \n§c \n§7Tämä porttikielto on ikuinen." 
-													+ "\n§c \n§c§m--------------------------------");
+											target.kickPlayer("§c§m--------------------------------\n§c\n§cSinulle on annettu porttikielto tälle palvelimelle." + reasonMessage + 
+													"\n§c\n§cTämä porttikielto on ikuinen.\n§c\n§c§m--------------------------------");
 										}
 									}.runTask(core);
 								}
@@ -982,15 +982,14 @@ public class PunishmentCommands implements CommandExecutor {
 								Player target = Bukkit.getPlayer(name);
 								if (target != null) {
 									
-									final String finalReason = reason;
+									String reasonMessage = reason.equals("-") ? "" : "\n§c\n§cSyy: §7§o" + reason;
 									final long finalExpires = expires;
 									
 									new BukkitRunnable() {
 										public void run() {
-											target.kickPlayer("§c§m--------------------------------\n§c \n§cSinulle on annettu porttikielto " 
-													+ "tälle palvelimelle seuraavalla syyllä:\n§c \n§c§o" + finalReason  
-													+ "\n§c \n§c \n§7Aikaa jäjellä: " + CoreUtils.getDaysAndHoursAndMinsFromMillis(finalExpires - System.currentTimeMillis()) 
-													+ ".\n§c \n§c§m--------------------------------");
+											target.kickPlayer("§c§m--------------------------------\n§c\n§cSinulle on annettu porttikielto tälle palvelimelle." + reasonMessage + 
+													"\n§c\n§cPorttikiellon kesto: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(finalExpires - System.currentTimeMillis() + 2000) 
+													+ "\n§c\n§c§m--------------------------------");
 										}
 									}.runTask(core);
 								}
@@ -1260,8 +1259,10 @@ public class PunishmentCommands implements CommandExecutor {
 		player.sendMessage("");
 		player.sendMessage("§c§l Sinut on vangittu!");
 		player.sendMessage("");
-		player.sendMessage("§c  Syy: §7§o" + reason);
-		player.sendMessage("");
+		if (!reason.equals("-")) {
+			player.sendMessage("§c  Syy: §7§o" + reason);
+			player.sendMessage("");
+		}
 		if (expires != 0) {
 			player.sendMessage("§c  Aikaa vapautumiseen: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis() + 2000));
 		}
@@ -1298,8 +1299,10 @@ public class PunishmentCommands implements CommandExecutor {
 		player.sendMessage("");
 		player.sendMessage("§c§l Sinut on hiljennetty!");
 		player.sendMessage("");
-		player.sendMessage("§c  Syy: §7§o" + reason);
-		player.sendMessage("");
+		if (!reason.equals("-")) {
+			player.sendMessage("§c  Syy: §7§o" + reason);
+			player.sendMessage("");
+		}
 		if (expires != 0) {
 			player.sendMessage("§c  Hiljennystä jäljellä: §7" + CoreUtils.getDaysAndHoursAndMinsFromMillis(expires - System.currentTimeMillis() + 2000));
 		}
