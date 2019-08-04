@@ -1,9 +1,14 @@
 package me.t4tu.rkcore.statistics;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import me.t4tu.rkcore.Core;
 import me.t4tu.rkcore.utils.CoreUtils;
@@ -12,10 +17,72 @@ import me.t4tu.rkcore.utils.MySQLUtils;
 
 public class StatisticsViewer {
 	
-	private Core core;
+	private static Core core;
+	
+	private List<PlayerStatisticsEntry> pvpTopCache;
 	
 	public StatisticsViewer(Core core) {
-		this.core = core;
+		StatisticsViewer.core = core;
+		pvpTopCache = new ArrayList<PlayerStatisticsEntry>();
+	}
+	
+	public List<PlayerStatisticsEntry> getPvpTopCache() {
+		return pvpTopCache;
+	}
+	
+	public void addKillToPvpTopCache(Player player) {
+		for (PlayerStatisticsEntry entry : pvpTopCache) {
+			if (entry.getUuid().equals(player.getUniqueId().toString())) {
+				entry.setValue(entry.getValue() + 1);
+				return;
+			}
+		}
+		pvpTopCache.add(new PlayerStatisticsEntry(Statistic.PVP_KILLS, 1, player.getUniqueId().toString()));
+	}
+	
+	public static void incrementKillsInPvpTopCache(Player player) {
+		core.getStatisticsViewer().addKillToPvpTopCache(player);
+	}
+	
+	public void updatePvpTopCache() {
+		MySQLResult statisticsData = MySQLUtils.get("SELECT * FROM statistics_player WHERE statistic=?", Statistic.PVP_KILLS.getId() + "");
+		List<StatisticsEntry> entries = core.getStatisticsManager().combineSimilarPlayers(core.getStatisticsManager().parseStatistics(statisticsData));
+		pvpTopCache.clear();
+		int count = 0;
+		for (StatisticsEntry entry : entries) {
+			if (entry instanceof PlayerStatisticsEntry) {
+				PlayerStatisticsEntry e = (PlayerStatisticsEntry) entry;
+				if (count >= 20) {
+					break;
+				}
+				pvpTopCache.add(e);
+			}
+		}
+	}
+	
+	public void updatePvpTopHolograms(World world) {
+		Collections.sort(pvpTopCache, new StatisticsManager.ValueSorter());
+		for (int i = 1; i <= 10; i++) {
+			if (i <= pvpTopCache.size()) {
+				PlayerStatisticsEntry entry = pvpTopCache.get(i - 1);
+				String name = CoreUtils.uuidToName(entry.getUuid());
+				int kills = entry.getValue();
+				for (ArmorStand a : world.getEntitiesByClass(ArmorStand.class)) {
+					if (a.getScoreboardTags().contains("RK-pvpstats-" + i)) {
+						int position = i;
+						new BukkitRunnable() {
+							public void run() {
+								a.setCustomName("§4§l" + position + ". §c" + name + "§7 - §c" + kills);
+							}
+						}.runTask(core);
+					}
+				}
+			}
+		}
+	}
+	
+	public static void updatePvpTopScoreboard(World world) {
+		core.getStatisticsViewer().updatePvpTopHolograms(world);
 	}
 	
 	public void viewCommand(CommandSender sender, String[] args, String tc1, String tc2, String tc3, String tc4, String usage) {

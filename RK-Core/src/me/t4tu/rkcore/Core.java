@@ -379,6 +379,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("tutorial", false);
 		commands.registerCommand("tardis", false);
 		commands.registerCommand("musiikkikauppa", false);
+		commands.registerCommand("pvpstats", true);
 		commands.registerCommand("matka", true);
 		commands.registerCommand("rankaise", false);
 		commands.registerCommand("h", false);
@@ -437,6 +438,13 @@ public class Core extends JavaPlugin {
 	}
 	
 	private void loops() {
+		
+		new BukkitRunnable() {
+			public void run() {
+				statisticsViewer.updatePvpTopCache();
+				statisticsViewer.updatePvpTopHolograms(Bukkit.getWorlds().get(0));
+			}
+		}.runTaskAsynchronously(this);
 		
 		new BukkitRunnable() {
 			World world = Bukkit.getWorlds().get(0);
@@ -659,6 +667,8 @@ public class Core extends JavaPlugin {
 					statisticsManager.logStatistic(new StatisticsEntry(Statistic.PLAYERS_ONLINE, players));
 					statisticsManager.logStatistic(new StatisticsEntry(Statistic.STAFF_ONLINE, staff));
 					statisticsManager.saveCacheToDatabase();
+					statisticsViewer.updatePvpTopCache();
+					statisticsViewer.updatePvpTopHolograms(Bukkit.getWorlds().get(0));
 				}
 			}.runTaskTimerAsynchronously(this, 12000, 12000);
 			

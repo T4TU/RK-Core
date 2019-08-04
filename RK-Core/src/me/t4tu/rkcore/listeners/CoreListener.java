@@ -1275,6 +1275,10 @@ public class CoreListener implements Listener {
 							}
 							else if (cause == DamageCause.ENTITY_EXPLOSION && text.contains("<killer>")) {
 								EntityDamageByEntityEvent event = (EntityDamageByEntityEvent) player.getLastDamageCause();
+								if (event.getDamager().getType() == EntityType.PRIMED_TNT ||event.getDamager().getType() == EntityType.MINECART_TNT) {
+									deathNotes.add("§7" + player.getName() + " räjähti taivaan tuuliin.");
+									continue;
+								}
 								String killer = LanguageHelper.getEntityName(event.getDamager(), "fi_fi");
 								if (event.getDamager().getCustomName() != null) {
 									killer = event.getDamager().getCustomName();
@@ -1964,7 +1968,7 @@ public class CoreListener implements Listener {
 			"§7<killer>§7 tönäisi laavaan pelaajan <victim>§7.<>LAVA", 
 			"§7<killer>§7 tappoi taikuudella pelaajan <victim>§7.<>MAGIC", 
 			"§7<killer>§7 myrkytti pelaajan <victim>§7.<>POISON", 
-			"§7<killer>§7 ampui pelaajan <victim>§7.<>PROJECTILE", 
+			"§7<killer>§7 lävisti pelaajan <victim>§7.<>PROJECTILE", 
 			"§7<killer>§7 antoi pelaajan <victim>§7 maistaa omaa lääkettään.<>THORNS", 
 			"§7<killer>§7 tönäisi pelaajan <victim>§7 tyhjyyteen.<>VOID", 
 			"§7<killer>§7 näivetti elävältä pelaajan <victim>§7.<>WITHER"
@@ -1995,10 +1999,9 @@ public class CoreListener implements Listener {
 			"§7<victim>§7 sai ihmeellisen päähänpiston kylpeä laavassa.<>LAVA", 
 			"§7<victim>§7 lätsähti päin seinää.<>FLY_INTO_WALL", 
 			"§7<victim>§7 poltti jalkansa tanssiessaan magmakuution päällä.<>HOT_FLOOR", 
-			"§7<victim>§7 muuttui eläväksi ukkosenjohdattimeksi.<>LIGHTNING", 
-			"§7Pelaajaan <victim>§7 iski salama kuin kirkkaalta taivaalta.<>LIGHTNING", 
+			"§7<victim>§7 kuoli salamaniskuun.<>LIGHTNING", 
 			"§7<victim>§7 myrkytettiin kuoliaaksi.<>POISON", 
-			"§7<killer>§7 ampui pelaajan <victim>§7.<>PROJECTILE", 
+			"§7<killer>§7 lävisti pelaajan <victim>§7.<>PROJECTILE", 
 			"§7<victim>§7 nääntyi nälkään.<>STARVATION", 
 			"§7<victim>§7 tukehtui seinän sisään.<>SUFFOCATION", 
 			"§7<victim>§7 riisti oman henkensä.<>SUICIDE", 
