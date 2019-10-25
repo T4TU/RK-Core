@@ -19,6 +19,7 @@ import java.util.StringJoiner;
 import java.util.TimeZone;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -82,6 +83,13 @@ public class CoreUtils {
 	public static final int SECONDS_TO_HOME_5 = 180000; // 50 tuntia
 	public static final int SECONDS_TO_HOME_6 = 360000; // 100 tuntia
 	public static final int SECONDS_TO_HOME_7 = 720000; // 200 tuntia
+	public static final int SECONDS_TO_HOME_8 = 720000; // 200 tuntia
+	public static final int SECONDS_TO_HOME_9 = 720000; // 200 tuntia
+	public static final int SECONDS_TO_HOME_10 = 720000; // 200 tuntia
+	public static final int SECONDS_TO_HOME_11 = 720000; // 200 tuntia
+	public static final int SECONDS_TO_HOME_12 = 720000; // 200 tuntia
+	public static final int SECONDS_TO_HOME_13 = 720000; // 200 tuntia
+	public static final int SECONDS_TO_HOME_14 = 720000; // 200 tuntia
 	
 	private static Core core;
 	private static List<String> registeredCommandsNoTabComplete = new ArrayList<String>();
@@ -336,12 +344,33 @@ public class CoreUtils {
 			if (home == 7 && seconds >= SECONDS_TO_HOME_7) {
 				return true;
 			}
+			if (home == 8 && seconds >= SECONDS_TO_HOME_8) {
+				return true;
+			}
+			if (home == 9 && seconds >= SECONDS_TO_HOME_9) {
+				return true;
+			}
+			if (home == 10 && seconds >= SECONDS_TO_HOME_10) {
+				return true;
+			}
+			if (home == 11 && seconds >= SECONDS_TO_HOME_11) {
+				return true;
+			}
+			if (home == 12 && seconds >= SECONDS_TO_HOME_12) {
+				return true;
+			}
+			if (home == 13 && seconds >= SECONDS_TO_HOME_13) {
+				return true;
+			}
+			if (home == 14 && seconds >= SECONDS_TO_HOME_14) {
+				return true;
+			}
 		}
 		return false;
 	}
 	
-	public static Location getHome(String name, int home) {
-		MySQLResult homeData = MySQLUtils.get("SELECT * FROM player_homes WHERE name=?", name);
+	public static Location getHome(Player player, int home) {
+		MySQLResult homeData = MySQLUtils.get("SELECT * FROM player_homes WHERE uuid=?", player.getUniqueId().toString());
 		if (homeData != null) {
 			String homeString = homeData.getString(0, "home_" + home);
 			if (homeString != null) {
@@ -373,26 +402,48 @@ public class CoreUtils {
 		return null;
 	}
 	
-	public static void setHome(Player player, int home) {
-		if (home < 1 || home > 7) {
+	public static int getHomeByName(Player player, String name) {
+		MySQLResult homeData = MySQLUtils.get("SELECT * FROM player_homes WHERE uuid=?", player.getUniqueId().toString());
+		if (homeData != null) {
+			for (int i = 1; i <= 14; i++) {
+				String homeString = homeData.getString(0, "home_" + i + "_name");
+				if (homeString != null) {
+					if (homeString.equalsIgnoreCase(name)) {
+						return i;
+					}
+				}
+			}
+		}
+		return 0;
+	}
+	
+	public static void setHome(Player player, int home, String name) {
+		if (home < 1 || home > 14) {
 			return;
 		}
 		Location location = player.getLocation();
 		String worldString = location.getWorld().getName();
-		String xString = "" + location.getX();
-		String yString = "" + location.getY();
-		String zString = "" + location.getZ();
-		String yawString = "" + location.getYaw();
-		String pitchString = "" + location.getPitch();
+		String xString = String.format("%.2f", location.getX());
+		String yString = String.format("%.2f", location.getY());
+		String zString = String.format("%.2f", location.getZ());
+		String yawString = String.format("%.2f", location.getYaw());
+		String pitchString = String.format("%.2f", location.getPitch());
 		String homeString = worldString + ";" + xString + ";" + yString + ";" + zString + ";" + yawString + ";" + pitchString;
-		MySQLUtils.set("UPDATE player_homes SET home_" + home + "=? WHERE name=?", homeString, player.getName());
+		MySQLUtils.set("UPDATE player_homes SET home_" + home + "=?, home_" + home + "_name=? WHERE uuid=?", homeString, name, player.getUniqueId().toString());
+	}
+	
+	public static void setHomeName(Player player, int home, String name) {
+		if (home < 1 || home > 14 || name.length() > 32) {
+			return;
+		}
+		MySQLUtils.set("UPDATE player_homes SET home_" + home + "_name=? WHERE uuid=?", name, player.getUniqueId().toString());
 	}
 	
 	public static void delHome(Player player, int home) {
-		if (home < 1 || home > 7) {
+		if (home < 1 || home > 14) {
 			return;
 		}
-		MySQLUtils.set("UPDATE player_homes SET home_" + home + "=? WHERE name=?", "", player.getName());
+		MySQLUtils.set("UPDATE player_homes SET home_" + home + "=?, home_" + home + "_name=? WHERE uuid=?", "", "", player.getUniqueId().toString());
 	}
 	
 	public static ItemStack getHomeItem(Player player, int home) {
@@ -403,37 +454,66 @@ public class CoreUtils {
 			material = Material.WHITE_BED;
 		}
 		else if (home == 2) {
-			material = Material.RED_BED;
+			material = Material.YELLOW_BED;
 		}
 		else if (home == 3) {
-			material = Material.PURPLE_BED;
+			material = Material.ORANGE_BED;
 		}
 		else if (home == 4) {
-			material = Material.GREEN_BED;
+			material = Material.RED_BED;
 		}
 		else if (home == 5) {
-			material = Material.BROWN_BED;
+			material = Material.LIME_BED;
 		}
 		else if (home == 6) {
-			material = Material.BLUE_BED;
+			material = Material.GREEN_BED;
 		}
 		else if (home == 7) {
+			material = Material.BROWN_BED;
+		}
+		else if (home == 8) {
+			material = Material.BLUE_BED;
+		}
+		else if (home == 9) {
+			material = Material.LIGHT_BLUE_BED;
+		}
+		else if (home == 10) {
+			material = Material.PURPLE_BED;
+		}
+		else if (home == 11) {
+			material = Material.MAGENTA_BED;
+		}
+		else if (home == 12) {
+			material = Material.PINK_BED;
+		}
+		else if (home == 13) {
+			material = Material.LIGHT_GRAY_BED;
+		}
+		else if (home == 14) {
 			material = Material.GRAY_BED;
 		}
 		else {
-			material = Material.PINK_BED;
+			material = Material.BLACK_BED;
 		}
 		
 		ItemStack item = new ItemStack(material);
 		ItemMeta meta = item.getItemMeta();
 		
-		Location location = getHome(player.getName(), home);
+		Location location = getHome(player, home);
 		
 		if (location != null) {
+			String homeName = "";
+			MySQLResult nameData = MySQLUtils.get("SELECT * FROM player_homes WHERE uuid=?", player.getUniqueId().toString());
+			if (nameData != null) {
+				String name = nameData.getString(0, "home_" + home + "_name");
+				if (name != null) {
+					homeName = " (\"" + name + "\")";
+				}
+			}
 			int x = location.getBlockX();
 			int y = location.getBlockY();
 			int z = location.getBlockZ();
-			meta.setDisplayName("§aKoti #" + home);
+			meta.setDisplayName("§aKoti #" + home + homeName);
 			meta.setLore(Arrays.asList("", "§7(" + x + ", " + y + ", " + z + ")", "",  "§7Teleporttaa tähän kotipisteeseen", 
 					"§7klikkaamalla tästä.", "", "§a » Teleporttaa klikkaamalla!"));
 		}
@@ -445,7 +525,7 @@ public class CoreUtils {
 			}
 			else {
 				float current = 0;
-				MySQLResult infoData = MySQLUtils.get("SELECT seconds FROM player_info WHERE name=?", player.getName());
+				MySQLResult infoData = MySQLUtils.get("SELECT seconds FROM player_info WHERE uuid=?", player.getUniqueId().toString());
 				if (infoData != null) {
 					current = infoData.getInt(0, "seconds") / 60f / 60f;
 				}
@@ -470,6 +550,27 @@ public class CoreUtils {
 				}
 				else if (home == 7) {
 					seconds = SECONDS_TO_HOME_7;
+				}
+				else if (home == 8) {
+					seconds = SECONDS_TO_HOME_8;
+				}
+				else if (home == 9) {
+					seconds = SECONDS_TO_HOME_9;
+				}
+				else if (home == 10) {
+					seconds = SECONDS_TO_HOME_10;
+				}
+				else if (home == 11) {
+					seconds = SECONDS_TO_HOME_11;
+				}
+				else if (home == 12) {
+					seconds = SECONDS_TO_HOME_12;
+				}
+				else if (home == 13) {
+					seconds = SECONDS_TO_HOME_13;
+				}
+				else if (home == 14) {
+					seconds = SECONDS_TO_HOME_14;
 				}
 				float max = seconds / 60f / 60f;
 				meta.setDisplayName("§cKoti #" + home);
@@ -1007,6 +1108,10 @@ public class CoreUtils {
 	
 	public static void teleport(Player player, Location location) {
 		if (core.getCoreCommands().getTeleportingPlayers().contains(player.getName())) {
+			return;
+		}
+		if (player.getGameMode() == GameMode.CREATIVE) {
+			player.teleport(location);
 			return;
 		}
 		core.getCoreCommands().getTeleportingPlayers().add(player.getName());

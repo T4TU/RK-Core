@@ -10,11 +10,14 @@ import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -86,6 +89,8 @@ public class Core extends JavaPlugin {
 		registerCoreCommands(coreCommands);
 		registerPunishmentCommands(punishmentCommands);
 		addStaffCommands();
+		
+		addCustomRecipes();
 		
 		if (noSQL) {
 			coreListener.setMaintenanceMode(true);
@@ -243,6 +248,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("who", true);
 		commands.registerCommand("pelaajat", true);
 		commands.registerCommand("alert", false);
+		commands.registerCommand("autobroadcast", false);
 		commands.registerCommand("send", false);
 		commands.registerCommand("chat", false);
 		commands.registerCommand("perm", false);
@@ -255,7 +261,6 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("sudochat", false);
 		commands.registerCommand("setnews", false);
 		commands.registerCommand("vanhentuneetsakot", false);
-		commands.registerCommand("clearfire", false);
 		commands.registerCommand("debug", false);
 		commands.registerCommand("ping", true);
 		commands.registerCommand("lag", true);
@@ -279,6 +284,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("sa", false);
 		commands.registerCommand("a", true);
 		commands.registerCommand("helpop", true);
+		commands.registerCommand("ar", false);
 		commands.registerCommand("henkilökunta", true);
 		commands.registerCommand("staff", true);
 		commands.registerCommand("viesti", true);
@@ -304,6 +310,8 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("juhlapäivät", false);
 		commands.registerCommand("lähellä", true);
 		commands.registerCommand("near", true);
+		commands.registerCommand("sijainti", true);
+		commands.registerCommand("getpos", true);
 		commands.registerCommand("spawn", true);
 		commands.registerCommand("hub", true);
 		commands.registerCommand("lobby", true);
@@ -314,6 +322,8 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("home", true);
 		commands.registerCommand("asetakoti", true);
 		commands.registerCommand("sethome", true);
+		commands.registerCommand("nimeäkoti", true);
+		commands.registerCommand("namehome", true);
 		commands.registerCommand("poistakoti", true);
 		commands.registerCommand("delhome", true);
 		commands.registerCommand("matkusta", true);
@@ -358,7 +368,6 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("pt", false);
 		commands.registerCommand("lightfix", false);
 		commands.registerCommand("thor", false);
-		commands.registerCommand("getpos", false);
 		commands.registerCommand("entity", false);
 		commands.registerCommand("mob", false);
 		commands.registerCommand("killall", false);
@@ -366,6 +375,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("xpl", false);
 		commands.registerCommand("portti", false);
 		commands.registerCommand("tykki", false);
+		commands.registerCommand("kallot", false);
 		commands.registerCommand("komentokuutio", false);
 		commands.registerCommand("command-block", false);
 		commands.registerCommand("maailma", false);
@@ -435,6 +445,47 @@ public class Core extends JavaPlugin {
 		CoreUtils.getRegisteredStaffCommands().add("core");
 		CoreUtils.getRegisteredStaffCommands().add("coreprotect");
 		CoreUtils.getRegisteredStaffCommands().add("/wand");
+	}
+	
+	private void addCustomRecipes() {
+		
+		ItemStack chainmailHelmet = new ItemStack(Material.CHAINMAIL_HELMET);
+		ShapedRecipe chainmailHelmetRecipe1 = new ShapedRecipe(new NamespacedKey(this, "chainmail_helmet1"), chainmailHelmet);
+		chainmailHelmetRecipe1.shape("III", "N N", "   ");
+		chainmailHelmetRecipe1.setIngredient('I', Material.IRON_INGOT);
+		chainmailHelmetRecipe1.setIngredient('N', Material.IRON_NUGGET);
+		Bukkit.addRecipe(chainmailHelmetRecipe1);
+		ShapedRecipe chainmailHelmetRecipe2 = new ShapedRecipe(new NamespacedKey(this, "chainmail_helmet2"), chainmailHelmet);
+		chainmailHelmetRecipe2.shape("   ", "III", "N N");
+		chainmailHelmetRecipe2.setIngredient('I', Material.IRON_INGOT);
+		chainmailHelmetRecipe2.setIngredient('N', Material.IRON_NUGGET);
+		Bukkit.addRecipe(chainmailHelmetRecipe2);
+		
+		ItemStack chainmailChestplate = new ItemStack(Material.CHAINMAIL_CHESTPLATE);
+		ShapedRecipe chainmailChestplateRecipe = new ShapedRecipe(new NamespacedKey(this, "chainmail_chestplate"), chainmailChestplate);
+		chainmailChestplateRecipe.shape("N N", "III", "III");
+		chainmailChestplateRecipe.setIngredient('I', Material.IRON_INGOT);
+		chainmailChestplateRecipe.setIngredient('N', Material.IRON_NUGGET);
+		Bukkit.addRecipe(chainmailChestplateRecipe);
+		
+		ItemStack chainmailLeggings = new ItemStack(Material.CHAINMAIL_LEGGINGS);
+		ShapedRecipe chainmailLeggingsRecipe = new ShapedRecipe(new NamespacedKey(this, "chainmail_leggings"), chainmailLeggings);
+		chainmailLeggingsRecipe.shape("III", "I I", "N N");
+		chainmailLeggingsRecipe.setIngredient('I', Material.IRON_INGOT);
+		chainmailLeggingsRecipe.setIngredient('N', Material.IRON_NUGGET);
+		Bukkit.addRecipe(chainmailLeggingsRecipe);
+		
+		ItemStack chainmailBoots = new ItemStack(Material.CHAINMAIL_BOOTS);
+		ShapedRecipe chainmailBootsRecipe1 = new ShapedRecipe(new NamespacedKey(this, "chainmail_boots1"), chainmailBoots);
+		chainmailBootsRecipe1.shape("I I", "N N", "   ");
+		chainmailBootsRecipe1.setIngredient('I', Material.IRON_INGOT);
+		chainmailBootsRecipe1.setIngredient('N', Material.IRON_NUGGET);
+		Bukkit.addRecipe(chainmailBootsRecipe1);
+		ShapedRecipe chainmailBootsRecipe2 = new ShapedRecipe(new NamespacedKey(this, "chainmail_boots2"), chainmailBoots);
+		chainmailBootsRecipe2.shape("   ", "I I", "N N");
+		chainmailBootsRecipe2.setIngredient('I', Material.IRON_INGOT);
+		chainmailBootsRecipe2.setIngredient('N', Material.IRON_NUGGET);
+		Bukkit.addRecipe(chainmailBootsRecipe2);
 	}
 	
 	private void loops() {
@@ -546,7 +597,8 @@ public class Core extends JavaPlugin {
 				// nukkuminen
 				
 				int playersSleeping = 0;
-				int playersNeededToSleep = Bukkit.getWorlds().get(0).getPlayers().size();
+				int playersOnline = Bukkit.getWorlds().get(0).getPlayers().size();
+				int playersNeededToSleep = playersOnline % 2 == 0 ? playersOnline / 2 : playersOnline / 2 + 1;
 				for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
 					if (player.isSleeping()) {
 						playersSleeping++;
@@ -571,7 +623,7 @@ public class Core extends JavaPlugin {
 						for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
 							if (player.isSleeping()) {
 								player.wakeup(true);
-								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit päiväunet, hypättiin sateen yli."));
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit päiväunet sateen yli."));
 							}
 						}
 					}
@@ -582,7 +634,7 @@ public class Core extends JavaPlugin {
 						for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
 							if (player.isSleeping()) {
 								player.wakeup(true);
-								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit yöunet, hypättiin yön yli."));
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit yön yli."));
 							}
 						}
 					}

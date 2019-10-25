@@ -101,6 +101,11 @@ public class ChatListener implements Listener {
 								+ tc1 + "/posti" + tc2 + ".");
 						p.sendMessage("");
 					}
+					for (Player pl : Bukkit.getOnlinePlayers()) {
+						if (CoreUtils.hasRank(pl, "valvoja") && core.getCoreCommands().getSpyPlayers().contains(pl.getName())) {
+							pl.sendMessage("§8§l" + player.getName() + "§7§l ▶ §8§l" + p.getName() + "§8 (posti) §7" + message);
+						}
+					}
 				}
 			}.runTaskAsynchronously(core);
 			return;

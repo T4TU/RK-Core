@@ -37,9 +37,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockIgniteEvent;
-import org.bukkit.event.block.BlockIgniteEvent.IgniteCause;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -99,7 +96,7 @@ public class CoreListener implements Listener {
 	private boolean maintenanceMode;
 	private List<String> stunCooldown;
 	private List<String> cannonCooldown;
-	private List<Location> fireSpreadCooldown;
+	private List<String> skullCooldown;
 	private List<Villager> npcLook;
 	
 	public CoreListener(Core core) {
@@ -107,7 +104,7 @@ public class CoreListener implements Listener {
 		maintenanceMode = false;
 		stunCooldown = new ArrayList<String>();
 		cannonCooldown = new ArrayList<String>();
-		fireSpreadCooldown = new ArrayList<Location>();
+		skullCooldown = new ArrayList<String>();
 		npcLook = new ArrayList<Villager>();
 		Bukkit.getPluginManager().registerEvents(this, core);
 	}
@@ -118,10 +115,6 @@ public class CoreListener implements Listener {
 	
 	public void setMaintenanceMode(boolean maintenanceMode) {
 		this.maintenanceMode = maintenanceMode;
-	}
-	
-	public List<Location> getFireSpreadCooldown() {
-		return fireSpreadCooldown;
 	}
 	
 	public List<Villager> getNPCLook() {
@@ -969,50 +962,6 @@ public class CoreListener implements Listener {
 	
 	///////////////////////////////////////////////////////////////
 	//
-	//          onBlockIgnite
-	//
-	///////////////////////////////////////////////////////////////
-	
-	@EventHandler(ignoreCancelled = true)
-	public void onBlockIgnite(BlockIgniteEvent e) {
-		if (e.getCause() == IgniteCause.LAVA || e.getCause() == IgniteCause.LIGHTNING) {
-			e.setCancelled(true);
-			return;
-		}
-		if (e.getCause() == IgniteCause.SPREAD && (fireSpreadCooldown.size() > 500 || fireSpreadCooldown.contains(e.getBlock().getLocation()))) {
-			e.setCancelled(true);
-			return;
-		}
-		new BukkitRunnable() {
-			public void run() {
-				if (e.getBlock().getType() == Material.FIRE && e.getBlock().getRelative(BlockFace.DOWN).getType() != Material.NETHERRACK) {
-					e.getBlock().setType(Material.AIR);
-					if (!fireSpreadCooldown.contains(e.getBlock().getLocation())) {
-						fireSpreadCooldown.add(e.getBlock().getLocation());
-						new BukkitRunnable() {
-							public void run() {
-								fireSpreadCooldown.remove(e.getBlock().getLocation());
-							}
-						}.runTaskLater(core, 2400);
-					}
-				}
-			}
-		}.runTaskLater(core, 300);
-	}
-	
-	///////////////////////////////////////////////////////////////
-	//
-	//          onBlockBurn
-	//
-	///////////////////////////////////////////////////////////////
-	
-	@EventHandler
-	public void onBlockBurn(BlockBurnEvent e) {
-		e.setCancelled(true);
-	}
-	
-	///////////////////////////////////////////////////////////////
-	//
 	//          onSignChange
 	//
 	///////////////////////////////////////////////////////////////
@@ -1489,6 +1438,7 @@ public class CoreListener implements Listener {
 	public void onPlayerInteract(PlayerInteractEvent e) {
 		
 		Player player = e.getPlayer();
+		Block block = e.getClickedBlock();
 		
 		String tc1 = CoreUtils.getHighlightColor();
 		String tc2 = CoreUtils.getBaseColor();
@@ -1541,7 +1491,6 @@ public class CoreListener implements Listener {
 		// portin nappi
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
-			Block block = e.getClickedBlock();
 			if (block.getType().toString().contains("BUTTON")) {
 				if (core.getConfig().getConfigurationSection("gates") != null) {
 					for (String s : core.getConfig().getConfigurationSection("gates").getKeys(false)) {
@@ -1633,7 +1582,6 @@ public class CoreListener implements Listener {
 		// tuolit
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
-			Block block = e.getClickedBlock();
 			if (block.getType().toString().contains("STAIRS")) {
 				boolean c = false;
 				Stairs stairs = (Stairs) block.getBlockData();
@@ -1669,7 +1617,6 @@ public class CoreListener implements Listener {
 		// komentokuutiot
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
-			Block block = e.getClickedBlock();
 			if (block.getType().toString().contains("SIGN") || block.getType().toString().contains("BUTTON")) {
 				Location location = block.getLocation();
 				String key = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ();
@@ -1690,7 +1637,6 @@ public class CoreListener implements Listener {
 		}
 		
 		if (e.getAction() == Action.PHYSICAL) {
-			Block block = e.getClickedBlock();
 			if (block.getType().toString().contains("PRESSURE_PLATE")) {
 				Location location = block.getLocation();
 				String key = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ();
@@ -1713,7 +1659,6 @@ public class CoreListener implements Listener {
 		// tykit
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
-			Block block = e.getClickedBlock();
 			if (block.getType().toString().contains("BUTTON")) {
 				Location location = block.getLocation();
 				String cannon = location.getWorld().getName() + "/" + location.getBlockX() + "/" + location.getBlockY() + "/" + location.getBlockZ() + "/";
@@ -1757,8 +1702,8 @@ public class CoreListener implements Listener {
 		// hevostallit
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
-			if (e.getClickedBlock().getState() instanceof Sign) {
-				Location clickedLocation = e.getClickedBlock().getLocation();
+			if (block.getState() instanceof Sign) {
+				Location clickedLocation = block.getLocation();
 				if (core.getConfig().getConfigurationSection("stables") != null) {
 					for (String id : core.getConfig().getConfigurationSection("stables").getKeys(false)) {
 						if (core.getConfig().getConfigurationSection("stables." + id + ".signs") != null) {
@@ -1807,13 +1752,70 @@ public class CoreListener implements Listener {
 					}
 				}
 			}
-			
+		}
+		
+		// kallot
+		
+		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getHand() == EquipmentSlot.HAND) {
+			if (block.getType() == Material.WITHER_SKELETON_SKULL || block.getType() == Material.WITHER_SKELETON_WALL_SKULL) {
+				if (!skullCooldown.contains(player.getName())) {
+					if (core.getConfig().getConfigurationSection("skulls") != null) {
+						for (String id : core.getConfig().getConfigurationSection("skulls").getKeys(false)) {
+							Location location = CoreUtils.loadLocation(core, "skulls." + id);
+							if (location.equals(block.getLocation())) {
+								
+								new BukkitRunnable() {
+									public void run() {
+										MySQLResult skullData = MySQLUtils.get("SELECT skulls FROM player_stats WHERE uuid=?", player.getUniqueId().toString());
+										if (skullData != null) {
+											String[] foundSkulls = skullData.getString(0, "skulls") == null ? new String[0] : skullData.getStringNotNull(0, "skulls").split(";");
+											for (String foundSkull : foundSkulls) {
+												if (foundSkull.equals(id)) {
+													player.sendMessage(tc3 + "Olet jo löytänyt tämän kallon!");
+													return;
+												}
+											}
+											MySQLUtils.set("UPDATE player_stats SET skulls=? WHERE uuid=?", skullData.getStringNotNull(0, "skulls") + id + ";", player.getUniqueId().toString());
+											player.playSound(block.getLocation(), Sound.ENTITY_WITHER_SKELETON_DEATH, 1, 1);
+											player.playSound(block.getLocation(), Sound.BLOCK_BELL_RESONATE, 1, 1);
+											new BukkitRunnable() {
+												int i = 0;
+												public void run() {
+													if (i >= 25) {
+														player.sendTitle(tc1 + (foundSkulls.length + 1) + tc2 + "/" + tc1 + core.getConfig().getConfigurationSection("skulls").getKeys(false).size(), 
+																"", 40, 20, 20);
+														cancel();
+														return;
+													}
+													else {
+														player.spawnParticle(Particle.TOWN_AURA, block.getLocation().add(0.5, 0.5, 0.5), 3, 0.4, 0.4, 0.4);
+													}
+													i++;
+												}
+											}.runTaskTimer(core, 0, 1);
+										}
+									}
+								}.runTaskAsynchronously(core);
+								
+								skullCooldown.add(player.getName());
+								new BukkitRunnable() {
+									public void run() {
+										skullCooldown.remove(player.getName());
+									}
+								}.runTaskLater(core, 40);
+								
+								break;
+							}
+						}
+					}
+				}
+			}
 		}
 		
 		// TARDIS
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
-			Location clickedLocation = e.getClickedBlock().getLocation().add(0.5, 0, 0.5);
+			Location clickedLocation = block.getLocation().add(0.5, 0, 0.5);
 			String[] names = {"T4TU_", "Ahishi", "evokki0075"};
 			for (int i = 0; i < 3; i++) {
 				String name = names[i];
@@ -1827,11 +1829,11 @@ public class CoreListener implements Listener {
 								player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.5f, 1);
 							}
 							else {
-								player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
+								player.playSound(block.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
 							}
 						}
 						else {
-							player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
+							player.playSound(block.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
 						}
 						return;
 					}
@@ -1840,12 +1842,12 @@ public class CoreListener implements Listener {
 		}
 		
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
-			if (e.getClickedBlock().getType() == Material.IRON_DOOR) {
+			if (block.getType() == Material.IRON_DOOR) {
 				String[] names = {"T4TU_", "Ahishi", "evokki0075"};
 				for (int i = 0; i < 3; i++) {
 					String name = names[i];
 					Location location = CoreUtils.loadLocation(core, "tardis." + name + ".interior-location");
-					if (location != null && location.getWorld().getName().equals(e.getClickedBlock().getWorld().getName()) && location.distance(e.getClickedBlock().getLocation()) < 4) {
+					if (location != null && location.getWorld().getName().equals(block.getWorld().getName()) && location.distance(block.getLocation()) < 4) {
 						e.setCancelled(true);
 						Location currentLocation = CoreUtils.loadLocation(core, "tardis." + name + ".current-location");
 						if (currentLocation != null && core.getCoreCommands().canTardisMove(i)) {
@@ -1856,7 +1858,7 @@ public class CoreListener implements Listener {
 							player.playSound(player.getLocation(), Sound.BLOCK_WOODEN_DOOR_CLOSE, 0.5f, 1);
 						}
 						else {
-							player.playSound(e.getClickedBlock().getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
+							player.playSound(block.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 0.5f, 2);
 						}
 						return;
 					}

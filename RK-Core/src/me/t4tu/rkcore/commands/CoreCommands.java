@@ -243,1527 +243,7 @@ public class CoreCommands implements CommandExecutor {
 		String noPermission = CoreUtils.getNoPermissionString();
 		String playersOnly = CoreUtils.getPlayersOnlyString();
 		
-		// reconnect
-		
-		if (cmd.getName().equalsIgnoreCase("reconnect")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				sender.sendMessage(tc2 + "Yhdistetään tietokantaan...");
-				MySQLUtils.closeConnection();
-				if (MySQLUtils.openConnection()) {
-					sender.sendMessage(tc2 + "Yhdistettiin tietokantaan onnistuneesti!");
-				}
-				else {
-					sender.sendMessage(tc3 + "Virhe yhdistettäessä tietokantaan!");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// setupmysql
-		
-		if (cmd.getName().equalsIgnoreCase("setupmysql")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 1 && args[0].equalsIgnoreCase("confirm")) {
-					sender.sendMessage(tc2 + "Rakennetaan tietokantaa...");
-					MySQLCreator.setupMySQL();
-					sender.sendMessage(tc2 + "Valmis!");
-				}
-				else {
-					sender.sendMessage(tc2 + "Oletko varma? Vahvista kirjoittamalla " + tc1 + "/setupmysql confirm" + tc2 + ".");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// updateplayerdata
-		
-		if (cmd.getName().equalsIgnoreCase("updateplayerdata")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 1) {
-					Player target = Bukkit.getPlayer(args[0]);
-					if (target != null) {
-						new BukkitRunnable() {
-							public void run() {
-								// TODO
-								String name = target.getName();
-								String uuid = target.getUniqueId().toString();
-								MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE uuid=?", uuid);
-								MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE uuid=?", uuid);
-								core.getConfig().set("users." + name + ".chat_prefix", infoData.getStringNotNull(0, "chat_prefix"));
-								core.getConfig().set("users." + name + ".chat_color", infoData.getStringNotNull(0, "chat_color"));
-								core.getConfig().set("users." + name + ".chat_nick", infoData.getString(0, "chat_nick"));
-								core.getConfig().set("users." + name + ".rank", infoData.getString(0, "rank"));
-								core.getConfig().set("users." + name + ".status", statsData.getString(0, "status"));
-								core.saveConfig();
-								SettingsUtils.reloadSettings(target);
-								CoreUtils.updatePermissions(target);
-								CoreUtils.updateNotes(target);
-								CoreUtils.updateTabForAll();
-								new BukkitRunnable() {
-									public void run() {
-										target.updateCommands();
-									}
-								}.runTask(core);
-								sender.sendMessage(tc2 + "Päivitettiin pelaajan " + tc1 + name + tc2 + " tiedot!");
-							}
-						}.runTaskAsynchronously(core);
-					}
-					else {
-						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/updateplayerdata <pelaaja>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// playerlookup
-		
-		if (cmd.getName().equalsIgnoreCase("playerlookup")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 1) {
-					new BukkitRunnable() {
-						public void run() {
-							MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
-							if (infoData != null) {
-								
-								String name = infoData.getString(0, "name");
-								String uuid = infoData.getString(0, "uuid");
-								String uuidWithoutDashes = uuid.replace("-", "");
-								String ip = infoData.getString(0, "ip");
-								String chatPrefix = infoData.getStringNotNull(0, "chat_prefix");
-								String chatColor = infoData.getStringNotNull(0, "chat_color");
-								String chatNick = infoData.getStringNotNull(0, "chat_nick");
-								String rank = infoData.getStringNotNull(0, "rank");
-								long seconds = infoData.getLong(0, "seconds");
-								if (core.getOntimes().containsKey(uuid)) {
-									seconds += core.getOntimes().get(uuid);
-								}
-								String secondsString = CoreUtils.getHoursAndMinsFromMillis(seconds * 1000);
-								long lastSeen = infoData.getLong(0, "last_seen");
-								String lastSeenString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
-										new Date(lastSeen + CoreUtils.TIME_OFFSET));
-								long nickLastChanged = infoData.getLong(0, "nick_last_changed");
-								String nickLastChangedString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
-										new Date(nickLastChanged + CoreUtils.TIME_OFFSET));
-								
-								sender.sendMessage("§e§m--------------------");
-								sender.sendMessage("§eNimi: §r" + name);
-								sender.sendMessage("§eUUID: §r" + uuid);
-								sender.sendMessage("§eIP: §r" + ip);
-								sender.sendMessage("§eEtuliite: §r" + chatPrefix);
-								sender.sendMessage("§eVäri: §r" + chatColor);
-								sender.sendMessage("§eLempinimi: §r" + chatNick);
-								sender.sendMessage("§eLempinimi vaihdettu: §r" + nickLastChangedString);
-								sender.sendMessage("§eArvo: §r" + rank);
-								sender.sendMessage("§ePelannut: §r" + secondsString);
-								if (Bukkit.getPlayer(name) != null) {
-									sender.sendMessage("§eViimeksi nähty: §rNyt");
-								}
-								else {
-									sender.sendMessage("§eViimeksi nähty: §r" + lastSeenString);
-								}
-								
-								MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE uuid=?", uuid);
-								if (statsData != null) {
-									int money = statsData.getInt(0, "money");
-									int profession = statsData.getInt(0, "profession");
-									long professionLastChanged = statsData.getLong(0, "profession_last_changed");
-									String professionLastChangedString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
-											new Date(professionLastChanged + CoreUtils.TIME_OFFSET));
-									boolean visited1 = statsData.getBoolean(0, "visited_1");
-									boolean visited2 = statsData.getBoolean(0, "visited_2");
-									boolean visited3 = statsData.getBoolean(0, "visited_3");
-									String status = statsData.getString(0, "status");
-									
-									sender.sendMessage("§eRahat: §r" + money);
-									sender.sendMessage("§eAmmatti: §r" + profession);
-									sender.sendMessage("§eAmmatti vaihdettu: §r" + professionLastChangedString);
-									sender.sendMessage("§evisited_1: §r" + visited1);
-									sender.sendMessage("§evisited_2: §r" + visited2);
-									sender.sendMessage("§evisited_3: §r" + visited3);
-									sender.sendMessage("§eTilaviesti: §r" + status);
-								}
-								
-								sender.sendMessage("§eKaverit: §r");
-								
-								for (String friend : CoreUtils.getFriendsUuids(name)) {
-									MySQLResult friendData = MySQLUtils.get("SELECT name FROM player_info WHERE uuid=?", friend);
-									if (friendData != null) {
-										sender.sendMessage("§e - §r" + friendData.getString(0, "name"));
-									}
-								}
-								
-								MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
-								if (banData != null) {
-									
-									String banner = banData.getString(0, "banner");
-									String reason = banData.getString(0, "reason");
-									long time = banData.getLong(0, "time");
-									long duration = banData.getLong(0, "duration");
-									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
-									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
-									
-									sender.sendMessage("§ePorttikielto:");
-									sender.sendMessage("§e - Antanut: §r" + banner);
-									sender.sendMessage("§e - Annettu: §r" + timeGiven);
-									sender.sendMessage("§e - Päättyy: §r" + expires);
-									sender.sendMessage("§e - Syy: §r" + reason);
-								}
-								else {
-									sender.sendMessage("§ePorttikielto: §rEi ole");
-								}
-								
-								MySQLResult jailData = MySQLUtils.get("SELECT * FROM player_jail WHERE uuid=?", uuidWithoutDashes);
-								if (jailData != null) {
-									
-									String jailer = jailData.getString(0, "jailer");
-									String reason = jailData.getString(0, "reason");
-									long time = jailData.getLong(0, "time");
-									long duration = jailData.getLong(0, "duration");
-									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
-									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
-									
-									sender.sendMessage("§eVangittu:");
-									sender.sendMessage("§e - Antanut: §r" + jailer);
-									sender.sendMessage("§e - Annettu: §r" + timeGiven);
-									sender.sendMessage("§e - Päättyy: §r" + expires);
-									sender.sendMessage("§e - Syy: §r" + reason);
-								}
-								else {
-									sender.sendMessage("§eVangittu: §rEi ole");
-								}
-								
-								MySQLResult muteData = MySQLUtils.get("SELECT * FROM player_mute WHERE uuid=?", uuidWithoutDashes);
-								if (muteData != null) {
-									
-									String banner = muteData.getString(0, "muter");
-									String reason = muteData.getString(0, "reason");
-									long time = muteData.getLong(0, "time");
-									long duration = muteData.getLong(0, "duration");
-									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
-									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
-									
-									sender.sendMessage("§eHiljennys:");
-									sender.sendMessage("§e - Antanut: §r" + banner);
-									sender.sendMessage("§e - Annettu: §r" + timeGiven);
-									sender.sendMessage("§e - Päättyy: §r" + expires);
-									sender.sendMessage("§e - Syy: §r" + reason);
-								}
-								else {
-									sender.sendMessage("§eHiljennys: §rEi ole");
-								}
-								
-								sender.sendMessage("§e§m--------------------");
-							}
-							else {
-								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-							}
-						}
-					}.runTaskAsynchronously(core);
-				}
-				else {
-					sender.sendMessage(usage + "/playerlookup <pelaaja>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// kickall
-		
-		if (cmd.getName().equalsIgnoreCase("kickall")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 1) {
-					String reason = "";
-					for (String word : args) {
-						reason = reason + " " + word;
-					}
-					reason = ChatColor.translateAlternateColorCodes('&', tc3 + reason.trim());
-					for (Player player : Bukkit.getOnlinePlayers()) {
-						if (!player.getName().equals(sender.getName())) {
-							player.kickPlayer(reason);
-						}
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/kickall <syy>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// huolto
-		
-		if (cmd.getName().equalsIgnoreCase("huolto")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				boolean maintenanceMode = core.getCoreListener().getMaintenanceMode();
-				if (maintenanceMode) {
-					core.getConfig().set("maintenance-mode", false);
-					core.getCoreListener().setMaintenanceMode(false);
-					sender.sendMessage(tc2 + "Huoltotila pois päältä!");
-				}
-				else {
-					core.getConfig().set("maintenance-mode", true);
-					core.getCoreListener().setMaintenanceMode(true);
-					sender.sendMessage(tc2 + "Huoltotila päällä!");
-				}
-				core.saveConfig();
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// xstop
-		
-		if (cmd.getName().equalsIgnoreCase("xstop")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 1) {
-					String reason = "";
-					for (String word : args) {
-						reason = reason + " " + word;
-					}
-					reason = ChatColor.translateAlternateColorCodes('&', tc3 + reason.trim());
-					for (Player player : Bukkit.getOnlinePlayers()) {
-						player.kickPlayer(reason);
-					}
-					core.getConfig().set("users", null);
-					core.saveConfig();
-					Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop");
-				}
-				else {
-					sender.sendMessage(usage + "/xstop <syy>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// autorestart
-		
-		if (cmd.getName().equalsIgnoreCase("autorestart")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 1 && args[0].equalsIgnoreCase("cancel")) {
-					if (autoRestartTaskId != -1) {
-						Bukkit.getScheduler().cancelTask(autoRestartTaskId);
-						Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "send all chat &a&lPalvelimen uudelleenkäynnistys keskeytetty!");
-						autoRestartTaskId = -1;
-					}
-					else {
-						sender.sendMessage(tc3 + "Autorestart ei ole käynnissä!");
-					}
-					return true;
-				}
-				if (autoRestartTaskId != -1) {
-					sender.sendMessage(tc3 + "Autorestart on jo käynnissä!");
-					return true;
-				}
-				new BukkitRunnable() {
-					int i = 0;
-					CommandSender console = Bukkit.getConsoleSender();
-					public void run() {
-						if (i == 0) {
-							autoRestartTaskId = getTaskId();
-							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen 1 minuutin kuluttua!");
-							for (Player player : Bukkit.getOnlinePlayers()) {
-								player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1, 2);
-							}
-						}
-						if (i == 30) {
-							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen 30 sekunnin kuluttua!");
-						}
-						if (i == 45) {
-							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen 15 sekunnin kuluttua!");
-						}
-						if (i >= 50 && i < 60) {
-							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen " + (60 - i) + " sekunnin kuluttua!");
-						}
-						if (i >= 60) {
-							cancel();
-							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen...");
-							Bukkit.dispatchCommand(console, "xstop Palvelin käynnistyy uudelleen...");
-						}
-						i++;
-					}
-				}.runTaskTimer(core, 0, 20);
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// config
-		
-		if (cmd.getName().equalsIgnoreCase("config")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 1) {
-					if (args[0].equalsIgnoreCase("reload")) {
-						if (args.length >= 2) {
-							Plugin plugin = Bukkit.getPluginManager().getPlugin(args[1]);
-							if (plugin != null) {
-								plugin.reloadConfig();
-								sender.sendMessage(tc2 + "Uudelleenladattiin pluginin " + tc1 + plugin.getName() + tc2 + " config.yml!");
-							}
-							else {
-								sender.sendMessage(tc3 + "Tuntematon plugin!");
-							}
-						}
-						else {
-							sender.sendMessage(usage + "/config reload <plugin>");
-						}
-					}
-					else if (args.length >= 3) {
-						Plugin plugin = Bukkit.getPluginManager().getPlugin(args[0]);
-						if (plugin == null) {
-							sender.sendMessage(tc3 + "Tuntematon plugin!");
-							return true;
-						}
-						boolean cannotBeBoolean = false;
-						String value = "";
-						for (int i = 2; i < args.length; i++) {
-							value = value + " " + args[i];
-						}
-						value = value.trim();
-						if (value.startsWith("'") && value.endsWith("'")) {
-							cannotBeBoolean = true;
-							value = value.substring(1, value.length() - 1);
-						}
-						if (value.equalsIgnoreCase("null")) {
-							plugin.getConfig().set(args[1], null);
-							plugin.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "null" + tc2 + " (null)");
-							return true;
-						}
-						else if (value.equalsIgnoreCase("true") && !cannotBeBoolean) {
-							plugin.getConfig().set(args[1], true);
-							plugin.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "true" + tc2 + " (boolean)");
-							return true;
-						}
-						else if (value.equalsIgnoreCase("false") && !cannotBeBoolean) {
-							plugin.getConfig().set(args[1], false);
-							plugin.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "false" + tc2 + " (boolean)");
-							return true;
-						}
-						try {
-							int i = Integer.parseInt(value);
-							plugin.getConfig().set(args[1], i);
-							plugin.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + i + tc2 + " (int)");
-						}
-						catch (NumberFormatException e) {
-							try {
-								double d = Double.parseDouble(value);
-								plugin.getConfig().set(args[1], d);
-								plugin.saveConfig();
-								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + d + tc2 + " (double)");
-							}
-							catch (NumberFormatException e2) {
-								plugin.getConfig().set(args[1], value);
-								plugin.saveConfig();
-								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi '" + tc1 + value + tc2 + "' (String)");
-							}
-						}
-					}
-					else {
-						sender.sendMessage(usage + "/config <plugin> <polku> <arvo>");
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/config <plugin> <polku> <arvo>" + tc3 + " tai " + tc4 + "/config reload <plugin>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// sql
-		
-		if (cmd.getName().equalsIgnoreCase("sql")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 2) {
-					if (args[0].equalsIgnoreCase("get")) {
-						new BukkitRunnable() {
-							public void run() {
-								String query = "";
-								for (int i = 1; i < args.length; i++) {
-									query = query + " " + args[i];
-								}
-								query = query.trim();
-								MySQLResult result = MySQLUtils.get(query);
-								if (result != null) {
-									for (int i = 0; i < result.getRows(); i++) {
-										sender.sendMessage(tc2 + "§m--------------------");
-										for (String column : result.getResult().get(i).keySet()) {
-											sender.sendMessage(tc1 + " " + column + ": " + tc2 + result.getString(i, column));
-										}
-										sender.sendMessage(tc2 + "§m--------------------");
-									}
-								}
-								else {
-									sender.sendMessage(tc3 + "Ei yhtäkään kyselyä vastaavaa riviä!");
-								}
-							}
-						}.runTaskAsynchronously(core);
-					}
-					else if (args[0].equalsIgnoreCase("set")) {
-						new BukkitRunnable() {
-							public void run() {
-								String query = "";
-								for (int i = 1; i < args.length; i++) {
-									query = query + " " + args[i];
-								}
-								query = query.trim();
-								int i = MySQLUtils.set(query);
-								sender.sendMessage(tc2 + "SQL-kysely lähetetty, vaikutusalue " + tc1 + i + tc2 + " rivi(ä)!");
-							}
-						}.runTaskAsynchronously(core);
-					}
-					else {
-						sender.sendMessage(usage + "/sql get/set <query>");
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/sql get/set <query>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// statistics
-		
-		if (cmd.getName().equalsIgnoreCase("statistics")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				new BukkitRunnable() {
-					public void run() {
-						if (args.length >= 1) {
-							if (args[0].equalsIgnoreCase("save")) {
-								sender.sendMessage(tc2 + "Pakotetaan uusimpien tilastojen tallennus tietokantaan...");
-								core.getStatisticsManager().saveCacheToDatabase();
-								sender.sendMessage(tc2 + "Tallennus valmis!");
-							}
-							else if (args[0].equalsIgnoreCase("view")) {
-								core.getStatisticsViewer().viewCommand(sender, args, tc1, tc2, tc3, tc4, usage);
-							}
-							else if (args[0].equalsIgnoreCase("log") || args[0].equalsIgnoreCase("increment")) {
-								if (args.length >= 4) {
-									try {
-										String table = args[1];
-										Statistic statistic = Statistic.valueOf(args[2].toUpperCase());
-										int value = Integer.parseInt(args[3]);
-										StatisticsEntry entry;
-										if (table.equals("simple")) {
-											entry = new StatisticsEntry(statistic, value);
-										}
-										else if (table.equals("player")) {
-											if (args.length >= 5) {
-												String uuid = CoreUtils.nameToUuid(args[4]);
-												if (uuid != null) {
-													entry = new PlayerStatisticsEntry(statistic, value, uuid);
-												}
-												else {
-													sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-													return;
-												}
-											}
-											else {
-												sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " " + table + " <tilasto> <arvo> <pelaaja>");
-												return;
-											}
-										}
-										else if (table.equals("player_complex")) {
-											if (args.length >= 6) {
-												String uuid = CoreUtils.nameToUuid(args[4]);
-												if (uuid != null) {
-													try {
-														int data = Integer.parseInt(args[5]);
-														entry = new ComplexPlayerStatisticsEntry(statistic, value, uuid, data);
-													}
-													catch (NumberFormatException e) {
-														sender.sendMessage(tc3 + "Virheellinen data!");
-														return;
-													}
-												}
-												else {
-													sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-													return;
-												}
-											}
-											else {
-												sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " " + table + " <tilasto> <arvo> <pelaaja> <data>");
-												return;
-											}
-										}
-										else {
-											sender.sendMessage(tc3 + "Virheellinen tilaston tyyppi!");
-											return;
-										}
-										if (args[0].equalsIgnoreCase("log")) {
-											core.getStatisticsManager().logStatistic(entry);
-										}
-										else {
-											core.getStatisticsManager().incrementStatistic(entry);
-										}
-										sender.sendMessage(tc2 + "Onnistui!");
-									}
-									catch (NumberFormatException e) {
-										sender.sendMessage(tc3 + "Virheellinen arvo!");
-									}
-									catch (IllegalArgumentException e) {
-										sender.sendMessage(tc3 + "Ei löydetty tilastoa \"" + tc4 + args[2].toUpperCase() + tc3 + "\"!");
-									}
-								}
-								else {
-									sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " <tyyppi> <tilasto> <arvo>");
-								}
-							}
-							else {
-								sender.sendMessage(usage + "/statistics save/view/log/increment");
-							}
-						}
-						else {
-							sender.sendMessage(usage + "/statistics save/view/log/increment");
-						}
-					}
-				}.runTaskAsynchronously(core);
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// list, who, pelaajat
-		
-		if (cmd.getName().equalsIgnoreCase("list") || cmd.getName().equalsIgnoreCase("who") || cmd.getName().equalsIgnoreCase("pelaajat")) {
-			if (sender.getName().equals(Bukkit.getConsoleSender().getName()) && args.length == 0) {
-				return true;
-			}
-			new BukkitRunnable() {
-				public void run() {
-					MySQLResult globalData = MySQLUtils.get("SELECT * FROM global");
-					sender.sendMessage("");
-					sender.sendMessage(tc2 + "§m----------" + tc1 + " Pelaajat " + tc2 + "§m----------");
-					sender.sendMessage("");
-					sender.sendMessage(tc2 + " Palvelimelle on liittynyt yhteensä " + tc1 + globalData.getInt(0, "uniquejoins") + tc2 + " pelaajaa,");
-					sender.sendMessage(tc2 + " pelaajaennätys on " + tc1 + globalData.getInt(0, "record") + tc2 + " samanaikaista pelaajaa.");
-					sender.sendMessage("");
-					if (CoreUtils.hasRank(sender, "valvoja")) {
-						sender.sendMessage(tc2 + " Paikalla on tällä hetkellä " + tc1 + Bukkit.getOnlinePlayers().size() + tc2 + " pelaajaa:");
-					}
-					else {
-						sender.sendMessage(tc2 + " Paikalla on tällä hetkellä " + tc1 + (Bukkit.getOnlinePlayers().size() - vanishedPlayers.size()) 
-								+ tc2 + " pelaajaa:");
-					}
-					sender.sendMessage("");
-					String playerList = "";
-					for (Player player : Bukkit.getOnlinePlayers()) {
-						if (vanishedPlayers.contains(player.getName())) {
-							if (CoreUtils.hasRank(sender, "valvoja")) {
-								playerList = playerList + " [V]" + player.getName();
-							}
-						}
-						else {
-							playerList = playerList + " " + player.getName();
-						}
-					}
-					playerList = playerList.trim().replace(" ", tc1 + ", " + tc2);
-					sender.sendMessage(tc2 + "  " + playerList);
-					sender.sendMessage("");
-				}
-			}.runTaskAsynchronously(core);
-			return true;
-		}
-		
-		// alert
-		
-		if (cmd.getName().equalsIgnoreCase("alert")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 2) {
-					String message = "";
-					for (int i = 1; i < args.length; i++) {
-						message = message + " " + args[i];
-					}
-					message = ChatColor.translateAlternateColorCodes('&', message.trim());
-					for (Player player : Bukkit.getOnlinePlayers()) {
-						if (args[0].equalsIgnoreCase("chat")) {
-							player.sendMessage("");
-							player.sendMessage("§4§lIlmoitus: §c" + message);
-							player.sendMessage("");
-							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-						}
-						else if (args[0].equalsIgnoreCase("title")) {
-							player.sendTitle("§4§lIlmoitus:", "§c" + message, 20, 60, 20);
-							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-						}
-						else if (args[0].equalsIgnoreCase("both")) {
-							player.sendMessage("");
-							player.sendMessage("§4§lIlmoitus: §c" + message);
-							player.sendMessage("");
-							player.sendTitle("§4§lIlmoitus:", "§c" + message, 20, 60, 20);
-							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-						}
-						else {
-							sender.sendMessage(usage + "/alert chat/title/both <viesti>");
-						}
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/alert chat/title/both <viesti>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// send
-		
-		if (cmd.getName().equalsIgnoreCase("send")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 3) {
-					Player target = Bukkit.getPlayer(args[0]);
-					if (target != null || args[0].equalsIgnoreCase("all")) {
-						
-						String message = "";
-						for (int i = 2; i < args.length; i++) {
-							message = message + " " + args[i];
-						}
-						message = ChatColor.translateAlternateColorCodes('&', message.trim());
-						
-						List<Player> players = new ArrayList<Player>();
-						if (args[0].equalsIgnoreCase("all")) {
-							players.addAll(Bukkit.getOnlinePlayers());
-						}
-						else {
-							players.add(target);
-						}
-						
-						if (args[1].equalsIgnoreCase("chat")) {
-							for (Player player : players) {
-								player.sendMessage(message);
-							}
-						}
-						else if (args[1].equalsIgnoreCase("title")) {
-							for (Player player : players) {
-								player.sendTitle(message, "", 10, 60, 10);
-							}
-						}
-						else if (args[1].equalsIgnoreCase("subtitle")) {
-							for (Player player : players) {
-								player.sendTitle("", message, 10, 60, 10);
-							}
-						}
-						else if (args[1].equalsIgnoreCase("actionbar")) {
-							TextComponent text = new TextComponent(message);
-							for (Player player : players) {
-								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, text);
-							}
-						}
-						else {
-							sender.sendMessage(usage + "/send <pelaaja> chat/title/subtitle/actionbar <viesti>");
-						}
-					}
-					else  {
-						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/send <pelaaja> chat/title/subtitle/actionbar <viesti>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// chat
-		
-		if (cmd.getName().equalsIgnoreCase("chat")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (core.getChatListener().isDisabled()) {
-					core.getChatListener().setDisabled(false);
-					sender.sendMessage(tc2 + "Chat on nyt käytettävissä!");
-				}
-				else {
-					core.getChatListener().setDisabled(true);
-					sender.sendMessage(tc2 + "Chat on nyt hiljennetty!");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// perm
-		
-		if (cmd.getName().equalsIgnoreCase("perm")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 3) {
-					MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
-					if (infoData != null) {
-						String name = infoData.getString(0, "name");
-						String uuid = infoData.getString(0, "uuid");
-						if (args[2].equalsIgnoreCase("true")) {
-							core.getConfig().set("permissions." + uuid + "." + args[1].replace(".", ";"), true);
-							core.saveConfig();
-							sender.sendMessage("");
-							sender.sendMessage(tc2 + "Asetettiin permissionin '" + args[1] + "' arvoksi " + args[2].toUpperCase() + " pelaajalle " + name + "!");
-							sender.sendMessage("");
-							sender.sendMessage(tc2 + " Pelaajalla " + name + " on nyt seuraavat permissionit:");
-							sender.sendMessage("");
-							if (core.getConfig().getConfigurationSection("permissions." + uuid) != null) {
-								for (String perm : core.getConfig().getConfigurationSection("permissions." + uuid).getKeys(false)) {
-									sender.sendMessage(tc2 + " - " + perm.replace(";", ".") + " | " +  core.getConfig().getBoolean("permissions." + uuid + "." + perm));
-								}
-							}
-							sender.sendMessage("");
-							if (Bukkit.getPlayer(name) != null) {
-								CoreUtils.updatePermissions(Bukkit.getPlayer(name));
-							}
-						}
-						else if (args[2].equalsIgnoreCase("false")) {
-							core.getConfig().set("permissions." + uuid + "." + args[1].replace(".", ";"), false);
-							core.saveConfig();
-							sender.sendMessage("");
-							sender.sendMessage(tc2 + "Asetettiin permissionin '" + args[1] + "' arvoksi " + args[2].toUpperCase() + " pelaajalle " + name + "!");
-							sender.sendMessage("");
-							sender.sendMessage(tc2 + " Pelaajalla " + name + " on nyt seuraavat permissionit:");
-							sender.sendMessage("");
-							if (core.getConfig().getConfigurationSection("permissions." + uuid) != null) {
-								for (String perm : core.getConfig().getConfigurationSection("permissions." + uuid).getKeys(false)) {
-									sender.sendMessage(tc2 + " - " + perm.replace(";", ".") + " | " +  core.getConfig().getBoolean("permissions." + uuid + "." + perm));
-								}
-							}
-							sender.sendMessage("");
-							if (Bukkit.getPlayer(name) != null) {
-								CoreUtils.updatePermissions(Bukkit.getPlayer(name));
-							}
-						}
-						else if (args[2].equalsIgnoreCase("reset")) {
-							core.getConfig().set("permissions." + uuid + "." + args[1].replace(".", ";"), null);
-							core.saveConfig();
-							sender.sendMessage("");
-							sender.sendMessage(tc2 + "Asetettiin permissionin '" + args[1] + "' arvoksi " + args[2].toUpperCase() + " pelaajalle " + name + "!");
-							sender.sendMessage("");
-							sender.sendMessage(tc2 + " Pelaajalla " + name + " on nyt seuraavat permissionit:");
-							sender.sendMessage("");
-							if (core.getConfig().getConfigurationSection("permissions." + uuid) != null) {
-								for (String perm : core.getConfig().getConfigurationSection("permissions." + uuid).getKeys(false)) {
-									sender.sendMessage(tc2 + " - " + perm.replace(";", ".") + " | " +  core.getConfig().getBoolean("permissions." + uuid + "." + perm));
-								}
-							}
-							sender.sendMessage("");
-							if (Bukkit.getPlayer(name) != null) {
-								CoreUtils.updatePermissions(Bukkit.getPlayer(name));
-							}
-						}
-					}
-					else {
-						sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/perm <pelaaja> <permission> true/false/reset");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// group
-		
-		if (cmd.getName().equalsIgnoreCase("group")) {
-			if (CoreUtils.hasAdminPowers(sender)) {
-				if (args.length >= 4) {
-					new BukkitRunnable() {
-						public void run() {
-							MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
-							if (infoData != null) {
-								String name = infoData.getString(0, "name");
-								String prefix = args[1].replace("<=", "«").replace("=>", "»");
-								if (prefix.equals("ritari")) {
-									prefix = "&7[«&2Ritari&7»]";
-								}
-								else if (prefix.equals("aatelinen")) {
-									prefix = "&7[«&6Aatelinen&7»]";
-								}
-								else if (prefix.equals("arkkitehti")) {
-									prefix = "&7[«&eArkkitehti&7»]";
-								}
-								else if (prefix.equals("valvoja")) {
-									prefix = "&7[«&cValvoja&7»]";
-								}
-								else if (prefix.equals("moderaattori")) {
-									prefix = "&7[«&cModeraattori&7»]";
-								}
-								else if (prefix.equals("ylläpitäjä")) {
-									prefix = "&7[«&4Ylläpitäjä&7»]";
-								}
-								else if (prefix.equals("pääarkkitehti")) {
-									prefix = "&7[«&4Pääarkkitehti&7»]";
-								}
-								else if (prefix.equals("pääsuunnittelija")) {
-									prefix = "&7[«&4Pääsuunnittelija&7»]";
-								}
-								else if (prefix.equals("pääkehittäjä")) {
-									prefix = "&7[«&4Pääkehittäjä&7»]";
-								}
-								prefix = prefix + " ";
-								if (prefix.equals("default ")) {
-									prefix = "";
-								}
-								MySQLUtils.set("UPDATE player_info SET chat_prefix=?, chat_color=?, rank=? WHERE name=?", prefix, args[2], 
-										args[3], name);
-								MySQLResult newInfoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", name);
-								Player player = Bukkit.getPlayer(args[0]);
-								if (player != null) {
-									core.getConfig().set("users." + player.getName() + ".chat_prefix", newInfoData.getStringNotNull(0, "chat_prefix"));
-									core.getConfig().set("users." + player.getName() + ".chat_color", newInfoData.getStringNotNull(0, "chat_color"));
-									core.getConfig().set("users." + player.getName() + ".rank", newInfoData.getString(0, "rank"));
-									core.saveConfig();
-									CoreUtils.updateTabForAll();
-									new BukkitRunnable() {
-										public void run() {
-											player.updateCommands();
-										}
-									}.runTask(core);
-								}
-								String newPrefix = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_prefix"));
-								String newColor = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_color"));
-								String newRank = ChatColor.translateAlternateColorCodes('&', newInfoData.getString(0, "rank"));
-								sender.sendMessage(tc2 + "Pelaaja " + tc1 + name + tc2 + " on nyt: §r" + newPrefix + newColor + name + tc2 
-										+ " (" + newRank + ")");
-							}
-							else {
-								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-							}
-						}
-					}.runTaskAsynchronously(core);
-				}
-				else {
-					sender.sendMessage(usage + "/group <pelaaja> <etuliite> <väri> <arvo>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// history
-		
-		if (cmd.getName().equalsIgnoreCase("history")) {
-			if (CoreUtils.hasRank(sender, "valvoja")) {
-				if (args.length >= 1) {
-					new BukkitRunnable() {
-						public void run() {
-							MySQLResult historyData = MySQLUtils.get("SELECT * FROM player_history WHERE name=?", args[0]);
-							if (historyData != null) {
-								String name = historyData.getString(0, "name");
-								sender.sendMessage("");
-								sender.sendMessage(tc2 + "§m----------" + tc1 + " Rangaistukset: " + name + " " + tc2 + "§m----------");
-								sender.sendMessage("");
-								for (int i = 0; i < historyData.getRows(); i++) {
-									SimpleDateFormat f = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-									String type = historyData.getString(i, "type");
-									String giver = historyData.getString(i, "giver");
-									String reason = historyData.getString(i, "reason");
-									long time = historyData.getLong(i, "time");
-									long duration = historyData.getLong(i, "duration");
-									long offset = CoreUtils.TIME_OFFSET;
-									if (reason == null && duration == 0) {
-										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
-												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)));
-									}
-									else if (reason == null) {
-										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
-												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)) + tc2 + ", päättyy: " + tc1 
-												+ f.format(new Date(duration + offset)));
-									}
-									else if (duration == 0) {
-										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
-												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)) + tc2 + ", syy: " + tc1 
-												+ reason);
-									}
-									else {
-										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
-												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)) + tc2 + ", päättyy: " + tc1 
-												+ f.format(new Date(duration + offset)) + tc2 + ", syy: " + tc1 + reason);
-									}
-								}
-								sender.sendMessage("");
-							}
-							else {
-								sender.sendMessage(tc3 + "Ei löydetty rangaistushistoriaa antamallasi nimellä!");
-							}
-						}
-					}.runTaskAsynchronously(core);
-				}
-				else {
-					sender.sendMessage(usage + "/history <pelaaja>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// halttime
-		
-		if (cmd.getName().equalsIgnoreCase("halttime")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (core.isTimeHalted()) {
-					sender.sendMessage(tc2 + "Aika liikkuu taas!");
-				}
-				else {
-					sender.sendMessage(tc2 + "Pelinsisäinen aika pysäytetty!");
-				}
-				core.setTimeHalted(!core.isTimeHalted());
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// give
-		
-		if (cmd.getName().equals("give")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 2) {
-					
-					List<Player> receivers = new ArrayList<Player>();
-					
-					if (args[0].equalsIgnoreCase("all")) {
-						receivers.addAll(Bukkit.getOnlinePlayers());
-					}
-					else if (args[0].equalsIgnoreCase("world")) {
-						if (sender instanceof Player) {
-							Player player = (Player) sender;
-							for (Player p : player.getWorld().getPlayers()) {
-								receivers.add(p);
-							}
-						}
-						else {
-							sender.sendMessage(tc3 + "Vaihtoehtoa \"world\" ei voi käyttää konsolista käsin!");
-							return true;
-						}
-					}
-					else {
-						if (Bukkit.getPlayer(args[0]) != null) {
-							receivers.add(Bukkit.getPlayer(args[0]));
-						}
-						else if (args[0].endsWith("m")) {
-							try {
-								int i = Integer.parseInt(args[0].substring(0, args[0].length() - 1));
-								if (sender instanceof Player) {
-									Player player = (Player) sender;
-									for (Player p : player.getWorld().getPlayers()) {
-										if (player.getLocation().distance(p.getLocation()) <= i) {
-											receivers.add(p);
-										}
-									}
-								}
-								else {
-									sender.sendMessage(tc3 + "Vaihtoehtoa \"säde\" ei voi käyttää konsolista käsin!");
-									return true;
-								}
-							}
-							catch (NumberFormatException e) {
-								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-								return true;
-							}
-						}
-						else {
-							sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-							return true;
-						}
-					}
-					
-					ItemStack item = new ItemStack(Material.APPLE);
-					int amount = 1;
-					
-					Material materialByName = Material.getMaterial(args[1].toUpperCase());
-					if (materialByName != null) {
-						item.setType(materialByName);
-					}
-					else {
-						sender.sendMessage(tc3 + "Tuntematon esine!");
-						return true;
-					}
-					
-					if (args.length >= 3) {
-						try {
-							int i = Integer.parseInt(args[2]);
-							item.setAmount(i);
-							amount = i;
-						}
-						catch (NumberFormatException e) {
-							sender.sendMessage(tc3 + "Virheellinen määrä!");
-							return true;
-						}
-					}
-					
-					if (args.length >= 4) {
-						for (int i = 3; i < args.length; i++) {
-							
-							String property = "";
-							String value = "";
-							
-							if (args[i].contains(":")) {
-								property = args[i].split(":")[0];
-								value = ChatColor.translateAlternateColorCodes('&', args[i].substring(property.length() + 1).replace("\\_", " "));
-							}
-							else {
-								sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
-								return true;
-							}
-							
-							if (property.equalsIgnoreCase("damage")) {
-								try {
-									int damage = Integer.parseInt(value);
-									ItemMeta meta = item.getItemMeta();
-									Damageable damageable = (Damageable) meta;
-									damageable.setDamage(damage);
-									item.setItemMeta(meta);
-								}
-								catch (NumberFormatException e) {
-									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
-									return true;
-								}
-							}
-							else if (property.equalsIgnoreCase("mapid")) {
-								try {
-									int mapId = Integer.parseInt(value);
-									if (item.getItemMeta() instanceof MapMeta) {
-										MapMeta mapMeta = (MapMeta) item.getItemMeta();
-										mapMeta.setMapId(mapId);
-										item.setItemMeta(mapMeta);
-									}
-									else {
-										sender.sendMessage(tc3 + "Tälle esineelle ei voi asettaa kartan ID:tä!");
-										return true;
-									}
-								}
-								catch (NumberFormatException e) {
-									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
-									return true;
-								}
-							}
-							else if (property.equalsIgnoreCase("name")) {
-								ItemMeta meta = item.getItemMeta();
-								meta.setDisplayName(value);
-								item.setItemMeta(meta);
-							}
-							else if (property.equalsIgnoreCase("lore")) {
-								List<String> lore = new ArrayList<String>();
-								for (String line : value.split("\\\\n")) {
-									lore.add(line);
-								}
-								ItemMeta meta = item.getItemMeta();
-								meta.setLore(lore);
-								item.setItemMeta(meta);
-							}
-							else if (property.equalsIgnoreCase("unbreakable")) {
-								ItemMeta meta = item.getItemMeta();
-								meta.setUnbreakable(true);
-								item.setItemMeta(meta);
-							}
-							else if (property.equalsIgnoreCase("hide")) {
-								ItemMeta meta = item.getItemMeta();
-								meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
-								item.setItemMeta(meta);
-							}
-							else {
-								try {
-									int level = Integer.parseInt(value);
-									Enchantment enchantment = Enchantment.getByName(property.toUpperCase());
-									if (enchantment != null) {
-										ItemMeta meta = item.getItemMeta();
-										meta.addEnchant(enchantment, level, true);
-										item.setItemMeta(meta);
-									}
-									else {
-										sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
-										return true;
-									}
-								}
-								catch (NumberFormatException e) {
-									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
-									return true;
-								}
-							}
-						}
-					}
-					
-					if (!receivers.isEmpty()) {
-						for (Player receiver : receivers) {
-							receiver.getInventory().addItem(item);
-						}
-						if (receivers.size() == 1) {
-							String itemName = LanguageHelper.getItemDisplayName(item, "fi_FI");
-							sender.sendMessage(tc2 + "Annettiin pelaajalle " + tc1 + receivers.get(0).getName() + tc2 + " " + tc1 
-									+ amount + " kappaletta" + tc2 + " esinettä " + tc1 + itemName + tc2 + "!");
-						}
-						else {
-							String itemName = LanguageHelper.getItemDisplayName(item, "fi_FI");
-							sender.sendMessage(tc2 + "Annettiin yhteensä " + tc1 + receivers.size() + tc2 + " pelaajalle " + tc1 
-									+ amount + " kappaletta" + tc2 + " esinettä " + tc1 + itemName + tc2 + "!");
-						}
-					}
-					else {
-						sender.sendMessage(tc3 + "Ei kriteerejä vastaavia pelaajia!");
-						return true;
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/give <pelaaja>/all/world/<säde> <esine> [määrä] [ominaisuudet]");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// effect
-		
-		if (cmd.getName().equals("effect")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 2) {
-					
-					List<Player> receivers = new ArrayList<Player>();
-					boolean clear = false;
-					
-					if (args[0].equalsIgnoreCase("all")) {
-						receivers.addAll(Bukkit.getOnlinePlayers());
-					}
-					else if (args[0].equalsIgnoreCase("world")) {
-						if (sender instanceof Player) {
-							Player player = (Player) sender;
-							for (Player p : player.getWorld().getPlayers()) {
-								receivers.add(p);
-							}
-						}
-						else {
-							sender.sendMessage(tc3 + "Vaihtoehtoa \"world\" ei voi käyttää konsolista käsin!");
-							return true;
-						}
-					}
-					else {
-						if (Bukkit.getPlayer(args[0]) != null) {
-							receivers.add(Bukkit.getPlayer(args[0]));
-						}
-						else if (args[0].endsWith("m")) {
-							try {
-								int i = Integer.parseInt(args[0].substring(0, args[0].length() - 1));
-								if (sender instanceof Player) {
-									Player player = (Player) sender;
-									for (Player p : player.getWorld().getPlayers()) {
-										if (player.getLocation().distance(p.getLocation()) <= i) {
-											receivers.add(p);
-										}
-									}
-								}
-								else {
-									sender.sendMessage(tc3 + "Vaihtoehtoa \"säde\" ei voi käyttää konsolista käsin!");
-									return true;
-								}
-							}
-							catch (NumberFormatException e) {
-								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-								return true;
-							}
-						}
-						else {
-							sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
-							return true;
-						}
-					}
-					
-					PotionEffectType type = PotionEffectType.SPEED;
-					int level = 1;
-					int duration = 1;
-					
-					if (args[1].equalsIgnoreCase("clear")) {
-						clear = true;
-					}
-					else {
-						if (args.length >= 4) {
-							
-							type = PotionEffectType.getByName(args[1].toUpperCase());
-							if (type == null) {
-								sender.sendMessage(tc3 + "Tuntematon efekti!");
-								return true;
-							}
-							
-							try {
-								level = Integer.parseInt(args[2]);
-								duration = Integer.parseInt(args[3]);
-							}
-							catch (NumberFormatException e) {
-								sender.sendMessage(tc3 + "Virheellinen taso tai kesto!");
-								return true;
-							}
-						}
-						else {
-							sender.sendMessage(usage + "/effect <pelaaja>/all/world/<säde> <efekti> <taso> <kesto>");
-							return true;
-						}
-					}
-					
-					PotionEffect effect = new PotionEffect(type, duration * 20, level - 1);
-					
-					if (!receivers.isEmpty()) {
-						for (Player receiver : receivers) {
-							if (clear) {
-								for (PotionEffect activeEffect : receiver.getActivePotionEffects()) {
-									receiver.removePotionEffect(activeEffect.getType());
-								}
-							}
-							else {
-								receiver.addPotionEffect(effect);
-							}
-						}
-						if (receivers.size() == 1) {
-							if (clear) {
-								sender.sendMessage(tc2 + "Poistettiin kaikki efektit pelaajalta " + tc1 + receivers.get(0).getName() + tc2 + "!");
-							}
-							else {
-								sender.sendMessage(tc2 + "Annettiin pelaajalle " + tc1 + receivers.get(0).getName() + tc2 + " efekti " + tc1 + 
-										type.getName() + " " + level + tc2 + " ajaksi " + tc1 + duration + " sekuntia" + tc2 + "!");
-							}
-						}
-						else {
-							if (clear) {
-								sender.sendMessage(tc2 + "Poistettiin kaikki efektit yhteensä " + tc1 + receivers.size() + tc2 + " pelaajalta!");
-							}
-							else {
-								sender.sendMessage(tc2 + "Annettiin yhteensä " + tc1 + receivers.size() + tc2 + " pelaajalle efekti " + tc1 + 
-										type.getName() + " " + level + tc2 + " ajaksi " + tc1 + duration + " sekuntia" + tc2 + "!");
-							}
-						}
-					}
-					else {
-						sender.sendMessage(tc3 + "Ei kriteerejä vastaavia pelaajia!");
-						return true;
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/effect <pelaaja>/all/world/<säde> <efekti> <taso> <kesto>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// sudo
-		
-		if (cmd.getName().equalsIgnoreCase("sudo")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 2) {
-					Player player = Bukkit.getPlayer(args[0]);
-					if (player != null) {
-						String command = "";
-						for (int i = 1; i < args.length; i++) {
-							command = command + " " + args[i];
-						}
-						command = command.trim();
-						sender.sendMessage(tc2 + "Pakotettiin pelaaja " + tc1 + player.getName() + tc2 + " suorittamaan komento " + tc1 
-								+ "/" + command + tc2 + "!");
-						player.performCommand(command);
-					}
-					else {
-						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/sudo <pelaaja> <komento>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// sudochat
-		
-		if (cmd.getName().equalsIgnoreCase("sudochat")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 2) {
-					Player player = Bukkit.getPlayer(args[0]);
-					if (player != null) {
-						String message = "";
-						for (int i = 1; i < args.length; i++) {
-							message = message + " " + args[i];
-						}
-						message = message.trim();
-						sender.sendMessage(tc2 + "Pakotettiin pelaaja " + tc1 + player.getName() + tc2 + " kirjoittamaan viesti \"" + tc1 
-								+ message + tc2 + "\"!");
-						player.chat(message);
-					}
-					else {
-						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
-					}
-				}
-				else {
-					sender.sendMessage(usage + "/sudochat <pelaaja> <viesti>");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// setnews
-		
-		if (cmd.getName().equalsIgnoreCase("setnews")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				if (args.length >= 1) {
-					if (args[0].equalsIgnoreCase("clear")) {
-						core.getConfig().set("motd", null);
-						core.saveConfig();
-						sender.sendMessage(tc2 + "Poistettiin Mitä uutta? -teksti!");
-						return true;
-					}
-					String json = "";
-					for (String word : args) {
-						json = json + " " + word;
-					}
-					json = json.trim();
-					core.getConfig().set("motd.motd", json);
-					core.getConfig().set("motd.seen", null);
-					core.saveConfig();
-					sender.sendMessage(tc2 + "Asetettiin uusi Mitä uutta? -teksti!");
-				}
-				else {
-					sender.sendMessage(usage + "/setnews <json>/clear");
-				}
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// vanhentuneetsakot
-		
-		if (cmd.getName().equalsIgnoreCase("vanhentuneetsakot")) {
-			if (CoreUtils.hasRank(sender, "valvoja")) {
-				new BukkitRunnable() {
-					public void run() {
-						boolean console = false;
-						if (args.length >= 1 && args[0].equalsIgnoreCase("console")) {
-							console = true;
-						}
-						if (!console) {
-							sender.sendMessage("");
-							sender.sendMessage(tc2 + "§m----------" + tc1 + " Vanhentuneet sakot " + tc2 + "§m----------");
-							sender.sendMessage("");
-						}
-						List<String> expiredFines = new ArrayList<String>();
-						MySQLResult finesData = MySQLUtils.get("SELECT * FROM player_fines");
-						if (finesData != null) {
-							for (int i = 0; i < finesData.getRows(); i++) {
-								
-								int id = finesData.getInt(i, "id");
-								int amount = finesData.getInt(i, "amount");
-								String name = finesData.getString(i, "name");
-								String uuidWithoutDashes = finesData.getString(i, "uuid").replace("-", "");
-								String reason = finesData.getString(i, "reason");
-								long duration = finesData.getLong(i, "duration");
-								
-								if (duration - System.currentTimeMillis() < 0) {
-									MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
-									MySQLResult jailData = MySQLUtils.get("SELECT * FROM player_jail WHERE uuid=?", uuidWithoutDashes);
-									if (banData != null || jailData != null) {
-										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "кк " + tc2 + "§m" + reason);
-									}
-									else {
-										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "кк " + tc2 + reason);
-									}
-								}
-							}
-						}
-						if (!expiredFines.isEmpty()) {
-							for (String fine : expiredFines) {
-								if (!console) {
-									sender.sendMessage(fine);
-								}
-							}
-							if (console) {
-								TextComponent text = new TextComponent("\nHavaittiin " + expiredFines.size() + " erääntynyttä sakkomaksua! "
-										+ "Tarkista klikkaamalla tästä!\n");
-								text.setColor(ChatColor.GOLD);
-								text.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/vanhentuneetsakot"));
-								for (Player player : Bukkit.getOnlinePlayers()) {
-									player.spigot().sendMessage(text);
-									player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, 1, 1);
-								}
-							}
-						}
-						else {
-							if (!console) {
-								sender.sendMessage(tc3 + " Ei vanhentuneita sakkomaksuja!");
-							}
-						}
-						if (!console) {
-							sender.sendMessage("");
-						}
-					}
-				}.runTaskAsynchronously(core);
-			}
-			else {
-				sender.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
-		// clearfire
-		
-		if (cmd.getName().equalsIgnoreCase("clearfire")) {
-			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
-				core.getCoreListener().getFireSpreadCooldown().clear();
-				sender.sendMessage(tc2 + "Komento suoritettiin onnistuneesti!");
-			}
+		if (handleConsoleCommands(sender, cmd, label, args, tc1, tc2, tc3, tc4, usage, noPermission)) {
 			return true;
 		}
 		
@@ -2161,7 +641,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 				}
 				if (staffOnline) {
-					player.sendMessage("§2§lSinä -> Henkilökunta §a" + message);
+					player.sendMessage("§2Viesti henkilökunnalle: §a" + message);
 				}
 				else {
 					player.sendMessage(tc3 + "Valitettavasti ketään henkilökunnasta ei ole paikalla tällä hetkellä! Voit ottaa yhteyttä henkilökuntaan esimerkiksi Discord-palvelimellamme " 
@@ -2169,7 +649,59 @@ public class CoreCommands implements CommandExecutor {
 				}
 			}
 			else {
-				player.sendMessage(usage + "/a <viesti>");
+				boolean staffOnline = false;
+				for (Player p : Bukkit.getOnlinePlayers()) {
+					if (CoreUtils.hasRank(p, "valvoja")) {
+						if (player.canSee(p)) {
+							staffOnline = true;
+						}
+					}
+				}
+				if (staffOnline) {
+					player.sendMessage(usage + "/a <viesti>");
+				}
+				else {
+					player.sendMessage(tc3 + "Valitettavasti ketään henkilökunnasta ei ole paikalla tällä hetkellä! Voit ottaa yhteyttä henkilökuntaan esimerkiksi Discord-palvelimellamme " 
+							+ tc4 + "(/discord)" + tc3 + " tai luoda asiasta tiketin komennolla " + tc4 + "/tiketti" + tc3 + ".");
+				}
+			}
+			return true;
+		}
+		
+		// ar
+		
+		if (cmd.getName().equalsIgnoreCase("ar")) {
+			if (CoreUtils.hasRank(player, "valvoja")) {
+				if (args.length >= 2) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						
+						String message = "";
+						for (int i = 1; i < args.length; i++) {
+							message = message + " " + args[i];
+						}
+						message = message.trim();
+						
+						target.sendMessage("§6Henkilökunnan vastaus (" + player.getName() + "): §e" + message);
+						target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_XYLOPHONE, 10, 0.1f);
+						target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_GUITAR, 10, 2);
+						
+						for (Player p : Bukkit.getOnlinePlayers()) {
+							if (CoreUtils.hasRank(p, "valvoja")) {
+								p.sendMessage("§7[§cApua§7] " + player.getName() + "§c -> §7" + target.getName() + "§c: " + message);
+							}
+						}
+					}
+					else {
+						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/ar <pelaaja> <viesti>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
 			}
 			return true;
 		}
@@ -2663,6 +1195,32 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// sijainti, getpos
+		
+		if (cmd.getName().equalsIgnoreCase("sijainti") || cmd.getName().equalsIgnoreCase("getpos")) {
+			if (args.length >= 1 && CoreUtils.hasRank(player, "ylläpitäjä")) {
+				Player target = Bukkit.getPlayer(args[0]);
+				if (target != null) {
+					String world = target.getWorld().getName();
+					int x = target.getLocation().getBlockX();
+					int y = target.getLocation().getBlockY();
+					int z = target.getLocation().getBlockZ();
+					player.sendMessage(tc2 + "Pelaajan " + tc1 + target.getName() + tc2 + " sijainti: " + tc1 + x + " " + y + " " + z + " (" + world + ")");
+				}
+				else {
+					player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+				}
+			}
+			else {
+				String world = player.getWorld().getName();
+				int x = player.getLocation().getBlockX();
+				int y = player.getLocation().getBlockY();
+				int z = player.getLocation().getBlockZ();
+				player.sendMessage(tc2 + "Sijaintisi: " + tc1 + x + " " + y + " " + z + " (" + world + ")");
+			}
+			return true;
+		}
+		
 		// spawn, hub, lobby
 		
 		if (cmd.getName().equalsIgnoreCase("spawn") || cmd.getName().equalsIgnoreCase("hub") || cmd.getName().equalsIgnoreCase("lobby")) {
@@ -2707,37 +1265,44 @@ public class CoreCommands implements CommandExecutor {
 			new BukkitRunnable() {
 				public void run() {
 					if (args.length >= 1) {
+						
+						int i;
+						
 						try {
-							int i = Integer.parseInt(args[0]);
-							Location home = CoreUtils.getHome(player.getName(), i);
+							i = Integer.parseInt(args[0]);
+						}
+						catch (NumberFormatException e) {
+							i = CoreUtils.getHomeByName(player, args[0]);
+						}
+						
+						if (i >= 1 && i <= 14) {
+							Location home = CoreUtils.getHome(player, i);
 							if (home != null) {
 								CoreUtils.teleport(player, home);
 							}
 							else {
 								if (CoreUtils.hasAccessToHome(player.getName(), i)) {
+									int i2 = i;
 									new BukkitRunnable() {
 										public void run() {
-											player.performCommand("asetakoti " + i);
+											player.performCommand("asetakoti " + i2);
 										}
 									}.runTask(core);
 								}
-								else if (i >= 1 && i <= 7) {
+								else {
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä kotipistettä!");
 								}
-								else {
-									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Kotipisteen täytyy olla välillä 1-7!");
-								}
 							}
 						}
-						catch (NumberFormatException e) {
-							player.sendMessage(tc3 + "Virheellinen kotipiste! Kotipisteen tätyy olla numero välillä 1-7!");
+						else {
+							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+							player.sendMessage(tc3 + "Virheellinen kotipiste!");
 						}
 					}
 					else {
 						
-						InventoryGUI gui = new InventoryGUI(27, "Kotipisteet");
+						InventoryGUI gui = new InventoryGUI(36, "Kotipisteet");
 						
 						new BukkitRunnable() {
 							public void run() {
@@ -2800,6 +1365,62 @@ public class CoreCommands implements CommandExecutor {
 								player.performCommand("koti 7");
 							}
 						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 8), 19, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 8");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 9), 20, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 9");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 10), 21, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 10");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 11), 22, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 11");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 12), 23, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 12");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 13), 24, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 13");
+							}
+						});
+						
+						gui.addItem(CoreUtils.getHomeItem(player, 14), 25, new InventoryGUIAction() {
+							public void onClickAsync() {}
+							public void onClick() {
+								gui.close(player);
+								player.performCommand("koti 14");
+							}
+						});
 					}
 				}
 			}.runTaskAsynchronously(core);
@@ -2810,55 +1431,143 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("asetakoti") || cmd.getName().equalsIgnoreCase("sethome")) {
 			if (args.length >= 1) {
+				String name = args.length >= 2 ? args[1] : "";
 				new BukkitRunnable() {
 					public void run() {
 						try {
 							int i = Integer.parseInt(args[0]);
-							Location home = CoreUtils.getHome(player.getName(), i);
-							if (home != null) {
-								if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
-									CoreUtils.setHome(player, i);
-									player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
-									player.sendMessage(tc2 + "Asetettiin kotipiste " + tc1 + "#" + i + tc2 + 
-											" nykyiseen sijaintiisi! Voit nyt teleportata sen luo komennolla " + tc1 + "/koti" + tc2 + ".");
+							if (i >= 1 && i <= 14) {
+								Location home = CoreUtils.getHome(player, i);
+								if (home != null) {
+									if (args.length >= 3 && args[2].equalsIgnoreCase("confirm")) {
+										int homeWithSameName = CoreUtils.getHomeByName(player, name);
+										if (homeWithSameName == 0 || homeWithSameName == i) {
+											CoreUtils.setHome(player, i, name);
+											player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+											player.sendMessage(tc2 + "Asetettiin kotipiste " + tc1 + "#" + i + tc2 + " nimellä " + tc1 + name + tc2 + 
+													" nykyiseen sijaintiisi! Voit nyt teleportata sen luo komennolla " + tc1 + "/koti" + tc2 + ".");
+										}
+										else {
+											player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+											player.sendMessage(tc3 + "Tämän niminen kotipiste on jo olemassa!");
+										}
+									}
+									else if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
+										CoreUtils.setHome(player, i, "");
+										player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+										player.sendMessage(tc2 + "Asetettiin kotipiste " + tc1 + "#" + i + tc2 + 
+												" nykyiseen sijaintiisi! Voit nyt teleportata sen luo komennolla " + tc1 + "/koti" + tc2 + ".");
+									}
+									else {
+										int homeWithSameName = CoreUtils.getHomeByName(player, name);
+										if (name.isEmpty() || homeWithSameName == 0 || homeWithSameName == i) {
+											TextComponent textComponent = new TextComponent("Olet jo asettanut tämän kotipisteen! "
+													+ "Jos asetat pisteen nyt tähän, edellinen pisteesi katoaa. Varmista pisteen "
+													+ "asettaminen klikkaamalla tätä tekstiä.");
+											textComponent.setColor(ChatColor.getByChar(tc2.charAt(1)));
+											textComponent.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
+													new ComponentBuilder(tc2 + "Aseta kotipiste tähän sijaintiin ja poista edellinen piste "
+															+ "klikkaamalla tästä!").create()));
+											textComponent.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/asetakoti " + i + " " + name + " confirm"));
+											player.spigot().sendMessage(textComponent);
+										}
+										else {
+											player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+											player.sendMessage(tc3 + "Tämän niminen kotipiste on jo olemassa!");
+										}
+									}
 								}
 								else {
-									TextComponent textComponent = new TextComponent("Olet jo asettanut tämän kotipisteen! "
-											+ "Jos asetat pisteen nyt tähän, edellinen pisteesi katoaa. Varmista pisteen "
-											+ "asettaminen klikkaamalla tätä tekstiä.");
-									textComponent.setColor(ChatColor.getByChar(tc2.charAt(1)));
-									textComponent.setHoverEvent(new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-											new ComponentBuilder(tc2 + "Aseta kotipiste tähän sijaintiin ja poista edellinen piste "
-													+ "klikkaamalla tästä!").create()));
-									textComponent.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/asetakoti " + i + " confirm"));
-									player.spigot().sendMessage(textComponent);
+									if (CoreUtils.hasAccessToHome(player.getName(), i)) {
+										if (name.isEmpty() || CoreUtils.getHomeByName(player, name) == 0) {
+											CoreUtils.setHome(player, i, name);
+											player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+											if (name.isEmpty()) {
+												player.sendMessage(tc2 + "Asetettiin kotipiste " + tc1 + "#" + i + tc2 + 
+														" nykyiseen sijaintiisi! Voit nyt teleportata sen luo komennolla " + tc1 + "/koti" + tc2 + ".");
+											}
+											else {
+												player.sendMessage(tc2 + "Asetettiin kotipiste " + tc1 + "#" + i + tc2 + " nimellä " + tc1 + name + tc2 + 
+														" nykyiseen sijaintiisi! Voit nyt teleportata sen luo komennolla " + tc1 + "/koti" + tc2 + ".");
+											}
+										}
+										else {
+											player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+											player.sendMessage(tc3 + "Tämän niminen kotipiste on jo olemassa!");
+										}
+									}
+									else {
+										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+										player.sendMessage(tc3 + "Et ole vielä ansainnut tätä kotipistettä!");
+									}
 								}
 							}
 							else {
-								if (CoreUtils.hasAccessToHome(player.getName(), i)) {
-									CoreUtils.setHome(player, i);
-									player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
-									player.sendMessage(tc2 + "Asetettiin kotipiste " + tc1 + "#" + i + tc2 + 
-											" nykyiseen sijaintiisi! Voit nyt teleportata sen luo komennolla " + tc1 + "/koti" + tc2 + ".");
-								}
-								else if (i >= 1 && i <= 7) {
-									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä kotipistettä!");
-								}
-								else {
-									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-									player.sendMessage(tc3 + "Kotipisteen täytyy olla välillä 1-7!");
-								}
+								player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+								player.sendMessage(tc3 + "Virheellinen kotipiste: kotipisteen numeron täytyy olla välillä 1-14!");
 							}
 						}
 						catch (NumberFormatException e) {
-							player.sendMessage(tc3 + "Virheellinen kotipiste! Kotipisteen tätyy olla numero välillä 1-7!");
+							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+							player.sendMessage(tc3 + "Virheellinen kotipiste: kotipisteen numeron täytyy olla välillä 1-14!");
 						}
 					}
 				}.runTaskAsynchronously(core);
 			}
 			else {
-				player.sendMessage(usage + "/asetakoti 1/2/3/4/5/6/7");
+				player.sendMessage(usage + "/asetakoti <1-14> [nimi]");
+			}
+			return true;
+		}
+		
+		// nimeäkoti, namehome
+		
+		if (cmd.getName().equalsIgnoreCase("nimeäkoti") || cmd.getName().equalsIgnoreCase("namehome")) {
+			if (args.length >= 2) {
+				String name = args[1];
+				new BukkitRunnable() {
+					public void run() {
+						try {
+							int i = Integer.parseInt(args[0]);
+							if (i >= 1 && i <= 14) {
+								Location home = CoreUtils.getHome(player, i);
+								if (home != null) {
+									if (name.length() <= 32) {
+										int homeWithSameName = CoreUtils.getHomeByName(player, name);
+										if (homeWithSameName == 0 || homeWithSameName == i) {
+											CoreUtils.setHomeName(player, i, name);
+											player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 2);
+											player.sendMessage(tc2 + "Asetettiin kotipisteen " + tc1 + "#" + i + tc2 + " nimeksi " + tc1 + name + tc2 + "!");
+										}
+										else {
+											player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+											player.sendMessage(tc3 + "Tämän niminen kotipiste on jo olemassa!");
+										}
+									}
+									else {
+										player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+										player.sendMessage(tc3 + "Liian pitkä kotipisteen nimi! Maksimipituus on 32 merkkiä.");
+									}
+								}
+								else {
+									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+									player.sendMessage(tc3 + "Et ole vielä asettanut tätä kotipistettä!");
+								}
+							}
+							else {
+								player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+								player.sendMessage(tc3 + "Virheellinen kotipiste: kotipisteen numeron täytyy olla välillä 1-14!");
+							}
+						}
+						catch (NumberFormatException e) {
+							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+							player.sendMessage(tc3 + "Virheellinen kotipiste: kotipisteen numeron täytyy olla välillä 1-14!");
+						}
+					}
+				}.runTaskAsynchronously(core);
+			}
+			else {
+				player.sendMessage(usage + "/nimeäkoti <1-14> <nimi>");
 			}
 			return true;
 		}
@@ -2869,9 +1578,18 @@ public class CoreCommands implements CommandExecutor {
 			if (args.length >= 1) {
 				new BukkitRunnable() {
 					public void run() {
+						
+						int i;
+						
 						try {
-							int i = Integer.parseInt(args[0]);
-							Location home = CoreUtils.getHome(player.getName(), i);
+							i = Integer.parseInt(args[0]);
+						}
+						catch (NumberFormatException e) {
+							i = CoreUtils.getHomeByName(player, args[0]);
+						}
+						
+						if (i >= 1 && i <= 14) {
+							Location home = CoreUtils.getHome(player, i);
 							if (home != null) {
 								if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
 									CoreUtils.delHome(player, i);
@@ -2888,23 +1606,20 @@ public class CoreCommands implements CommandExecutor {
 									player.spigot().sendMessage(textComponent);
 								}
 							}
-							else if (i >= 1 && i <= 7) {
+							else {
 								player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 								player.sendMessage(tc3 + "Et ole vielä asettanut tätä kotipistettä!");
 							}
-							else {
-								player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-								player.sendMessage(tc3 + "Kotipisteen täytyy olla välillä 1-7!");
-							}
 						}
-						catch (NumberFormatException e) {
-							player.sendMessage(tc3 + "Virheellinen kotipiste! Kotipisteen tätyy olla numero välillä 1-7!");
+						else {
+							player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+							player.sendMessage(tc3 + "Virheellinen kotipiste: kotipisteen numeron täytyy olla välillä 1-14!");
 						}
 					}
 				}.runTaskAsynchronously(core);
 			}
 			else {
-				player.sendMessage(usage + "/poistakoti 1/2/3/4/5/6/7");
+				player.sendMessage(usage + "/poistakoti <1-14>" + tc3 + " tai " + tc4 + "/poistakoti <nimi>");
 			}
 			return true;
 		}
@@ -3341,13 +2056,31 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("vanish")) {
 			if (CoreUtils.hasRank(player, "valvoja")) {
-				if (vanishedPlayers.contains(player.getName())) {
-					vanishedPlayers.remove(player.getName());
-					player.sendMessage(tc2 + "Et ole enää näkymätön!");
+				if (args.length >= 1 && CoreUtils.hasRank(player, "ylläpitäjä")) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						if (vanishedPlayers.contains(target.getName())) {
+							vanishedPlayers.remove(target.getName());
+							player.sendMessage(tc1 + target.getName() + tc2 + " ei ole enää näkymätön!");
+						}
+						else {
+							vanishedPlayers.add(target.getName());
+							player.sendMessage(tc1 + target.getName() + tc2 + " on nyt näkymätön!");
+						}
+					}
+					else {
+						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
 				}
 				else {
-					vanishedPlayers.add(player.getName());
-					player.sendMessage(tc2 + "Olet nyt näkymätön muille pelaajille!");
+					if (vanishedPlayers.contains(player.getName())) {
+						vanishedPlayers.remove(player.getName());
+						player.sendMessage(tc2 + "Et ole enää näkymätön!");
+					}
+					else {
+						vanishedPlayers.add(player.getName());
+						player.sendMessage(tc2 + "Olet nyt näkymätön muille pelaajille!");
+					}
 				}
 				CoreUtils.updateVanish();
 			}
@@ -3378,13 +2111,31 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("god")) {
 			if (CoreUtils.hasRank(player, "valvoja")) {
-				if (godPlayers.contains(player.getName())) {
-					godPlayers.remove(player.getName());
-					player.sendMessage(tc2 + "Et ole enää kuolematon!");
+				if (args.length >= 1 && CoreUtils.hasRank(player, "ylläpitäjä")) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						if (godPlayers.contains(target.getName())) {
+							godPlayers.remove(target.getName());
+							player.sendMessage(tc1 + target.getName() + tc2 + " ei ole enää kuolematon!");
+						}
+						else {
+							godPlayers.add(target.getName());
+							player.sendMessage(tc1 + target.getName() + tc2 + " on nyt kuolematon!");
+						}
+					}
+					else {
+						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
 				}
 				else {
-					godPlayers.add(player.getName());
-					player.sendMessage(tc2 + "Olet nyt kuolematon!");
+					if (godPlayers.contains(player.getName())) {
+						godPlayers.remove(player.getName());
+						player.sendMessage(tc2 + "Et ole enää kuolematon!");
+					}
+					else {
+						godPlayers.add(player.getName());
+						player.sendMessage(tc2 + "Olet nyt kuolematon!");
+					}
 				}
 			}
 			else {
@@ -3397,13 +2148,31 @@ public class CoreCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("fly")) {
 			if (CoreUtils.hasRank(player, "arkkitehti") || CoreUtils.hasRank(player, "valvoja")) {
-				if (player.getAllowFlight()) {
-					player.setAllowFlight(false);
-					player.sendMessage(tc2 + "Et voi enää lentää!");
+				if (args.length >= 1 && CoreUtils.hasRank(player, "ylläpitäjä")) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						if (target.getAllowFlight()) {
+							target.setAllowFlight(false);
+							player.sendMessage(tc1 + target.getName() + tc2 + " ei voi enää lentää!");
+						}
+						else {
+							target.setAllowFlight(true);
+							player.sendMessage(tc1 + target.getName() + tc2 + " voi nyt lentää!");
+						}
+					}
+					else {
+						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
 				}
 				else {
-					player.setAllowFlight(true);
-					player.sendMessage(tc2 + "Voit nyt lentää!");
+					if (player.getAllowFlight()) {
+						player.setAllowFlight(false);
+						player.sendMessage(tc2 + "Et voi enää lentää!");
+					}
+					else {
+						player.setAllowFlight(true);
+						player.sendMessage(tc2 + "Voit nyt lentää!");
+					}
 				}
 			}
 			else {
@@ -3417,28 +2186,62 @@ public class CoreCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("gamemode") || cmd.getName().equalsIgnoreCase("gm")) {
 			if (CoreUtils.hasRank(player, "arkkitehti") || CoreUtils.hasRank(player, "valvoja")) {
 				if (args.length >= 1) {
-					if (args[0].equalsIgnoreCase("survival") || args[0].equalsIgnoreCase("s") || args[0].equalsIgnoreCase("0")) {
-						player.setGameMode(GameMode.SURVIVAL);
-						player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Survival" + tc2 + "!");
-					}
-					else if (args[0].equalsIgnoreCase("creative") || args[0].equalsIgnoreCase("c") || args[0].equalsIgnoreCase("1")) {
-						player.setGameMode(GameMode.CREATIVE);
-						player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Creative" + tc2 + "!");
-					}
-					else if (args[0].equalsIgnoreCase("adventure") || args[0].equalsIgnoreCase("a") || args[0].equalsIgnoreCase("2")) {
-						player.setGameMode(GameMode.ADVENTURE);
-						player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Adventure" + tc2 + "!");
-					}
-					else if (args[0].equalsIgnoreCase("spectator") || args[0].equalsIgnoreCase("sp") || args[0].equalsIgnoreCase("3")) {
-						player.setGameMode(GameMode.SPECTATOR);
-						player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Spectator" + tc2 + "!");
+					if (args.length >= 2 && CoreUtils.hasRank(player, "ylläpitäjä")) {
+						Player target = Bukkit.getPlayer(args[1]);
+						if (target != null) {
+							if (args[0].equalsIgnoreCase("survival") || args[0].equalsIgnoreCase("s") || args[0].equalsIgnoreCase("0")) {
+								target.setGameMode(GameMode.SURVIVAL);
+								player.sendMessage(tc2 + "Asetettiin pelaajan " + tc1 + target.getName() + tc2 + " pelitilaksi " + tc1 + "Survival" + tc2 + "!");
+							}
+							else if (args[0].equalsIgnoreCase("creative") || args[0].equalsIgnoreCase("c") || args[0].equalsIgnoreCase("1")) {
+								target.setGameMode(GameMode.CREATIVE);
+								player.sendMessage(tc2 + "Asetettiin pelaajan " + tc1 + target.getName() + tc2 + " pelitilaksi " + tc1 + "Creative" + tc2 + "!");
+							}
+							else if (args[0].equalsIgnoreCase("adventure") || args[0].equalsIgnoreCase("a") || args[0].equalsIgnoreCase("2")) {
+								target.setGameMode(GameMode.ADVENTURE);
+								player.sendMessage(tc2 + "Asetettiin pelaajan " + tc1 + target.getName() + tc2 + " pelitilaksi " + tc1 + "Adventure" + tc2 + "!");
+							}
+							else if (args[0].equalsIgnoreCase("spectator") || args[0].equalsIgnoreCase("sp") || args[0].equalsIgnoreCase("3")) {
+								target.setGameMode(GameMode.SPECTATOR);
+								player.sendMessage(tc2 + "Asetettiin pelaajan " + tc1 + target.getName() + tc2 + " pelitilaksi " + tc1 + "Spectator" + tc2 + "!");
+							}
+							else {
+								player.sendMessage(tc3 + "Tuntematon pelitila!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+						}
 					}
 					else {
-						player.sendMessage(tc3 + "Tuntematon pelitila!");
+						if (args[0].equalsIgnoreCase("survival") || args[0].equalsIgnoreCase("s") || args[0].equalsIgnoreCase("0")) {
+							player.setGameMode(GameMode.SURVIVAL);
+							player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Survival" + tc2 + "!");
+						}
+						else if (args[0].equalsIgnoreCase("creative") || args[0].equalsIgnoreCase("c") || args[0].equalsIgnoreCase("1")) {
+							player.setGameMode(GameMode.CREATIVE);
+							player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Creative" + tc2 + "!");
+						}
+						else if (args[0].equalsIgnoreCase("adventure") || args[0].equalsIgnoreCase("a") || args[0].equalsIgnoreCase("2")) {
+							player.setGameMode(GameMode.ADVENTURE);
+							player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Adventure" + tc2 + "!");
+						}
+						else if (args[0].equalsIgnoreCase("spectator") || args[0].equalsIgnoreCase("sp") || args[0].equalsIgnoreCase("3")) {
+							player.setGameMode(GameMode.SPECTATOR);
+							player.sendMessage(tc2 + "Asetettiin pelitilaksi " + tc1 + "Spectator" + tc2 + "!");
+						}
+						else {
+							player.sendMessage(tc3 + "Tuntematon pelitila!");
+						}
 					}
 				}
 				else {
-					player.sendMessage(usage + "/gamemode <pelitila>");
+					if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+						player.sendMessage(usage + "/gamemode <pelitila> [pelaaja]");
+					}
+					else {
+						player.sendMessage(usage + "/gamemode <pelitila>");
+					}
 				}
 			}
 			else {
@@ -4264,37 +3067,6 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
-		// getpos
-		
-		if (cmd.getName().equalsIgnoreCase("getpos")) {
-			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				if (args.length >= 1) {
-					Player target = Bukkit.getPlayer(args[0]);
-					if (target != null) {
-						String world = target.getWorld().getName();
-						int x = target.getLocation().getBlockX();
-						int y = target.getLocation().getBlockY();
-						int z = target.getLocation().getBlockZ();
-						player.sendMessage(tc2 + "Pelaajan " + tc1 + target.getName() + tc2 + " sijainti: " + tc1 + x + " " + y + " " + z + " (" + world + ")");
-					}
-					else {
-						player.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
-					}
-				}
-				else {
-					String world = player.getWorld().getName();
-					int x = player.getLocation().getBlockX();
-					int y = player.getLocation().getBlockY();
-					int z = player.getLocation().getBlockZ();
-					player.sendMessage(tc2 + "Sijaintisi: " + tc1 + x + " " + y + " " + z + " (" + world + ")");
-				}
-			}
-			else {
-				player.sendMessage(noPermission);
-			}
-			return true;
-		}
-		
 		// entity, mob
 		
 		if (cmd.getName().equalsIgnoreCase("entity") || cmd.getName().equalsIgnoreCase("mob")) {
@@ -4854,7 +3626,7 @@ public class CoreCommands implements CommandExecutor {
 						}
 					}
 					else {
-						player.sendMessage(usage + "/tykki aseta <pituus>" + tc3 + " tai " + tc4 + "/tykki lista/poista");
+						player.sendMessage(usage + "/tykki aseta <pituus>" + tc3 + " tai " + tc4 + "/tykki lista/poista" + tc3 + " tai " + tc4 + "/tykki ammu <x> <y> <z> <pituus>");
 					}
 				}
 				else {
@@ -4864,6 +3636,91 @@ public class CoreCommands implements CommandExecutor {
 			else {
 				player.sendMessage(noPermission);
 			}
+			return true;
+		}
+		
+		// kallot
+		
+		if (cmd.getName().equalsIgnoreCase("kallot")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("lista")) {
+						player.sendMessage("");
+						player.sendMessage(tc2 + "§m----------" + tc1 + " Kallot " + tc2 + "§m----------");
+						player.sendMessage("");
+						if (core.getConfig().getConfigurationSection("skulls") != null && 
+								!core.getConfig().getConfigurationSection("skulls").getKeys(false).isEmpty()) {
+							for (String id : core.getConfig().getConfigurationSection("skulls").getKeys(false)) {
+								Location location = CoreUtils.loadLocation(core, "skulls." + id);
+								if (location != null) {
+									player.sendMessage(tc2 + " - " + tc1 + "#" + id + tc2 + " (" + location.getWorld().getName() + " " + location.getBlockX() + " " + 
+											location.getBlockY() + " " + location.getBlockZ() + ")");
+								}
+							}
+						}
+						else {
+							player.sendMessage(tc3 + " Ei kalloja!");
+						}
+						player.sendMessage("");
+					}
+					else if (args[0].equalsIgnoreCase("poista")) {
+						Block block = player.getTargetBlock(null, 20);
+						if (block != null) {
+							Location targetLocation = block.getLocation();
+							if (core.getConfig().getConfigurationSection("skulls") != null && 
+									!core.getConfig().getConfigurationSection("skulls").getKeys(false).isEmpty()) {
+								String removeId = null;
+								for (String id : core.getConfig().getConfigurationSection("skulls").getKeys(false)) {
+									Location location = CoreUtils.loadLocation(core, "skulls." + id);
+									if (location != null && location.equals(targetLocation)) {
+										removeId = id;
+										break;
+									}
+								}
+								if (removeId != null) {
+									core.getConfig().set("skulls." + removeId, null);
+									core.saveConfig();
+									player.sendMessage(tc2 + "Poistettiin kallo!");
+								}
+								else {
+									player.sendMessage(tc3 + "Tämä ei ole kallo!");
+								}
+							}
+							else {
+								player.sendMessage(tc3 + "Tämä ei ole kallo!");
+							}
+						}
+						else {
+							player.sendMessage(tc3 + "Tämä ei ole kallo!");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("lisää")) {
+						if (args.length >= 2) {
+							Block block = player.getTargetBlock(null, 20);
+							if (block != null && (block.getType() == Material.WITHER_SKELETON_SKULL || block.getType() == Material.WITHER_SKELETON_WALL_SKULL)) {
+								CoreUtils.setLocation(core, "skulls." + args[1], block.getLocation());
+								player.sendMessage(tc2 + "Lisättiin kallo " + tc1 + "#" + args[1] + tc2 + "!");
+							}
+							else {
+								player.sendMessage(tc3 + "Sinun täytyy katsoa kohti kalloa, jonka haluat lisätä!");
+							}
+						}
+						else {
+							player.sendMessage(usage + "/kallo lisää <ID>");
+						}
+					}
+					else {
+						player.sendMessage(usage + "/kallo lisää <ID>" + tc3 + " tai " + tc4 + "/kallo lista/poista");
+					}
+				}
+				else {
+					player.sendMessage(usage + "/kallo lisää <ID>" + tc3 + " tai " + tc4 + "/kallo lista/poista");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
+			return true;
 		}
 		
 		// komentokuutio, command-block
@@ -8993,8 +7850,8 @@ public class CoreCommands implements CommandExecutor {
 					player.sendMessage("");
 					player.sendMessage(tc2 + " Partyt ovat helppo tapa pelata kavereiden kanssa. Partyn");
 					player.sendMessage(tc2 + " jäsenet voivat avata toistensa lukitsemia ovia, arkkuja yms.");
-					player.sendMessage(tc2 + " ilman erikoisoikeuksia. Lisäksi jäsenet voivat kurkistaa");
-					player.sendMessage(tc2 + " toistensa reppuihin hiipimällä ja oikeaklikkaamalla.");
+					player.sendMessage(tc2 + " ilman erikoisoikeuksia. Lisäksi jäsenet voivat avata");
+					player.sendMessage(tc2 + " toistensa tavaraluettelot hiipimällä ja oikeaklikkaamalla.");
 					player.sendMessage("");
 					player.sendMessage(tc2 + " Luo kaveriporukallesi party komennolla " + tc1 + "/party luo");
 					player.sendMessage("");
@@ -9119,6 +7976,1576 @@ public class CoreCommands implements CommandExecutor {
 		}
 		
 		return true;
+	}
+	
+	@SuppressWarnings("deprecation")
+	private boolean handleConsoleCommands(CommandSender sender, Command cmd, String label, String[] args, String tc1, String tc2, String tc3, String tc4, String usage, String noPermission) {
+		
+		// reconnect
+		
+		if (cmd.getName().equalsIgnoreCase("reconnect")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				sender.sendMessage(tc2 + "Yhdistetään tietokantaan...");
+				MySQLUtils.closeConnection();
+				if (MySQLUtils.openConnection()) {
+					sender.sendMessage(tc2 + "Yhdistettiin tietokantaan onnistuneesti!");
+				}
+				else {
+					sender.sendMessage(tc3 + "Virhe yhdistettäessä tietokantaan!");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// setupmysql
+		
+		if (cmd.getName().equalsIgnoreCase("setupmysql")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 1 && args[0].equalsIgnoreCase("confirm")) {
+					sender.sendMessage(tc2 + "Rakennetaan tietokantaa...");
+					MySQLCreator.setupMySQL();
+					sender.sendMessage(tc2 + "Valmis!");
+				}
+				else {
+					sender.sendMessage(tc2 + "Oletko varma? Vahvista kirjoittamalla " + tc1 + "/setupmysql confirm" + tc2 + ".");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// updateplayerdata
+		
+		if (cmd.getName().equalsIgnoreCase("updateplayerdata")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 1) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null) {
+						new BukkitRunnable() {
+							public void run() {
+								// TODO
+								String name = target.getName();
+								String uuid = target.getUniqueId().toString();
+								MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE uuid=?", uuid);
+								MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE uuid=?", uuid);
+								core.getConfig().set("users." + name + ".chat_prefix", infoData.getStringNotNull(0, "chat_prefix"));
+								core.getConfig().set("users." + name + ".chat_color", infoData.getStringNotNull(0, "chat_color"));
+								core.getConfig().set("users." + name + ".chat_nick", infoData.getString(0, "chat_nick"));
+								core.getConfig().set("users." + name + ".rank", infoData.getString(0, "rank"));
+								core.getConfig().set("users." + name + ".status", statsData.getString(0, "status"));
+								core.saveConfig();
+								SettingsUtils.reloadSettings(target);
+								CoreUtils.updatePermissions(target);
+								CoreUtils.updateNotes(target);
+								CoreUtils.updateTabForAll();
+								new BukkitRunnable() {
+									public void run() {
+										target.updateCommands();
+									}
+								}.runTask(core);
+								sender.sendMessage(tc2 + "Päivitettiin pelaajan " + tc1 + name + tc2 + " tiedot!");
+							}
+						}.runTaskAsynchronously(core);
+					}
+					else {
+						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/updateplayerdata <pelaaja>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// playerlookup
+		
+		if (cmd.getName().equalsIgnoreCase("playerlookup")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					new BukkitRunnable() {
+						public void run() {
+							MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
+							if (infoData != null) {
+								
+								String name = infoData.getString(0, "name");
+								String uuid = infoData.getString(0, "uuid");
+								String uuidWithoutDashes = uuid.replace("-", "");
+								String ip = infoData.getString(0, "ip");
+								String chatPrefix = infoData.getStringNotNull(0, "chat_prefix");
+								String chatColor = infoData.getStringNotNull(0, "chat_color");
+								String chatNick = infoData.getStringNotNull(0, "chat_nick");
+								String rank = infoData.getStringNotNull(0, "rank");
+								long seconds = infoData.getLong(0, "seconds");
+								if (core.getOntimes().containsKey(uuid)) {
+									seconds += core.getOntimes().get(uuid);
+								}
+								String secondsString = CoreUtils.getHoursAndMinsFromMillis(seconds * 1000);
+								long lastSeen = infoData.getLong(0, "last_seen");
+								String lastSeenString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
+										new Date(lastSeen + CoreUtils.TIME_OFFSET));
+								long nickLastChanged = infoData.getLong(0, "nick_last_changed");
+								String nickLastChangedString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
+										new Date(nickLastChanged + CoreUtils.TIME_OFFSET));
+								
+								sender.sendMessage("§e§m--------------------");
+								sender.sendMessage("§eNimi: §r" + name);
+								sender.sendMessage("§eUUID: §r" + uuid);
+								sender.sendMessage("§eIP: §r" + ip);
+								sender.sendMessage("§eEtuliite: §r" + chatPrefix);
+								sender.sendMessage("§eVäri: §r" + chatColor);
+								sender.sendMessage("§eLempinimi: §r" + chatNick);
+								sender.sendMessage("§eLempinimi vaihdettu: §r" + nickLastChangedString);
+								sender.sendMessage("§eArvo: §r" + rank);
+								sender.sendMessage("§ePelannut: §r" + secondsString);
+								if (Bukkit.getPlayer(name) != null) {
+									sender.sendMessage("§eViimeksi nähty: §rNyt");
+								}
+								else {
+									sender.sendMessage("§eViimeksi nähty: §r" + lastSeenString);
+								}
+								
+								MySQLResult statsData = MySQLUtils.get("SELECT * FROM player_stats WHERE uuid=?", uuid);
+								if (statsData != null) {
+									int money = statsData.getInt(0, "money");
+									int profession = statsData.getInt(0, "profession");
+									long professionLastChanged = statsData.getLong(0, "profession_last_changed");
+									String professionLastChangedString = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(
+											new Date(professionLastChanged + CoreUtils.TIME_OFFSET));
+									boolean visited1 = statsData.getBoolean(0, "visited_1");
+									boolean visited2 = statsData.getBoolean(0, "visited_2");
+									boolean visited3 = statsData.getBoolean(0, "visited_3");
+									String status = statsData.getString(0, "status");
+									
+									sender.sendMessage("§eRahat: §r" + money);
+									sender.sendMessage("§eAmmatti: §r" + profession);
+									sender.sendMessage("§eAmmatti vaihdettu: §r" + professionLastChangedString);
+									sender.sendMessage("§evisited_1: §r" + visited1);
+									sender.sendMessage("§evisited_2: §r" + visited2);
+									sender.sendMessage("§evisited_3: §r" + visited3);
+									sender.sendMessage("§eTilaviesti: §r" + status);
+								}
+								
+								sender.sendMessage("§eKaverit: §r");
+								
+								for (String friend : CoreUtils.getFriendsUuids(name)) {
+									MySQLResult friendData = MySQLUtils.get("SELECT name FROM player_info WHERE uuid=?", friend);
+									if (friendData != null) {
+										sender.sendMessage("§e - §r" + friendData.getString(0, "name"));
+									}
+								}
+								
+								MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
+								if (banData != null) {
+									
+									String banner = banData.getString(0, "banner");
+									String reason = banData.getString(0, "reason");
+									long time = banData.getLong(0, "time");
+									long duration = banData.getLong(0, "duration");
+									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
+									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
+									
+									sender.sendMessage("§ePorttikielto:");
+									sender.sendMessage("§e - Antanut: §r" + banner);
+									sender.sendMessage("§e - Annettu: §r" + timeGiven);
+									sender.sendMessage("§e - Päättyy: §r" + expires);
+									sender.sendMessage("§e - Syy: §r" + reason);
+								}
+								else {
+									sender.sendMessage("§ePorttikielto: §rEi ole");
+								}
+								
+								MySQLResult jailData = MySQLUtils.get("SELECT * FROM player_jail WHERE uuid=?", uuidWithoutDashes);
+								if (jailData != null) {
+									
+									String jailer = jailData.getString(0, "jailer");
+									String reason = jailData.getString(0, "reason");
+									long time = jailData.getLong(0, "time");
+									long duration = jailData.getLong(0, "duration");
+									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
+									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
+									
+									sender.sendMessage("§eVangittu:");
+									sender.sendMessage("§e - Antanut: §r" + jailer);
+									sender.sendMessage("§e - Annettu: §r" + timeGiven);
+									sender.sendMessage("§e - Päättyy: §r" + expires);
+									sender.sendMessage("§e - Syy: §r" + reason);
+								}
+								else {
+									sender.sendMessage("§eVangittu: §rEi ole");
+								}
+								
+								MySQLResult muteData = MySQLUtils.get("SELECT * FROM player_mute WHERE uuid=?", uuidWithoutDashes);
+								if (muteData != null) {
+									
+									String banner = muteData.getString(0, "muter");
+									String reason = muteData.getString(0, "reason");
+									long time = muteData.getLong(0, "time");
+									long duration = muteData.getLong(0, "duration");
+									String timeGiven = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(time + CoreUtils.TIME_OFFSET));
+									String expires = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(duration + CoreUtils.TIME_OFFSET));
+									
+									sender.sendMessage("§eHiljennys:");
+									sender.sendMessage("§e - Antanut: §r" + banner);
+									sender.sendMessage("§e - Annettu: §r" + timeGiven);
+									sender.sendMessage("§e - Päättyy: §r" + expires);
+									sender.sendMessage("§e - Syy: §r" + reason);
+								}
+								else {
+									sender.sendMessage("§eHiljennys: §rEi ole");
+								}
+								
+								sender.sendMessage("§e§m--------------------");
+							}
+							else {
+								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+							}
+						}
+					}.runTaskAsynchronously(core);
+				}
+				else {
+					sender.sendMessage(usage + "/playerlookup <pelaaja>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// kickall
+		
+		if (cmd.getName().equalsIgnoreCase("kickall")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 1) {
+					String reason = "";
+					for (String word : args) {
+						reason = reason + " " + word;
+					}
+					reason = ChatColor.translateAlternateColorCodes('&', tc3 + reason.trim());
+					for (Player player : Bukkit.getOnlinePlayers()) {
+						if (!player.getName().equals(sender.getName())) {
+							player.kickPlayer(reason);
+						}
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/kickall <syy>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// huolto
+		
+		if (cmd.getName().equalsIgnoreCase("huolto")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				boolean maintenanceMode = core.getCoreListener().getMaintenanceMode();
+				if (maintenanceMode) {
+					core.getConfig().set("maintenance-mode", false);
+					core.getCoreListener().setMaintenanceMode(false);
+					sender.sendMessage(tc2 + "Huoltotila pois päältä!");
+				}
+				else {
+					core.getConfig().set("maintenance-mode", true);
+					core.getCoreListener().setMaintenanceMode(true);
+					sender.sendMessage(tc2 + "Huoltotila päällä!");
+				}
+				core.saveConfig();
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// xstop
+		
+		if (cmd.getName().equalsIgnoreCase("xstop")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 1) {
+					String reason = "";
+					for (String word : args) {
+						reason = reason + " " + word;
+					}
+					reason = ChatColor.translateAlternateColorCodes('&', tc3 + reason.trim());
+					for (Player player : Bukkit.getOnlinePlayers()) {
+						player.kickPlayer(reason);
+					}
+					core.getConfig().set("users", null);
+					core.saveConfig();
+					Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop");
+				}
+				else {
+					sender.sendMessage(usage + "/xstop <syy>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// autorestart
+		
+		if (cmd.getName().equalsIgnoreCase("autorestart")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 1 && args[0].equalsIgnoreCase("cancel")) {
+					if (autoRestartTaskId != -1) {
+						Bukkit.getScheduler().cancelTask(autoRestartTaskId);
+						Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "send all chat &a&lPalvelimen uudelleenkäynnistys keskeytetty!");
+						autoRestartTaskId = -1;
+					}
+					else {
+						sender.sendMessage(tc3 + "Autorestart ei ole käynnissä!");
+					}
+					return true;
+				}
+				if (autoRestartTaskId != -1) {
+					sender.sendMessage(tc3 + "Autorestart on jo käynnissä!");
+					return true;
+				}
+				new BukkitRunnable() {
+					int i = 0;
+					CommandSender console = Bukkit.getConsoleSender();
+					public void run() {
+						if (i == 0) {
+							autoRestartTaskId = getTaskId();
+							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen 1 minuutin kuluttua!");
+							for (Player player : Bukkit.getOnlinePlayers()) {
+								player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1, 2);
+							}
+						}
+						if (i == 30) {
+							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen 30 sekunnin kuluttua!");
+						}
+						if (i == 45) {
+							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen 15 sekunnin kuluttua!");
+						}
+						if (i >= 50 && i < 60) {
+							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen " + (60 - i) + " sekunnin kuluttua!");
+						}
+						if (i >= 60) {
+							cancel();
+							Bukkit.dispatchCommand(console, "send all chat &c&lPalvelin käynnistyy uudelleen...");
+							Bukkit.dispatchCommand(console, "xstop Palvelin käynnistyy uudelleen...");
+						}
+						i++;
+					}
+				}.runTaskTimer(core, 0, 20);
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// config
+		
+		if (cmd.getName().equalsIgnoreCase("config")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("reload")) {
+						if (args.length >= 2) {
+							Plugin plugin = Bukkit.getPluginManager().getPlugin(args[1]);
+							if (plugin != null) {
+								plugin.reloadConfig();
+								sender.sendMessage(tc2 + "Uudelleenladattiin pluginin " + tc1 + plugin.getName() + tc2 + " config.yml!");
+							}
+							else {
+								sender.sendMessage(tc3 + "Tuntematon plugin!");
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/config reload <plugin>");
+						}
+					}
+					else if (args.length >= 3) {
+						Plugin plugin = Bukkit.getPluginManager().getPlugin(args[0]);
+						if (plugin == null) {
+							sender.sendMessage(tc3 + "Tuntematon plugin!");
+							return true;
+						}
+						boolean cannotBeBoolean = false;
+						String value = "";
+						for (int i = 2; i < args.length; i++) {
+							value = value + " " + args[i];
+						}
+						value = value.trim();
+						if (value.startsWith("'") && value.endsWith("'")) {
+							cannotBeBoolean = true;
+							value = value.substring(1, value.length() - 1);
+						}
+						if (value.equalsIgnoreCase("null")) {
+							plugin.getConfig().set(args[1], null);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "null" + tc2 + " (null)");
+							return true;
+						}
+						else if (value.equalsIgnoreCase("true") && !cannotBeBoolean) {
+							plugin.getConfig().set(args[1], true);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "true" + tc2 + " (boolean)");
+							return true;
+						}
+						else if (value.equalsIgnoreCase("false") && !cannotBeBoolean) {
+							plugin.getConfig().set(args[1], false);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + "false" + tc2 + " (boolean)");
+							return true;
+						}
+						try {
+							int i = Integer.parseInt(value);
+							plugin.getConfig().set(args[1], i);
+							plugin.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + i + tc2 + " (int)");
+						}
+						catch (NumberFormatException e) {
+							try {
+								double d = Double.parseDouble(value);
+								plugin.getConfig().set(args[1], d);
+								plugin.saveConfig();
+								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi " + tc1 + d + tc2 + " (double)");
+							}
+							catch (NumberFormatException e2) {
+								plugin.getConfig().set(args[1], value);
+								plugin.saveConfig();
+								sender.sendMessage(tc2 + "Asetettiin polun " + tc1 + args[1] + tc2 + " arvoksi '" + tc1 + value + tc2 + "' (String)");
+							}
+						}
+					}
+					else {
+						sender.sendMessage(usage + "/config <plugin> <polku> <arvo>");
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/config <plugin> <polku> <arvo>" + tc3 + " tai " + tc4 + "/config reload <plugin>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// sql
+		
+		if (cmd.getName().equalsIgnoreCase("sql")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 2) {
+					if (args[0].equalsIgnoreCase("get")) {
+						new BukkitRunnable() {
+							public void run() {
+								String query = "";
+								for (int i = 1; i < args.length; i++) {
+									query = query + " " + args[i];
+								}
+								query = query.trim();
+								MySQLResult result = MySQLUtils.get(query);
+								if (result != null) {
+									for (int i = 0; i < result.getRows(); i++) {
+										sender.sendMessage(tc2 + "§m--------------------");
+										for (String column : result.getResult().get(i).keySet()) {
+											sender.sendMessage(tc1 + " " + column + ": " + tc2 + result.getString(i, column));
+										}
+										sender.sendMessage(tc2 + "§m--------------------");
+									}
+								}
+								else {
+									sender.sendMessage(tc3 + "Ei yhtäkään kyselyä vastaavaa riviä!");
+								}
+							}
+						}.runTaskAsynchronously(core);
+					}
+					else if (args[0].equalsIgnoreCase("set")) {
+						new BukkitRunnable() {
+							public void run() {
+								String query = "";
+								for (int i = 1; i < args.length; i++) {
+									query = query + " " + args[i];
+								}
+								query = query.trim();
+								int i = MySQLUtils.set(query);
+								sender.sendMessage(tc2 + "SQL-kysely lähetetty, vaikutusalue " + tc1 + i + tc2 + " rivi(ä)!");
+							}
+						}.runTaskAsynchronously(core);
+					}
+					else {
+						sender.sendMessage(usage + "/sql get/set <query>");
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/sql get/set <query>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// statistics
+		
+		if (cmd.getName().equalsIgnoreCase("statistics")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				new BukkitRunnable() {
+					public void run() {
+						if (args.length >= 1) {
+							if (args[0].equalsIgnoreCase("save")) {
+								sender.sendMessage(tc2 + "Pakotetaan uusimpien tilastojen tallennus tietokantaan...");
+								core.getStatisticsManager().saveCacheToDatabase();
+								sender.sendMessage(tc2 + "Tallennus valmis!");
+							}
+							else if (args[0].equalsIgnoreCase("view")) {
+								core.getStatisticsViewer().viewCommand(sender, args, tc1, tc2, tc3, tc4, usage);
+							}
+							else if (args[0].equalsIgnoreCase("log") || args[0].equalsIgnoreCase("increment")) {
+								if (args.length >= 4) {
+									try {
+										String table = args[1];
+										Statistic statistic = Statistic.valueOf(args[2].toUpperCase());
+										int value = Integer.parseInt(args[3]);
+										StatisticsEntry entry;
+										if (table.equals("simple")) {
+											entry = new StatisticsEntry(statistic, value);
+										}
+										else if (table.equals("player")) {
+											if (args.length >= 5) {
+												String uuid = CoreUtils.nameToUuid(args[4]);
+												if (uuid != null) {
+													entry = new PlayerStatisticsEntry(statistic, value, uuid);
+												}
+												else {
+													sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+													return;
+												}
+											}
+											else {
+												sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " " + table + " <tilasto> <arvo> <pelaaja>");
+												return;
+											}
+										}
+										else if (table.equals("player_complex")) {
+											if (args.length >= 6) {
+												String uuid = CoreUtils.nameToUuid(args[4]);
+												if (uuid != null) {
+													try {
+														int data = Integer.parseInt(args[5]);
+														entry = new ComplexPlayerStatisticsEntry(statistic, value, uuid, data);
+													}
+													catch (NumberFormatException e) {
+														sender.sendMessage(tc3 + "Virheellinen data!");
+														return;
+													}
+												}
+												else {
+													sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+													return;
+												}
+											}
+											else {
+												sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " " + table + " <tilasto> <arvo> <pelaaja> <data>");
+												return;
+											}
+										}
+										else {
+											sender.sendMessage(tc3 + "Virheellinen tilaston tyyppi!");
+											return;
+										}
+										if (args[0].equalsIgnoreCase("log")) {
+											core.getStatisticsManager().logStatistic(entry);
+										}
+										else {
+											core.getStatisticsManager().incrementStatistic(entry);
+										}
+										sender.sendMessage(tc2 + "Onnistui!");
+									}
+									catch (NumberFormatException e) {
+										sender.sendMessage(tc3 + "Virheellinen arvo!");
+									}
+									catch (IllegalArgumentException e) {
+										sender.sendMessage(tc3 + "Ei löydetty tilastoa \"" + tc4 + args[2].toUpperCase() + tc3 + "\"!");
+									}
+								}
+								else {
+									sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " <tyyppi> <tilasto> <arvo>");
+								}
+							}
+							else {
+								sender.sendMessage(usage + "/statistics save/view/log/increment");
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/statistics save/view/log/increment");
+						}
+					}
+				}.runTaskAsynchronously(core);
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// list, who, pelaajat
+		
+		if (cmd.getName().equalsIgnoreCase("list") || cmd.getName().equalsIgnoreCase("who") || cmd.getName().equalsIgnoreCase("pelaajat")) {
+			if (sender.getName().equals(Bukkit.getConsoleSender().getName()) && args.length == 0) {
+				return true;
+			}
+			new BukkitRunnable() {
+				public void run() {
+					MySQLResult globalData = MySQLUtils.get("SELECT * FROM global");
+					sender.sendMessage("");
+					sender.sendMessage(tc2 + "§m----------" + tc1 + " Pelaajat " + tc2 + "§m----------");
+					sender.sendMessage("");
+					sender.sendMessage(tc2 + " Palvelimelle on liittynyt yhteensä " + tc1 + globalData.getInt(0, "uniquejoins") + tc2 + " pelaajaa,");
+					sender.sendMessage(tc2 + " pelaajaennätys on " + tc1 + globalData.getInt(0, "record") + tc2 + " samanaikaista pelaajaa.");
+					sender.sendMessage("");
+					if (CoreUtils.hasRank(sender, "valvoja")) {
+						sender.sendMessage(tc2 + " Paikalla on tällä hetkellä " + tc1 + Bukkit.getOnlinePlayers().size() + tc2 + " pelaajaa:");
+					}
+					else {
+						sender.sendMessage(tc2 + " Paikalla on tällä hetkellä " + tc1 + (Bukkit.getOnlinePlayers().size() - vanishedPlayers.size()) 
+								+ tc2 + " pelaajaa:");
+					}
+					sender.sendMessage("");
+					String playerList = "";
+					for (Player player : Bukkit.getOnlinePlayers()) {
+						if (vanishedPlayers.contains(player.getName())) {
+							if (CoreUtils.hasRank(sender, "valvoja")) {
+								playerList = playerList + " [V]" + player.getName();
+							}
+						}
+						else {
+							playerList = playerList + " " + player.getName();
+						}
+					}
+					playerList = playerList.trim().replace(" ", tc1 + ", " + tc2);
+					sender.sendMessage(tc2 + "  " + playerList);
+					sender.sendMessage("");
+				}
+			}.runTaskAsynchronously(core);
+			return true;
+		}
+		
+		// alert
+		
+		if (cmd.getName().equalsIgnoreCase("alert")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 2) {
+					String message = "";
+					for (int i = 1; i < args.length; i++) {
+						message = message + " " + args[i];
+					}
+					message = ChatColor.translateAlternateColorCodes('&', message.trim());
+					for (Player player : Bukkit.getOnlinePlayers()) {
+						if (args[0].equalsIgnoreCase("chat")) {
+							player.sendMessage("");
+							player.sendMessage("§4§lIlmoitus: §c" + message);
+							player.sendMessage("");
+							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
+						}
+						else if (args[0].equalsIgnoreCase("title")) {
+							player.sendTitle("§4§lIlmoitus:", "§c" + message, 20, 60, 20);
+							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
+						}
+						else if (args[0].equalsIgnoreCase("both")) {
+							player.sendMessage("");
+							player.sendMessage("§4§lIlmoitus: §c" + message);
+							player.sendMessage("");
+							player.sendTitle("§4§lIlmoitus:", "§c" + message, 20, 60, 20);
+							player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
+						}
+						else {
+							sender.sendMessage(usage + "/alert chat/title/both <viesti>");
+						}
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/alert chat/title/both <viesti>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// autobroadcast
+		
+		if (cmd.getName().equalsIgnoreCase("autobroadcast")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("list")) {
+						sender.sendMessage("");
+						sender.sendMessage(tc2 + "§m----------" + tc1 + " Autobroadcast " + tc2 + "§m----------");
+						sender.sendMessage("");
+						List<String> messages = core.getConfig().getStringList("autobroadcast.messages");
+						if (!messages.isEmpty()) {
+							int i = 1;
+							for (String message : messages) {
+								sender.sendMessage(tc2 + " - " + tc1 + "#" + i + tc2 + " \"" + message + tc2 + "\"");
+								i++;
+							}
+						}
+						else {
+							sender.sendMessage(tc3 + " Ei autobroadcast-viestejä!");
+						}
+						sender.sendMessage("");
+					}
+					else if (args[0].equalsIgnoreCase("add")) {
+						if (args.length >= 2) {
+							String message = "";
+							for (int i = 1; i < args.length; i++) {
+								message = message + " " + args[i];
+							}
+							message = message.trim();
+							List<String> messages = core.getConfig().getStringList("autobroadcast.messages");
+							messages.add(message);
+							core.getConfig().set("autobroadcast.messages", messages);
+							core.saveConfig();
+							sender.sendMessage(tc2 + "Lisättiin uusi viesti!");
+						}
+						else {
+							sender.sendMessage(usage + "/autobroadcast add <viesti>");
+						}
+					}
+					// TODO
+				}
+				else {
+					sender.sendMessage(usage + "/autobroadcast list/add/remove/broadcast/time");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// send
+		
+		if (cmd.getName().equalsIgnoreCase("send")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 3) {
+					Player target = Bukkit.getPlayer(args[0]);
+					if (target != null || args[0].equalsIgnoreCase("all")) {
+						
+						String message = "";
+						for (int i = 2; i < args.length; i++) {
+							message = message + " " + args[i];
+						}
+						message = ChatColor.translateAlternateColorCodes('&', message.trim());
+						
+						List<Player> players = new ArrayList<Player>();
+						if (args[0].equalsIgnoreCase("all")) {
+							players.addAll(Bukkit.getOnlinePlayers());
+						}
+						else {
+							players.add(target);
+						}
+						
+						if (args[1].equalsIgnoreCase("chat")) {
+							for (Player player : players) {
+								player.sendMessage(message);
+							}
+						}
+						else if (args[1].equalsIgnoreCase("title")) {
+							for (Player player : players) {
+								player.sendTitle(message, "", 10, 60, 10);
+							}
+						}
+						else if (args[1].equalsIgnoreCase("subtitle")) {
+							for (Player player : players) {
+								player.sendTitle("", message, 10, 60, 10);
+							}
+						}
+						else if (args[1].equalsIgnoreCase("actionbar")) {
+							TextComponent text = new TextComponent(message);
+							for (Player player : players) {
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, text);
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/send <pelaaja> chat/title/subtitle/actionbar <viesti>");
+						}
+					}
+					else  {
+						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/send <pelaaja> chat/title/subtitle/actionbar <viesti>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// chat
+		
+		if (cmd.getName().equalsIgnoreCase("chat")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (core.getChatListener().isDisabled()) {
+					core.getChatListener().setDisabled(false);
+					sender.sendMessage(tc2 + "Chat on nyt käytettävissä!");
+				}
+				else {
+					core.getChatListener().setDisabled(true);
+					sender.sendMessage(tc2 + "Chat on nyt hiljennetty!");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// perm
+		
+		if (cmd.getName().equalsIgnoreCase("perm")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 3) {
+					MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
+					if (infoData != null) {
+						String name = infoData.getString(0, "name");
+						String uuid = infoData.getString(0, "uuid");
+						if (args[2].equalsIgnoreCase("true")) {
+							core.getConfig().set("permissions." + uuid + "." + args[1].replace(".", ";"), true);
+							core.saveConfig();
+							sender.sendMessage("");
+							sender.sendMessage(tc2 + "Asetettiin permissionin '" + args[1] + "' arvoksi " + args[2].toUpperCase() + " pelaajalle " + name + "!");
+							sender.sendMessage("");
+							sender.sendMessage(tc2 + " Pelaajalla " + name + " on nyt seuraavat permissionit:");
+							sender.sendMessage("");
+							if (core.getConfig().getConfigurationSection("permissions." + uuid) != null) {
+								for (String perm : core.getConfig().getConfigurationSection("permissions." + uuid).getKeys(false)) {
+									sender.sendMessage(tc2 + " - " + perm.replace(";", ".") + " | " +  core.getConfig().getBoolean("permissions." + uuid + "." + perm));
+								}
+							}
+							sender.sendMessage("");
+							if (Bukkit.getPlayer(name) != null) {
+								CoreUtils.updatePermissions(Bukkit.getPlayer(name));
+							}
+						}
+						else if (args[2].equalsIgnoreCase("false")) {
+							core.getConfig().set("permissions." + uuid + "." + args[1].replace(".", ";"), false);
+							core.saveConfig();
+							sender.sendMessage("");
+							sender.sendMessage(tc2 + "Asetettiin permissionin '" + args[1] + "' arvoksi " + args[2].toUpperCase() + " pelaajalle " + name + "!");
+							sender.sendMessage("");
+							sender.sendMessage(tc2 + " Pelaajalla " + name + " on nyt seuraavat permissionit:");
+							sender.sendMessage("");
+							if (core.getConfig().getConfigurationSection("permissions." + uuid) != null) {
+								for (String perm : core.getConfig().getConfigurationSection("permissions." + uuid).getKeys(false)) {
+									sender.sendMessage(tc2 + " - " + perm.replace(";", ".") + " | " +  core.getConfig().getBoolean("permissions." + uuid + "." + perm));
+								}
+							}
+							sender.sendMessage("");
+							if (Bukkit.getPlayer(name) != null) {
+								CoreUtils.updatePermissions(Bukkit.getPlayer(name));
+							}
+						}
+						else if (args[2].equalsIgnoreCase("reset")) {
+							core.getConfig().set("permissions." + uuid + "." + args[1].replace(".", ";"), null);
+							core.saveConfig();
+							sender.sendMessage("");
+							sender.sendMessage(tc2 + "Asetettiin permissionin '" + args[1] + "' arvoksi " + args[2].toUpperCase() + " pelaajalle " + name + "!");
+							sender.sendMessage("");
+							sender.sendMessage(tc2 + " Pelaajalla " + name + " on nyt seuraavat permissionit:");
+							sender.sendMessage("");
+							if (core.getConfig().getConfigurationSection("permissions." + uuid) != null) {
+								for (String perm : core.getConfig().getConfigurationSection("permissions." + uuid).getKeys(false)) {
+									sender.sendMessage(tc2 + " - " + perm.replace(";", ".") + " | " +  core.getConfig().getBoolean("permissions." + uuid + "." + perm));
+								}
+							}
+							sender.sendMessage("");
+							if (Bukkit.getPlayer(name) != null) {
+								CoreUtils.updatePermissions(Bukkit.getPlayer(name));
+							}
+						}
+					}
+					else {
+						sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/perm <pelaaja> <permission> true/false/reset");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// group
+		
+		if (cmd.getName().equalsIgnoreCase("group")) {
+			if (CoreUtils.hasAdminPowers(sender)) {
+				if (args.length >= 4) {
+					new BukkitRunnable() {
+						public void run() {
+							MySQLResult infoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", args[0]);
+							if (infoData != null) {
+								String name = infoData.getString(0, "name");
+								String prefix = args[1].replace("<=", "«").replace("=>", "»");
+								if (prefix.equals("ritari")) {
+									prefix = "&7[«&2Ritari&7»]";
+								}
+								else if (prefix.equals("aatelinen")) {
+									prefix = "&7[«&6Aatelinen&7»]";
+								}
+								else if (prefix.equals("arkkitehti")) {
+									prefix = "&7[«&eArkkitehti&7»]";
+								}
+								else if (prefix.equals("valvoja")) {
+									prefix = "&7[«&cValvoja&7»]";
+								}
+								else if (prefix.equals("moderaattori")) {
+									prefix = "&7[«&cModeraattori&7»]";
+								}
+								else if (prefix.equals("ylläpitäjä")) {
+									prefix = "&7[«&4Ylläpitäjä&7»]";
+								}
+								else if (prefix.equals("pääarkkitehti")) {
+									prefix = "&7[«&4Pääarkkitehti&7»]";
+								}
+								else if (prefix.equals("pääsuunnittelija")) {
+									prefix = "&7[«&4Pääsuunnittelija&7»]";
+								}
+								else if (prefix.equals("pääkehittäjä")) {
+									prefix = "&7[«&4Pääkehittäjä&7»]";
+								}
+								prefix = prefix + " ";
+								if (prefix.equals("default ")) {
+									prefix = "";
+								}
+								MySQLUtils.set("UPDATE player_info SET chat_prefix=?, chat_color=?, rank=? WHERE name=?", prefix, args[2], 
+										args[3], name);
+								MySQLResult newInfoData = MySQLUtils.get("SELECT * FROM player_info WHERE name=?", name);
+								Player player = Bukkit.getPlayer(args[0]);
+								if (player != null) {
+									core.getConfig().set("users." + player.getName() + ".chat_prefix", newInfoData.getStringNotNull(0, "chat_prefix"));
+									core.getConfig().set("users." + player.getName() + ".chat_color", newInfoData.getStringNotNull(0, "chat_color"));
+									core.getConfig().set("users." + player.getName() + ".rank", newInfoData.getString(0, "rank"));
+									core.saveConfig();
+									CoreUtils.updateTabForAll();
+									new BukkitRunnable() {
+										public void run() {
+											player.updateCommands();
+										}
+									}.runTask(core);
+								}
+								String newPrefix = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_prefix"));
+								String newColor = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_color"));
+								String newRank = ChatColor.translateAlternateColorCodes('&', newInfoData.getString(0, "rank"));
+								sender.sendMessage(tc2 + "Pelaaja " + tc1 + name + tc2 + " on nyt: §r" + newPrefix + newColor + name + tc2 
+										+ " (" + newRank + ")");
+							}
+							else {
+								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+							}
+						}
+					}.runTaskAsynchronously(core);
+				}
+				else {
+					sender.sendMessage(usage + "/group <pelaaja> <etuliite> <väri> <arvo>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// history
+		
+		if (cmd.getName().equalsIgnoreCase("history")) {
+			if (CoreUtils.hasRank(sender, "valvoja")) {
+				if (args.length >= 1) {
+					new BukkitRunnable() {
+						public void run() {
+							MySQLResult historyData = MySQLUtils.get("SELECT * FROM player_history WHERE name=?", args[0]);
+							if (historyData != null) {
+								String name = historyData.getString(0, "name");
+								sender.sendMessage("");
+								sender.sendMessage(tc2 + "§m----------" + tc1 + " Rangaistukset: " + name + " " + tc2 + "§m----------");
+								sender.sendMessage("");
+								for (int i = 0; i < historyData.getRows(); i++) {
+									SimpleDateFormat f = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+									String type = historyData.getString(i, "type");
+									String giver = historyData.getString(i, "giver");
+									String reason = historyData.getString(i, "reason");
+									long time = historyData.getLong(i, "time");
+									long duration = historyData.getLong(i, "duration");
+									long offset = CoreUtils.TIME_OFFSET;
+									if (reason == null && duration == 0) {
+										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
+												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)));
+									}
+									else if (reason == null) {
+										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
+												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)) + tc2 + ", päättyy: " + tc1 
+												+ f.format(new Date(duration + offset)));
+									}
+									else if (duration == 0) {
+										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
+												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)) + tc2 + ", syy: " + tc1 
+												+ reason);
+									}
+									else {
+										sender.sendMessage(tc1 + " - " + tc2 + "Tyyppi: " + tc1 + type + tc2 + ", antaja: " + tc1 + giver 
+												+ tc2 + ", annettu: " + tc1 + f.format(new Date(time + offset)) + tc2 + ", päättyy: " + tc1 
+												+ f.format(new Date(duration + offset)) + tc2 + ", syy: " + tc1 + reason);
+									}
+								}
+								sender.sendMessage("");
+							}
+							else {
+								sender.sendMessage(tc3 + "Ei löydetty rangaistushistoriaa antamallasi nimellä!");
+							}
+						}
+					}.runTaskAsynchronously(core);
+				}
+				else {
+					sender.sendMessage(usage + "/history <pelaaja>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// halttime
+		
+		if (cmd.getName().equalsIgnoreCase("halttime")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (core.isTimeHalted()) {
+					sender.sendMessage(tc2 + "Aika liikkuu taas!");
+				}
+				else {
+					sender.sendMessage(tc2 + "Pelinsisäinen aika pysäytetty!");
+				}
+				core.setTimeHalted(!core.isTimeHalted());
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// give
+		
+		if (cmd.getName().equals("give")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 2) {
+					
+					List<Player> receivers = new ArrayList<Player>();
+					
+					if (args[0].equalsIgnoreCase("all")) {
+						receivers.addAll(Bukkit.getOnlinePlayers());
+					}
+					else if (args[0].equalsIgnoreCase("world")) {
+						if (sender instanceof Player) {
+							Player player = (Player) sender;
+							for (Player p : player.getWorld().getPlayers()) {
+								receivers.add(p);
+							}
+						}
+						else {
+							sender.sendMessage(tc3 + "Vaihtoehtoa \"world\" ei voi käyttää konsolista käsin!");
+							return true;
+						}
+					}
+					else {
+						if (Bukkit.getPlayer(args[0]) != null) {
+							receivers.add(Bukkit.getPlayer(args[0]));
+						}
+						else if (args[0].endsWith("m")) {
+							try {
+								int i = Integer.parseInt(args[0].substring(0, args[0].length() - 1));
+								if (sender instanceof Player) {
+									Player player = (Player) sender;
+									for (Player p : player.getWorld().getPlayers()) {
+										if (player.getLocation().distance(p.getLocation()) <= i) {
+											receivers.add(p);
+										}
+									}
+								}
+								else {
+									sender.sendMessage(tc3 + "Vaihtoehtoa \"säde\" ei voi käyttää konsolista käsin!");
+									return true;
+								}
+							}
+							catch (NumberFormatException e) {
+								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+								return true;
+							}
+						}
+						else {
+							sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+							return true;
+						}
+					}
+					
+					ItemStack item = new ItemStack(Material.APPLE);
+					int amount = 1;
+					
+					Material materialByName = Material.getMaterial(args[1].toUpperCase());
+					if (materialByName != null) {
+						item.setType(materialByName);
+					}
+					else {
+						sender.sendMessage(tc3 + "Tuntematon esine!");
+						return true;
+					}
+					
+					if (args.length >= 3) {
+						try {
+							int i = Integer.parseInt(args[2]);
+							item.setAmount(i);
+							amount = i;
+						}
+						catch (NumberFormatException e) {
+							sender.sendMessage(tc3 + "Virheellinen määrä!");
+							return true;
+						}
+					}
+					
+					if (args.length >= 4) {
+						for (int i = 3; i < args.length; i++) {
+							
+							String property = "";
+							String value = "";
+							
+							if (args[i].contains(":")) {
+								property = args[i].split(":")[0];
+								value = ChatColor.translateAlternateColorCodes('&', args[i].substring(property.length() + 1).replace("\\_", " "));
+							}
+							else {
+								sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
+								return true;
+							}
+							
+							if (property.equalsIgnoreCase("damage")) {
+								try {
+									int damage = Integer.parseInt(value);
+									ItemMeta meta = item.getItemMeta();
+									Damageable damageable = (Damageable) meta;
+									damageable.setDamage(damage);
+									item.setItemMeta(meta);
+								}
+								catch (NumberFormatException e) {
+									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
+									return true;
+								}
+							}
+							else if (property.equalsIgnoreCase("mapid")) {
+								try {
+									int mapId = Integer.parseInt(value);
+									if (item.getItemMeta() instanceof MapMeta) {
+										MapMeta mapMeta = (MapMeta) item.getItemMeta();
+										mapMeta.setMapId(mapId);
+										item.setItemMeta(mapMeta);
+									}
+									else {
+										sender.sendMessage(tc3 + "Tälle esineelle ei voi asettaa kartan ID:tä!");
+										return true;
+									}
+								}
+								catch (NumberFormatException e) {
+									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
+									return true;
+								}
+							}
+							else if (property.equalsIgnoreCase("name")) {
+								ItemMeta meta = item.getItemMeta();
+								meta.setDisplayName(value);
+								item.setItemMeta(meta);
+							}
+							else if (property.equalsIgnoreCase("lore")) {
+								List<String> lore = new ArrayList<String>();
+								for (String line : value.split("\\\\n")) {
+									lore.add(line);
+								}
+								ItemMeta meta = item.getItemMeta();
+								meta.setLore(lore);
+								item.setItemMeta(meta);
+							}
+							else if (property.equalsIgnoreCase("unbreakable")) {
+								ItemMeta meta = item.getItemMeta();
+								meta.setUnbreakable(true);
+								item.setItemMeta(meta);
+							}
+							else if (property.equalsIgnoreCase("hide")) {
+								ItemMeta meta = item.getItemMeta();
+								meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
+								item.setItemMeta(meta);
+							}
+							else {
+								try {
+									int level = Integer.parseInt(value);
+									Enchantment enchantment = Enchantment.getByName(property.toUpperCase());
+									if (enchantment != null) {
+										ItemMeta meta = item.getItemMeta();
+										meta.addEnchant(enchantment, level, true);
+										item.setItemMeta(meta);
+									}
+									else {
+										sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
+										return true;
+									}
+								}
+								catch (NumberFormatException e) {
+									sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");
+									return true;
+								}
+							}
+						}
+					}
+					
+					if (!receivers.isEmpty()) {
+						for (Player receiver : receivers) {
+							receiver.getInventory().addItem(item);
+						}
+						if (receivers.size() == 1) {
+							String itemName = LanguageHelper.getItemDisplayName(item, "fi_FI");
+							sender.sendMessage(tc2 + "Annettiin pelaajalle " + tc1 + receivers.get(0).getName() + tc2 + " " + tc1 
+									+ amount + " kappaletta" + tc2 + " esinettä " + tc1 + itemName + tc2 + "!");
+						}
+						else {
+							String itemName = LanguageHelper.getItemDisplayName(item, "fi_FI");
+							sender.sendMessage(tc2 + "Annettiin yhteensä " + tc1 + receivers.size() + tc2 + " pelaajalle " + tc1 
+									+ amount + " kappaletta" + tc2 + " esinettä " + tc1 + itemName + tc2 + "!");
+						}
+					}
+					else {
+						sender.sendMessage(tc3 + "Ei kriteerejä vastaavia pelaajia!");
+						return true;
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/give <pelaaja>/all/world/<säde> <esine> [määrä] [ominaisuudet]");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// effect
+		
+		if (cmd.getName().equals("effect")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 2) {
+					
+					List<Player> receivers = new ArrayList<Player>();
+					boolean clear = false;
+					
+					if (args[0].equalsIgnoreCase("all")) {
+						receivers.addAll(Bukkit.getOnlinePlayers());
+					}
+					else if (args[0].equalsIgnoreCase("world")) {
+						if (sender instanceof Player) {
+							Player player = (Player) sender;
+							for (Player p : player.getWorld().getPlayers()) {
+								receivers.add(p);
+							}
+						}
+						else {
+							sender.sendMessage(tc3 + "Vaihtoehtoa \"world\" ei voi käyttää konsolista käsin!");
+							return true;
+						}
+					}
+					else {
+						if (Bukkit.getPlayer(args[0]) != null) {
+							receivers.add(Bukkit.getPlayer(args[0]));
+						}
+						else if (args[0].endsWith("m")) {
+							try {
+								int i = Integer.parseInt(args[0].substring(0, args[0].length() - 1));
+								if (sender instanceof Player) {
+									Player player = (Player) sender;
+									for (Player p : player.getWorld().getPlayers()) {
+										if (player.getLocation().distance(p.getLocation()) <= i) {
+											receivers.add(p);
+										}
+									}
+								}
+								else {
+									sender.sendMessage(tc3 + "Vaihtoehtoa \"säde\" ei voi käyttää konsolista käsin!");
+									return true;
+								}
+							}
+							catch (NumberFormatException e) {
+								sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+								return true;
+							}
+						}
+						else {
+							sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+							return true;
+						}
+					}
+					
+					PotionEffectType type = PotionEffectType.SPEED;
+					int level = 1;
+					int duration = 1;
+					
+					if (args[1].equalsIgnoreCase("clear")) {
+						clear = true;
+					}
+					else {
+						if (args.length >= 4) {
+							
+							type = PotionEffectType.getByName(args[1].toUpperCase());
+							if (type == null) {
+								sender.sendMessage(tc3 + "Tuntematon efekti!");
+								return true;
+							}
+							
+							try {
+								level = Integer.parseInt(args[2]);
+								duration = Integer.parseInt(args[3]);
+							}
+							catch (NumberFormatException e) {
+								sender.sendMessage(tc3 + "Virheellinen taso tai kesto!");
+								return true;
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/effect <pelaaja>/all/world/<säde> <efekti> <taso> <kesto>");
+							return true;
+						}
+					}
+					
+					PotionEffect effect = new PotionEffect(type, duration * 20, level - 1);
+					
+					if (!receivers.isEmpty()) {
+						for (Player receiver : receivers) {
+							if (clear) {
+								for (PotionEffect activeEffect : receiver.getActivePotionEffects()) {
+									receiver.removePotionEffect(activeEffect.getType());
+								}
+							}
+							else {
+								receiver.addPotionEffect(effect);
+							}
+						}
+						if (receivers.size() == 1) {
+							if (clear) {
+								sender.sendMessage(tc2 + "Poistettiin kaikki efektit pelaajalta " + tc1 + receivers.get(0).getName() + tc2 + "!");
+							}
+							else {
+								sender.sendMessage(tc2 + "Annettiin pelaajalle " + tc1 + receivers.get(0).getName() + tc2 + " efekti " + tc1 + 
+										type.getName() + " " + level + tc2 + " ajaksi " + tc1 + duration + " sekuntia" + tc2 + "!");
+							}
+						}
+						else {
+							if (clear) {
+								sender.sendMessage(tc2 + "Poistettiin kaikki efektit yhteensä " + tc1 + receivers.size() + tc2 + " pelaajalta!");
+							}
+							else {
+								sender.sendMessage(tc2 + "Annettiin yhteensä " + tc1 + receivers.size() + tc2 + " pelaajalle efekti " + tc1 + 
+										type.getName() + " " + level + tc2 + " ajaksi " + tc1 + duration + " sekuntia" + tc2 + "!");
+							}
+						}
+					}
+					else {
+						sender.sendMessage(tc3 + "Ei kriteerejä vastaavia pelaajia!");
+						return true;
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/effect <pelaaja>/all/world/<säde> <efekti> <taso> <kesto>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// sudo
+		
+		if (cmd.getName().equalsIgnoreCase("sudo")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 2) {
+					Player player = Bukkit.getPlayer(args[0]);
+					if (player != null) {
+						String command = "";
+						for (int i = 1; i < args.length; i++) {
+							command = command + " " + args[i];
+						}
+						command = command.trim();
+						sender.sendMessage(tc2 + "Pakotettiin pelaaja " + tc1 + player.getName() + tc2 + " suorittamaan komento " + tc1 
+								+ "/" + command + tc2 + "!");
+						player.performCommand(command);
+					}
+					else {
+						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/sudo <pelaaja> <komento>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// sudochat
+		
+		if (cmd.getName().equalsIgnoreCase("sudochat")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 2) {
+					Player player = Bukkit.getPlayer(args[0]);
+					if (player != null) {
+						String message = "";
+						for (int i = 1; i < args.length; i++) {
+							message = message + " " + args[i];
+						}
+						message = message.trim();
+						sender.sendMessage(tc2 + "Pakotettiin pelaaja " + tc1 + player.getName() + tc2 + " kirjoittamaan viesti \"" + tc1 
+								+ message + tc2 + "\"!");
+						player.chat(message);
+					}
+					else {
+						sender.sendMessage(tc3 + "Kyseinen pelaaja ei ole paikalla!");
+					}
+				}
+				else {
+					sender.sendMessage(usage + "/sudochat <pelaaja> <viesti>");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// setnews
+		
+		if (cmd.getName().equalsIgnoreCase("setnews")) {
+			if (CoreUtils.hasRank(sender, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					if (args[0].equalsIgnoreCase("clear")) {
+						core.getConfig().set("motd", null);
+						core.saveConfig();
+						sender.sendMessage(tc2 + "Poistettiin Mitä uutta? -teksti!");
+						return true;
+					}
+					String json = "";
+					for (String word : args) {
+						json = json + " " + word;
+					}
+					json = json.trim();
+					core.getConfig().set("motd.motd", json);
+					core.getConfig().set("motd.seen", null);
+					core.saveConfig();
+					sender.sendMessage(tc2 + "Asetettiin uusi Mitä uutta? -teksti!");
+				}
+				else {
+					sender.sendMessage(usage + "/setnews <json>/clear");
+				}
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		
+		// vanhentuneetsakot
+		
+		if (cmd.getName().equalsIgnoreCase("vanhentuneetsakot")) {
+			if (CoreUtils.hasRank(sender, "valvoja")) {
+				new BukkitRunnable() {
+					public void run() {
+						boolean console = false;
+						if (args.length >= 1 && args[0].equalsIgnoreCase("console")) {
+							console = true;
+						}
+						if (!console) {
+							sender.sendMessage("");
+							sender.sendMessage(tc2 + "§m----------" + tc1 + " Vanhentuneet sakot " + tc2 + "§m----------");
+							sender.sendMessage("");
+						}
+						List<String> expiredFines = new ArrayList<String>();
+						MySQLResult finesData = MySQLUtils.get("SELECT * FROM player_fines");
+						if (finesData != null) {
+							for (int i = 0; i < finesData.getRows(); i++) {
+								
+								int id = finesData.getInt(i, "id");
+								int amount = finesData.getInt(i, "amount");
+								String name = finesData.getString(i, "name");
+								String uuidWithoutDashes = finesData.getString(i, "uuid").replace("-", "");
+								String reason = finesData.getString(i, "reason");
+								long duration = finesData.getLong(i, "duration");
+								
+								if (duration - System.currentTimeMillis() < 0) {
+									MySQLResult banData = MySQLUtils.get("SELECT * FROM player_ban WHERE uuid=?", uuidWithoutDashes);
+									MySQLResult jailData = MySQLUtils.get("SELECT * FROM player_jail WHERE uuid=?", uuidWithoutDashes);
+									if (banData != null || jailData != null) {
+										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "кк " + tc2 + "§m" + reason);
+									}
+									else {
+										expiredFines.add(tc1 + " - #" + id + ", " + name + ", " + amount + "кк " + tc2 + reason);
+									}
+								}
+							}
+						}
+						if (!expiredFines.isEmpty()) {
+							for (String fine : expiredFines) {
+								if (!console) {
+									sender.sendMessage(fine);
+								}
+							}
+							if (console) {
+								TextComponent text = new TextComponent("\nHavaittiin " + expiredFines.size() + " erääntynyttä sakkomaksua! "
+										+ "Tarkista klikkaamalla tästä!\n");
+								text.setColor(ChatColor.GOLD);
+								text.setClickEvent(new ClickEvent(Action.RUN_COMMAND, "/vanhentuneetsakot"));
+								for (Player player : Bukkit.getOnlinePlayers()) {
+									player.spigot().sendMessage(text);
+									player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, 1, 1);
+								}
+							}
+						}
+						else {
+							if (!console) {
+								sender.sendMessage(tc3 + " Ei vanhentuneita sakkomaksuja!");
+							}
+						}
+						if (!console) {
+							sender.sendMessage("");
+						}
+					}
+				}.runTaskAsynchronously(core);
+			}
+			else {
+				sender.sendMessage(noPermission);
+			}
+			return true;
+		}
+		return false;
 	}
 	
 	public void updateTardisBlocks(String name) {
