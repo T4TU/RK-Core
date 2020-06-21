@@ -1451,6 +1451,17 @@ public class CoreListener implements Listener {
 			return;
 		}
 		
+		// koputtaminen
+		
+		if (e.getAction() == Action.LEFT_CLICK_BLOCK && player.isSneaking()) {
+			if (block.getType() == Material.IRON_DOOR) {
+				block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 1, 1);
+			}
+			else if (block.getType().toString().contains("_DOOR")) {
+				block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 1, 1);
+			}
+		}
+		
 		// powertoolit
 		
 		if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {

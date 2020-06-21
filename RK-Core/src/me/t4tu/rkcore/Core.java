@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -39,6 +40,7 @@ import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.ReflectionUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -775,6 +777,46 @@ public class Core extends JavaPlugin {
 				}
 			}.runTaskTimer(this, 40, 40);
 		}
+		
+		new BukkitRunnable() {
+			String previousMessage1 = null;
+			String previousMessage2 = null;
+			Random random = new Random();
+			int i = 0;
+			public void run() {
+				
+				// autobroadcast
+				
+				int time = getConfig().getInt("autobroadcast.time");
+				
+				if (i >= time) {
+					if (time != 0) {
+						List<String> messages = getConfig().getStringList("autobroadcast.messages");
+						if (!messages.isEmpty()) {
+							String prefix = ChatColor.translateAlternateColorCodes('&', getConfig().getString("autobroadcast.prefix", ""));
+							String message = null;
+							for (int c = 0; c < 10; c++) {
+								int index = random.nextInt(messages.size());
+								message = ChatColor.translateAlternateColorCodes('&', messages.get(index));
+								if ((previousMessage1 != null && message.equals(previousMessage1)) || (previousMessage2 != null && message.equals(previousMessage2))) {
+									continue;
+								}
+								break;
+							}
+							previousMessage2 = previousMessage1;
+							previousMessage1 = message;
+							for (Player player : Bukkit.getOnlinePlayers()) {
+								if (SettingsUtils.getSetting(player, "show_autobroadcasts")) {
+									player.sendMessage(prefix + message);
+								}
+							}
+						}
+					}
+					i = 0;
+				}
+				i++;
+			}
+		}.runTaskTimer(this, 0, 1200);
 		
 		new BukkitRunnable() {
 			public void run() {

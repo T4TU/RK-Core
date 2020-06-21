@@ -8696,7 +8696,7 @@ public class CoreCommands implements CommandExecutor {
 						if (!messages.isEmpty()) {
 							int i = 1;
 							for (String message : messages) {
-								sender.sendMessage(tc2 + " - " + tc1 + "#" + i + tc2 + " \"" + message + tc2 + "\"");
+								sender.sendMessage(tc2 + " - " + tc1 + "(" + i + ")" + tc2 + " \"" + message + tc2 + "\"");
 								i++;
 							}
 						}
@@ -8722,10 +8722,102 @@ public class CoreCommands implements CommandExecutor {
 							sender.sendMessage(usage + "/autobroadcast add <viesti>");
 						}
 					}
-					// TODO
+					else if (args[0].equalsIgnoreCase("remove")) {
+						if (args.length >= 2) {
+							try {
+								int i = Integer.parseInt(args[1]);
+								List<String> messages = core.getConfig().getStringList("autobroadcast.messages");
+								if (i > 0 && i <= messages.size()) {
+									messages.remove(i - 1);
+									core.getConfig().set("autobroadcast.messages", messages);
+									core.saveConfig();
+									sender.sendMessage(tc2 + "Poistettiin viesti numerolla " + tc1 + i + tc2 + "!");
+								}
+								else {
+									sender.sendMessage(tc3 + "Ei löydetty viestiä antamallasi numerolla!");
+								}
+							}
+							catch (NumberFormatException e) {
+								sender.sendMessage(tc3 + "Virheellinen viestin numero!");
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/autobroadcast remove <numero>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("broadcast")) {
+						if (args.length >= 2) {
+							try {
+								int i = Integer.parseInt(args[1]);
+								String prefix = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("autobroadcast.prefix", ""));
+								List<String> messages = core.getConfig().getStringList("autobroadcast.messages");
+								if (i > 0 && i <= messages.size()) {
+									String message = ChatColor.translateAlternateColorCodes('&', messages.get(i - 1));
+									for (Player player : Bukkit.getOnlinePlayers()) {
+										if (SettingsUtils.getSetting(player, "show_autobroadcasts")) {
+											player.sendMessage(prefix + message);
+										}
+									}
+								}
+								else {
+									sender.sendMessage(tc3 + "Ei löydetty viestiä antamallasi numerolla!");
+								}
+							}
+							catch (NumberFormatException e) {
+								sender.sendMessage(tc3 + "Virheellinen viestin numero!");
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/autobroadcast broadcast <numero>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("time")) {
+						if (args.length >= 2) {
+							try {
+								int i = Integer.parseInt(args[1]);
+								if (i > 0) {
+									core.getConfig().set("autobroadcast.time", i);
+									core.saveConfig();
+									sender.sendMessage(tc2 + "Viestejä lähetetään nyt automaattisesti " + tc1 + i + "min" + tc2 + " välein!");
+								}
+								else if (i == 0) {
+									core.getConfig().set("autobroadcast.time", 0);
+									core.saveConfig();
+									sender.sendMessage(tc2 + "Poistettiin viestien automaattinen lähettäminen käytöstä!");
+								}
+								else {
+									sender.sendMessage(tc3 + "Virheellinen aika!");
+								}
+							}
+							catch (NumberFormatException e) {
+								sender.sendMessage(tc3 + "Virheellinen aika!");
+							}
+						}
+						else {
+							sender.sendMessage(usage + "/autobroadcast time <viestien välinen aika minuutteina>");
+						}
+					}
+					else if (args[0].equalsIgnoreCase("prefix")) {
+						if (args.length >= 2) {
+							String prefix = "";
+							for (int i = 1; i < args.length; i++) {
+								prefix = prefix + " " + args[i];
+							}
+							prefix = prefix.trim();
+							core.getConfig().set("autobroadcast.prefix", prefix + " ");
+							core.saveConfig();
+							sender.sendMessage(tc2 + "Asetettiin autobroadcastin prefixiksi §r" + ChatColor.translateAlternateColorCodes('&', prefix) + tc2 + "!");
+						}
+						else {
+							sender.sendMessage(usage + "/autobroadcast prefix <uusi prefix>");
+						}
+					}
+					else {
+						sender.sendMessage(usage + "/autobroadcast list/add/remove/broadcast/time/prefix");
+					}
 				}
 				else {
-					sender.sendMessage(usage + "/autobroadcast list/add/remove/broadcast/time");
+					sender.sendMessage(usage + "/autobroadcast list/add/remove/broadcast/time/prefix");
 				}
 			}
 			else {
