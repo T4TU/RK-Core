@@ -1174,6 +1174,7 @@ public class CoreListener implements Listener {
 		if (player.getGameMode() == GameMode.CREATIVE) {
 			e.setKeepInventory(true);
 			e.setKeepLevel(true);
+			e.getDrops().clear();
 			e.setDroppedExp(0);
 		}
 		
