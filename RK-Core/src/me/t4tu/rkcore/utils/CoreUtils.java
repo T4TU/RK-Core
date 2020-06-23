@@ -1111,7 +1111,11 @@ public class CoreUtils {
 			return;
 		}
 		if (player.getGameMode() == GameMode.CREATIVE) {
-			player.teleport(location);
+			new BukkitRunnable() {
+				public void run() {
+					player.teleport(location);
+				}
+			}.runTask(core);
 			return;
 		}
 		core.getCoreCommands().getTeleportingPlayers().add(player.getName());

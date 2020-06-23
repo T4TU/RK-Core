@@ -805,9 +805,11 @@ public class Core extends JavaPlugin {
 							}
 							previousMessage2 = previousMessage1;
 							previousMessage1 = message;
-							for (Player player : Bukkit.getOnlinePlayers()) {
-								if (SettingsUtils.getSetting(player, "show_autobroadcasts")) {
-									player.sendMessage(prefix + message);
+							if (message != null) {
+								for (Player player : Bukkit.getOnlinePlayers()) {
+									if (SettingsUtils.getSetting(player, "show_autobroadcast")) {
+										player.sendMessage(prefix + message);
+									}
 								}
 							}
 						}
