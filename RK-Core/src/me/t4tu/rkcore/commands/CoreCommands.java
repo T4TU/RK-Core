@@ -9706,9 +9706,10 @@ public class CoreCommands implements CommandExecutor {
 			"Näytä viesti, kun minulta ostetaan tuotteita§show_bought_items§20", 
 			"Näytä pelaajien kuolinilmoitukset§show_death_messages§21", 
 			"Näytä muiden pelaajien AFK-ilmoitukset§show_afk§22", 
-			"Huomauta, jos chat-viestissä mainitsemani pelaaja on AFK§show_afk_chat_notification§23", 
-			"Näytä kavereideni tilaviestien päivitykset§show_friend_status§24", 
-			"Näytä ajoittain toistuvat ilmoitukset ja vinkit§show_autobroadcast§25"
+			"Näytä omat AFK-ilmoitukseni§show_own_afk§23", 
+			"Huomauta, jos chat-viestissä mainitsemani pelaaja on AFK§show_afk_chat_notification§24", 
+			"Näytä kavereideni tilaviestien päivitykset§show_friend_status§25", 
+			"Näytä ajoittain toistuvat ilmoitukset ja vinkit§show_autobroadcast§28"
 			);
 	
 	private List<String> profileSettings = Arrays.asList(

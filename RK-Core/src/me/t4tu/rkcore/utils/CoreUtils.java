@@ -218,7 +218,7 @@ public class CoreUtils {
 					p.sendMessage(tc2 + player.getName() + " on nyt AFK-tilassa.");
 				}
 			}
-			if (!SettingsUtils.getSetting(player, "show_afk")) {
+			if (!SettingsUtils.getSetting(player, "show_afk") && SettingsUtils.getSetting(player, "show_own_afk")) {
 				player.sendMessage(tc2 + "Olet nyt AFK-tilassa!");
 			}
 		}
@@ -228,7 +228,7 @@ public class CoreUtils {
 					p.sendMessage(tc2 + player.getName() + " ei ole enää AFK-tilassa.");
 				}
 			}
-			if (!SettingsUtils.getSetting(player, "show_afk")) {
+			if (!SettingsUtils.getSetting(player, "show_afk") && SettingsUtils.getSetting(player, "show_own_afk")) {
 				player.sendMessage(tc2 + "Et ole enää AFK-tilassa!");
 			}
 		}
