@@ -1144,13 +1144,12 @@ public class CoreListener implements Listener {
 		if (core.getConfig().getBoolean("users." + e.getPlayer().getName() + ".jail.jailed") && core.getConfig().contains("jail")) {
 			Location location = CoreUtils.loadLocation(core, "jail");
 			e.setRespawnLocation(location);
+			return;
 		}
-		else if (core.getConfig().contains("spawn")) {
+		if ((e.getPlayer().getBedSpawnLocation() == null || !e.getPlayer().getBedSpawnLocation().getWorld().getName().equals(Bukkit.getWorlds().get(0).getName())) 
+				&& core.getConfig().contains("spawn")) {
 			Location spawn = CoreUtils.loadLocation(core, "spawn");
 			e.setRespawnLocation(spawn);
-		}
-		else {
-			e.setRespawnLocation(e.getPlayer().getWorld().getSpawnLocation());
 		}
 	}
 	

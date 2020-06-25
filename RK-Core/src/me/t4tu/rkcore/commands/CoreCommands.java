@@ -82,6 +82,7 @@ import net.md_5.bungee.api.chat.ClickEvent.Action;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 
 public class CoreCommands implements CommandExecutor {
 	
@@ -1293,6 +1294,16 @@ public class CoreCommands implements CommandExecutor {
 									player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1, 1);
 									player.sendMessage(tc3 + "Et ole vielä ansainnut tätä kotipistettä!");
 								}
+							}
+						}
+						else if (args[0].equalsIgnoreCase("sänky") || args[0].equalsIgnoreCase("bed")) {
+							Location bedLocation = player.getBedSpawnLocation();
+							if (bedLocation != null) {
+								CoreUtils.teleport(player, bedLocation);
+							}
+							else {
+								TranslatableComponent message = new TranslatableComponent("block.minecraft.bed.not_valid");
+								player.spigot().sendMessage(message);
 							}
 						}
 						else {
