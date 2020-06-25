@@ -8283,9 +8283,11 @@ public class CoreCommands implements CommandExecutor {
 					for (Player player : Bukkit.getOnlinePlayers()) {
 						player.kickPlayer(reason);
 					}
-					core.getConfig().set("users", null);
-					core.saveConfig();
-					Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop");
+					new BukkitRunnable() {
+						public void run() {
+							Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop");
+						}
+					}.runTaskLater(core, 40);
 				}
 				else {
 					sender.sendMessage(usage + "/xstop <syy>");
