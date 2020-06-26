@@ -85,6 +85,88 @@ public class StatisticsViewer {
 		core.getStatisticsViewer().updatePvpTopHolograms(world);
 	}
 	
+	public MySQLResult fetchData(CommandSender sender, String[] args, String tc1, String tc2, String tc3, String tc4, String usage) {
+		if (args.length >= 6) {
+			try {
+				String table = args[1];
+				Statistic statistic = Statistic.valueOf(args[2].toUpperCase());
+				int days = Integer.parseInt(args[3]);
+				long maxTime = System.currentTimeMillis() - 86400000l * days;
+				boolean timeGiven = days > 0;
+				String player = null;
+				boolean playerGiven = false;
+				int data = 0;
+				boolean dataGiven = false;
+				if (!args[4].equalsIgnoreCase("none")) {
+					playerGiven = true;
+					player = CoreUtils.nameToUuid(args[4]);
+					if (player == null) {
+						sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+						return null;
+					}
+				}
+				if (!args[5].equalsIgnoreCase("none")) {
+					dataGiven = true;
+					try {
+						data = Integer.parseInt(args[5]);
+					}
+					catch (NumberFormatException e) {
+						sender.sendMessage(tc3 + "Virheellinen data!");
+						return null;
+					}
+				}
+				MySQLResult statisticsData;
+				if (playerGiven) {
+					if (dataGiven) {
+						if (timeGiven) {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=? AND player=? AND data=? AND time>?", statistic.getId() + "", player, data + "", maxTime + "");
+						}
+						else {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=? AND player=? AND data=?", statistic.getId() + "", player, data + "");
+						}
+					}
+					else {
+						if (timeGiven) {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=? AND player=? AND time>?", statistic.getId() + "", player, maxTime + "");
+						}
+						else {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=? AND player=?", statistic.getId() + "", player);
+						}
+					}
+				}
+				else {
+					if (dataGiven) {
+						if (timeGiven) {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=? AND data=? AND time>?", statistic.getId() + "", data + "", maxTime + "");
+						}
+						else {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=? AND data=?", statistic.getId() + "", data + "");
+						}
+					}
+					else {
+						if (timeGiven) {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=? AND time>?", statistic.getId() + "", maxTime + "");
+						}
+						else {
+							statisticsData = MySQLUtils.get("SELECT value, time FROM statistics_" + table + " WHERE statistic=?", statistic.getId() + "");
+						}
+					}
+				}
+				return statisticsData;
+			}
+			catch (NumberFormatException e) {
+				sender.sendMessage(tc3 + "Virheellinen vuorokausien määrä!");
+			}
+			catch (IllegalArgumentException e) {
+				sender.sendMessage(tc3 + "Ei löydetty tilastoa \"" + tc4 + args[2].toUpperCase() + tc3 + "\"!");
+			}
+		}
+		else {
+			sender.sendMessage(usage + "/statistics export <tyyppi> <tilasto> <vuorokaudet> <pelaaja>/none <data>/none");
+		}
+		return null;
+	}
+	
 	public void viewCommand(CommandSender sender, String[] args, String tc1, String tc2, String tc3, String tc4, String usage) {
 		if (args.length >= 6) {
 			try {

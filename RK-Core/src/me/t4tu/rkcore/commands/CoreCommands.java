@@ -1,5 +1,9 @@
 package me.t4tu.rkcore.commands;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -8592,12 +8596,35 @@ public class CoreCommands implements CommandExecutor {
 									sender.sendMessage(usage + "/statistics " + args[0].toLowerCase() + " <tyyppi> <tilasto> <arvo>");
 								}
 							}
+							else if (args[0].equalsIgnoreCase("export")) {
+								MySQLResult data = core.getStatisticsViewer().fetchData(sender, args, tc1, tc2, tc3, tc4, usage);
+								if (data != null) {
+									Statistic statistic = Statistic.valueOf(args[2].toUpperCase());
+									String filename = statistic.toString().toLowerCase() + ".rks";
+									try {
+										FileOutputStream fileOut = new FileOutputStream(filename);
+										DataOutputStream dataOut = new DataOutputStream(new BufferedOutputStream(fileOut));
+										int length = data.getRows();
+										dataOut.writeInt(length);
+										for (int i = 0; i < length; i++) {
+											dataOut.writeInt(data.getInt(i, "value"));
+											dataOut.writeLong(data.getLong(i, "time"));
+										}
+										dataOut.close();
+										sender.sendMessage(tc2 + "Tallennettiin data tiedostoon " + tc1 + filename + tc2 + "!");
+									}
+									catch (IOException e) {
+										e.printStackTrace();
+										sender.sendMessage(tc3 + "Virhe tallennettaessa dataa tiedostoon!");
+									}
+								}
+							}
 							else {
-								sender.sendMessage(usage + "/statistics save/view/log/increment");
+								sender.sendMessage(usage + "/statistics save/view/log/increment/export");
 							}
 						}
 						else {
-							sender.sendMessage(usage + "/statistics save/view/log/increment");
+							sender.sendMessage(usage + "/statistics save/view/log/increment/export");
 						}
 					}
 				}.runTaskAsynchronously(core);
