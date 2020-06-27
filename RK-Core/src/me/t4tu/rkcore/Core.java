@@ -274,6 +274,8 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("player", true);
 		commands.registerCommand("profile", true);
 		commands.registerCommand("p", true);
+		commands.registerCommand("tilastot", true);
+		commands.registerCommand("stats", true);
 		commands.registerCommand("help", true);
 		commands.registerCommand("apua", true);
 		commands.registerCommand("?", true);
@@ -625,7 +627,7 @@ public class Core extends JavaPlugin {
 						for (Player player : Bukkit.getWorlds().get(0).getPlayers()) {
 							if (player.isSleeping()) {
 								player.wakeup(true);
-								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit päiväunet sateen yli."));
+								player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§eNukuit päiväunet, eikä ulkona enää sada."));
 							}
 						}
 					}
@@ -723,6 +725,7 @@ public class Core extends JavaPlugin {
 					statisticsManager.saveCacheToDatabase();
 					statisticsViewer.updatePvpTopCache();
 					statisticsViewer.updatePvpTopHolograms(Bukkit.getWorlds().get(0));
+					statisticsViewer.getViewerCache().clear();
 				}
 			}.runTaskTimerAsynchronously(this, 12000, 12000);
 			

@@ -2,7 +2,9 @@ package me.t4tu.rkcore.statistics;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -20,14 +22,20 @@ public class StatisticsViewer {
 	private static Core core;
 	
 	private List<PlayerStatisticsEntry> pvpTopCache;
+	private Map<String, MySQLResult[]> viewerCache;
 	
 	public StatisticsViewer(Core core) {
 		StatisticsViewer.core = core;
 		pvpTopCache = new ArrayList<PlayerStatisticsEntry>();
+		viewerCache = new HashMap<String, MySQLResult[]>();
 	}
 	
 	public List<PlayerStatisticsEntry> getPvpTopCache() {
 		return pvpTopCache;
+	}
+	
+	public Map<String, MySQLResult[]> getViewerCache() {
+		return viewerCache;
 	}
 	
 	public void addKillToPvpTopCache(Player player) {
@@ -45,18 +53,12 @@ public class StatisticsViewer {
 	}
 	
 	public void updatePvpTopCache() {
-		MySQLResult statisticsData = MySQLUtils.get("SELECT * FROM statistics_player WHERE statistic=?", Statistic.PVP_KILLS.getId() + "");
-		List<StatisticsEntry> entries = core.getStatisticsManager().combineSimilarPlayers(core.getStatisticsManager().parseStatistics(statisticsData));
+		MySQLResult statisticsData = MySQLUtils.get("SELECT statistic, player, SUM(value) AS value, time FROM statistics_player WHERE statistic=? GROUP BY player ORDER BY value DESC LIMIT 30", 
+				Statistic.PVP_KILLS.getId() + "");
 		pvpTopCache.clear();
-		int count = 0;
-		for (StatisticsEntry entry : entries) {
-			if (entry instanceof PlayerStatisticsEntry) {
-				PlayerStatisticsEntry e = (PlayerStatisticsEntry) entry;
-				if (count >= 20) {
-					break;
-				}
-				pvpTopCache.add(e);
-			}
+		int rows = statisticsData.getRows();
+		for (int i = 0; i < rows; i++) {
+			pvpTopCache.add(new PlayerStatisticsEntry(Statistic.PVP_KILLS, statisticsData.getInt(i, "value"), statisticsData.getString(i, "player")));
 		}
 	}
 	
@@ -176,6 +178,7 @@ public class StatisticsViewer {
 				long maxTime = System.currentTimeMillis() - 86400000l * days;
 				boolean timeGiven = days > 0;
 				String player = null;
+				String playerName = null;
 				boolean playerGiven = false;
 				boolean playerTop = false;
 				int data = 0;
@@ -192,6 +195,7 @@ public class StatisticsViewer {
 							sender.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
 							return;
 						}
+						playerName = CoreUtils.uuidToName(player);
 					}
 				}
 				if (!args[5].equalsIgnoreCase("none")) {
@@ -218,37 +222,16 @@ public class StatisticsViewer {
 						else {
 							statisticsData = MySQLUtils.get("SELECT SUM(value) AS total, COUNT(value) AS count, MAX(value) AS max, MIN(value) AS min FROM statistics_" + table + " WHERE statistic=? AND player=? AND data=?", statistic.getId() + "", player, data + "");
 						}
-						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, player, dataGiven, data, statisticsData);
+						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, playerName, dataGiven, data, statisticsData);
 					}
 					else if (dataTop) {
 						if (timeGiven) {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=? AND player=? AND time>?", statistic.getId() + "", player, maxTime + "");
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value, data FROM statistics_" + table + " WHERE statistic=? AND player=? AND time>? GROUP BY player, data ORDER BY value DESC", statistic.getId() + "", player, maxTime + "");
 						}
 						else {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=? AND player=?", statistic.getId() + "", player);
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value, data FROM statistics_" + table + " WHERE statistic=? AND player=? GROUP BY player, data ORDER BY value DESC", statistic.getId() + "", player);
 						}
-						List<StatisticsEntry> entries = core.getStatisticsManager().combineSimilar(core.getStatisticsManager().parseStatistics(statisticsData));
-						Collections.sort(entries, new StatisticsManager.ValueSorter());
-						sender.sendMessage("");
-						sender.sendMessage("§5§l " + statistic.toString());
-						if (timeGiven)
-							sender.sendMessage("§5 (Viimeiset " + days + " vuorokautta)");
-						sender.sendMessage("§5 (Pelaaja: " + args[4] + ")");
-						sender.sendMessage("§5 (Data: TOP)");
-						sender.sendMessage("");
-						int count = 0;
-						for (StatisticsEntry entry : entries) {
-							if (entry instanceof ComplexPlayerStatisticsEntry) {
-								ComplexPlayerStatisticsEntry e = (ComplexPlayerStatisticsEntry) entry;
-								if (count >= 10) {
-									sender.sendMessage("§8  Ja " + (entries.size() - 10) + " lisää...");
-									break;
-								}
-								sender.sendMessage("§5  " + e.getData() + ": §d" + e.getValue());
-								count++;
-							}
-						}
-						sender.sendMessage("");
+						showTopInfo(sender, args, statistic, timeGiven, days, playerTop, playerGiven, playerName, dataTop, dataGiven, data, statisticsData);
 					}
 					else {
 						if (timeGiven) {
@@ -257,73 +240,30 @@ public class StatisticsViewer {
 						else {
 							statisticsData = MySQLUtils.get("SELECT SUM(value) AS total, COUNT(value) AS count, MAX(value) AS max, MIN(value) AS min FROM statistics_" + table + " WHERE statistic=? AND player=?", statistic.getId() + "", player);
 						}
-						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, player, dataGiven, data, statisticsData);
+						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, playerName, dataGiven, data, statisticsData);
 					}
 				}
 				else if (playerTop) {
 					if (dataGiven) {
 						if (timeGiven) {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=? AND data=? AND time>?", statistic.getId() + "", data + "", maxTime + "");
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value, data FROM statistics_" + table + " WHERE statistic=? AND data=? AND time>? GROUP BY player, data ORDER BY value DESC", statistic.getId() + "", data + "", maxTime + "");
 						}
 						else {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=? AND data=?", statistic.getId() + "", data + "");
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value, data FROM statistics_" + table + " WHERE statistic=? AND data=? GROUP BY player, data ORDER BY value DESC", statistic.getId() + "", data + "");
 						}
-						List<StatisticsEntry> entries = core.getStatisticsManager().combineSimilar(core.getStatisticsManager().parseStatistics(statisticsData));
-						Collections.sort(entries, new StatisticsManager.ValueSorter());
-						sender.sendMessage("");
-						sender.sendMessage("§5§l " + statistic.toString());
-						if (timeGiven)
-							sender.sendMessage("§5 (Viimeiset " + days + " vuorokautta)");
-						sender.sendMessage("§5 (Pelaaja: TOP)");
-						sender.sendMessage("§5 (Data: " + data + ")");
-						sender.sendMessage("");
-						int count = 0;
-						for (StatisticsEntry entry : entries) {
-							if (entry instanceof ComplexPlayerStatisticsEntry) {
-								ComplexPlayerStatisticsEntry e = (ComplexPlayerStatisticsEntry) entry;
-								if (count >= 10) {
-									sender.sendMessage("§8  Ja " + (entries.size() - 10) + " lisää...");
-									break;
-								}
-								String playerName = CoreUtils.uuidToName(e.getUuid());
-								sender.sendMessage("§5  " + playerName + ": §d" + e.getValue());
-								count++;
-							}
-						}
-						sender.sendMessage("");
+						showTopInfo(sender, args, statistic, timeGiven, days, playerTop, playerGiven, playerName, dataTop, dataGiven, data, statisticsData);
 					}
 					else if (dataTop) {
 						sender.sendMessage(tc3 + "Vain yksi argumentti voi olla \"top\"!");
 					}
 					else {
 						if (timeGiven) {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=? AND time>?", statistic.getId() + "", maxTime + "");
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value FROM statistics_" + table + " WHERE statistic=? AND time>? GROUP BY player ORDER BY value DESC", statistic.getId() + "", maxTime + "");
 						}
 						else {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=?", statistic.getId() + "");
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value FROM statistics_" + table + " WHERE statistic=? GROUP BY player ORDER BY value DESC", statistic.getId() + "");
 						}
-						List<StatisticsEntry> entries = core.getStatisticsManager().combineSimilarPlayers(core.getStatisticsManager().parseStatistics(statisticsData));
-						Collections.sort(entries, new StatisticsManager.ValueSorter());
-						sender.sendMessage("");
-						sender.sendMessage("§5§l " + statistic.toString());
-						if (timeGiven)
-							sender.sendMessage("§5 (Viimeiset " + days + " vuorokautta)");
-						sender.sendMessage("§5 (Pelaaja: TOP)");
-						sender.sendMessage("");
-						int count = 0;
-						for (StatisticsEntry entry : entries) {
-							if (entry instanceof PlayerStatisticsEntry) {
-								PlayerStatisticsEntry e = (PlayerStatisticsEntry) entry;
-								if (count >= 10) {
-									sender.sendMessage("§8  Ja " + (entries.size() - 10) + " lisää...");
-									break;
-								}
-								String playerName = CoreUtils.uuidToName(e.getUuid());
-								sender.sendMessage("§5  " + playerName + ": §d" + e.getValue());
-								count++;
-							}
-						}
-						sender.sendMessage("");
+						showTopInfo(sender, args, statistic, timeGiven, days, playerTop, playerGiven, playerName, dataTop, dataGiven, data, statisticsData);
 					}
 				}
 				else {
@@ -334,36 +274,16 @@ public class StatisticsViewer {
 						else {
 							statisticsData = MySQLUtils.get("SELECT SUM(value) AS total, COUNT(value) AS count, MAX(value) AS max, MIN(value) AS min FROM statistics_" + table + " WHERE statistic=? AND data=?", statistic.getId() + "", data + "");
 						}
-						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, player, dataGiven, data, statisticsData);
+						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, playerName, dataGiven, data, statisticsData);
 					}
 					else if (dataTop) {
 						if (timeGiven) {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=? AND time>?", statistic.getId() + "", maxTime + "");
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value, data FROM statistics_" + table + " WHERE statistic=? AND time>? GROUP BY data ORDER BY value DESC", statistic.getId() + "", maxTime + "");
 						}
 						else {
-							statisticsData = MySQLUtils.get("SELECT * FROM statistics_" + table + " WHERE statistic=?", statistic.getId() + "");
+							statisticsData = MySQLUtils.get("SELECT player, SUM(value) AS value, data FROM statistics_" + table + " WHERE statistic=? GROUP BY data ORDER BY value DESC", statistic.getId() + "");
 						}
-						List<StatisticsEntry> entries = core.getStatisticsManager().combineSimilarData(core.getStatisticsManager().parseStatistics(statisticsData));
-						Collections.sort(entries, new StatisticsManager.ValueSorter());
-						sender.sendMessage("");
-						sender.sendMessage("§5§l " + statistic.toString());
-						if (timeGiven)
-							sender.sendMessage("§5 (Viimeiset " + days + " vuorokautta)");
-						sender.sendMessage("§5 (Data: TOP)");
-						sender.sendMessage("");
-						int count = 0;
-						for (StatisticsEntry entry : entries) {
-							if (entry instanceof ComplexPlayerStatisticsEntry) {
-								ComplexPlayerStatisticsEntry e = (ComplexPlayerStatisticsEntry) entry;
-								if (count >= 10) {
-									sender.sendMessage("§8  Ja " + (entries.size() - 10) + " lisää...");
-									break;
-								}
-								sender.sendMessage("§5  " + e.getData() + ": §d" + e.getValue());
-								count++;
-							}
-						}
-						sender.sendMessage("");
+						showTopInfo(sender, args, statistic, timeGiven, days, playerTop, playerGiven, playerName, dataTop, dataGiven, data, statisticsData);
 					}
 					else {
 						if (timeGiven) {
@@ -372,7 +292,7 @@ public class StatisticsViewer {
 						else {
 							statisticsData = MySQLUtils.get("SELECT SUM(value) AS total, COUNT(value) AS count, MAX(value) AS max, MIN(value) AS min FROM statistics_" + table + " WHERE statistic=?", statistic.getId() + "");
 						}
-						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, player, dataGiven, data, statisticsData);
+						showBasicInfo(sender, args, statistic, timeGiven, days, playerGiven, playerName, dataGiven, data, statisticsData);
 					}
 				}
 			}
@@ -389,14 +309,14 @@ public class StatisticsViewer {
 	}
 	
 	private void showBasicInfo(CommandSender sender, String[] args, Statistic statistic, boolean timeGiven, int days, 
-			boolean playerGiven, String player, boolean dataGiven, int data, MySQLResult statisticsData) {
+			boolean playerGiven, String playerName, boolean dataGiven, int data, MySQLResult statisticsData) {
 		if (statisticsData != null) {
 			sender.sendMessage("");
 			sender.sendMessage("§5§l " + statistic.toString());
 			if (timeGiven)
 				sender.sendMessage("§5 (Viimeiset " + days + " vuorokautta)");
 			if (playerGiven)
-				sender.sendMessage("§5 (Pelaaja: " + args[4] + ")");
+				sender.sendMessage("§5 (Pelaaja: " + playerName + ")");
 			if (dataGiven)
 				sender.sendMessage("§5 (Data: " + data + ")");
 			sender.sendMessage("");
@@ -408,6 +328,37 @@ public class StatisticsViewer {
 		}
 		else {
 			sender.sendMessage(CoreUtils.getErrorBaseColor() + "Ei löydetty yhtään dataa antamillasi parametreillä!");
+		}
+	}
+	
+	private void showTopInfo(CommandSender sender, String[] args, Statistic statistic, boolean timeGiven, int days, 
+			boolean playerTop, boolean playerGiven, String playerName, boolean dataTop, boolean dataGiven, int data, MySQLResult statisticsData) {
+		if (statisticsData != null) {
+			sender.sendMessage("");
+			sender.sendMessage("§5§l " + statistic.toString());
+			if (timeGiven)
+				sender.sendMessage("§5 (Viimeiset " + days + " vuorokautta)");
+			if (playerTop)
+				sender.sendMessage("§5 (Pelaaja: TOP)");
+			if (playerGiven)
+				sender.sendMessage("§5 (Pelaaja: " + playerName + ")");
+			if (dataTop)
+				sender.sendMessage("§5 (Data: TOP)");
+			if (dataGiven)
+				sender.sendMessage("§5 (Data: " + data + ")");
+			sender.sendMessage("");
+			int rows = statisticsData.getRows();
+			int results = Math.min(rows, 10);
+			for (int i = 0; i < results; i++) {
+				if (playerTop)
+					sender.sendMessage("§5  " + CoreUtils.uuidToName(statisticsData.getString(i, "player")) + ": §d" + statisticsData.getInt(i, "value"));
+				if (dataTop)
+					sender.sendMessage("§5  " + statisticsData.getInt(i, "data") + ": §d" + statisticsData.getInt(i, "value"));
+			}
+			if (rows > 10) {
+				sender.sendMessage("§8  Ja " + (rows - 10) + " lisää...");
+			}
+			sender.sendMessage("");
 		}
 	}
 }

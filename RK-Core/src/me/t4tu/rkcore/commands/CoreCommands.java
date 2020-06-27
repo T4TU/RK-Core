@@ -515,6 +515,92 @@ public class CoreCommands implements CommandExecutor {
 			return true;
 		}
 		
+		// tilastot, stats
+		
+		if (cmd.getName().equalsIgnoreCase("tilastot") || cmd.getName().equalsIgnoreCase("stats")) {
+			if (args.length >= 1) {
+				new BukkitRunnable() {
+					public void run() {
+						
+						String name = CoreUtils.nameToName(args[0]);
+						
+						if (name != null) {
+							
+							String uuid = CoreUtils.nameToUuid(name);
+							
+							MySQLResult[] data;
+							if (core.getStatisticsViewer().getViewerCache().containsKey(uuid)) {
+								data = core.getStatisticsViewer().getViewerCache().get(uuid);
+							}
+							else {
+								// TODO
+								data = new MySQLResult[10];
+								data[0] = MySQLUtils.get("SELECT SUM(value) AS value FROM statistics_player WHERE statistic=? AND player=?", Statistic.PVP_KILLS.getId() + "", uuid);
+								core.getStatisticsViewer().getViewerCache().put(uuid, data);
+							}
+							
+							new BukkitRunnable() {
+								public void run() {
+									
+									InventoryGUI gui = new InventoryGUI(54, "Tilastot: " + name);
+									
+									List<String> comingSoon = Arrays.asList("", "§7Tulossa...");
+									
+									gui.addItem(CoreUtils.getItem(Material.IRON_SWORD, "§aPvP-tapot: " + data[0].getInt(0, "value"), null, 1), 11, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.OAK_SAPLING, "§a???", comingSoon, 1), 13, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.OAK_SAPLING, "§a???", comingSoon, 1), 15, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.OAK_SAPLING, "§a???", comingSoon, 1), 29, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.OAK_SAPLING, "§a???", comingSoon, 1), 31, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.OAK_SAPLING, "§a???", comingSoon, 1), 33, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() { }
+									});
+									
+									gui.addItem(CoreUtils.getItem(Material.ARROW, "§c« Takaisin profiiliin", null, 1), 49, new InventoryGUIAction() {
+										public void onClickAsync() { }
+										public void onClick() {
+											gui.close(player);
+											player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+											player.performCommand("pelaaja " + name);
+										}
+									});
+									
+									gui.open(player);
+								}
+							}.runTask(core);
+						}
+						else {
+							player.sendMessage(tc3 + "Ei löydetty pelaajaa antamallasi nimellä!");
+						}
+					}
+				}.runTaskAsynchronously(core);
+			}
+			else {
+				player.sendMessage(usage + "/tilastot <pelaaja>");
+			}
+			return true;
+		}
+		
 		// help, apua, ?
 		
 		if (cmd.getName().equalsIgnoreCase("help") || cmd.getName().equalsIgnoreCase("apua") || cmd.getName().equalsIgnoreCase("?")) {
@@ -605,7 +691,7 @@ public class CoreCommands implements CommandExecutor {
 					}
 					message = ChatColor.translateAlternateColorCodes('&', message.trim());
 					for (Player p : Bukkit.getOnlinePlayers()) {
-						if (CoreUtils.hasRank(p, "valvoja")) {
+						if (CoreUtils.hasRank(p, "ylläpitäjä")) {
 							p.sendMessage("§7[§eYlläpito§7] " + player.getName() + "§e: " + message);
 						}
 					}
@@ -5233,63 +5319,57 @@ public class CoreCommands implements CommandExecutor {
 		// pvpstats
 		
 		if (cmd.getName().equalsIgnoreCase("pvpstats")) {
-			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
-				if (args.length >= 1) {
-					if (args[0].equalsIgnoreCase("create")) {
-						ArmorStand a0 = player.getWorld().spawn(player.getLocation(), ArmorStand.class);
-						a0.setCustomName("§4§lEniten tappoja areenalla");
-						a0.setCustomNameVisible(true);
-						a0.setRemoveWhenFarAway(false);
-						a0.setGravity(false);
-						a0.setVisible(false);
-						a0.setMarker(true);
-						a0.setInvulnerable(true);
-						a0.setAI(false);
-						a0.setBasePlate(false);
-						a0.setSmall(true);
-						a0.addScoreboardTag("RK-pvpstats");
-						for (int i = 1; i <= 10; i++) {
-							Location location = player.getLocation().subtract(0, 0.1 + 0.3 * i, 0);
-							ArmorStand a = player.getWorld().spawn(location, ArmorStand.class);
-							a.setCustomName("§4§l" + i + ". §cei kukaan§7 - §c0");
-							a.setCustomNameVisible(true);
-							a.setRemoveWhenFarAway(false);
-							a.setGravity(false);
-							a.setVisible(false);
-							a.setMarker(true);
-							a.setInvulnerable(true);
-							a.setAI(false);
-							a.setBasePlate(false);
-							a.setSmall(true);
-							a.addScoreboardTag("RK-pvpstats");
-							a.addScoreboardTag("RK-pvpstats-" + i);
+			if (args.length >= 1 && CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args[0].equalsIgnoreCase("create")) {
+					ArmorStand a0 = player.getWorld().spawn(player.getLocation(), ArmorStand.class);
+					a0.setCustomName("§4§lEniten tappoja areenalla");
+					a0.setCustomNameVisible(true);
+					a0.setRemoveWhenFarAway(false);
+					a0.setGravity(false);
+					a0.setVisible(false);
+					a0.setMarker(true);
+					a0.setInvulnerable(true);
+					a0.setAI(false);
+					a0.setBasePlate(false);
+					a0.setSmall(true);
+					a0.addScoreboardTag("RK-pvpstats");
+					for (int i = 1; i <= 10; i++) {
+						Location location = player.getLocation().subtract(0, 0.1 + 0.3 * i, 0);
+						ArmorStand a = player.getWorld().spawn(location, ArmorStand.class);
+						a.setCustomName("§4§l" + i + ". §cei kukaan§7 - §c0");
+						a.setCustomNameVisible(true);
+						a.setRemoveWhenFarAway(false);
+						a.setGravity(false);
+						a.setVisible(false);
+						a.setMarker(true);
+						a.setInvulnerable(true);
+						a.setAI(false);
+						a.setBasePlate(false);
+						a.setSmall(true);
+						a.addScoreboardTag("RK-pvpstats");
+						a.addScoreboardTag("RK-pvpstats-" + i);
+					}
+					player.sendMessage(tc2 + "Lisättiin hologrammit PvP-tilastoja varten!");
+				}
+				else if (args[0].equalsIgnoreCase("remove")) {
+					for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
+						if (entity.getScoreboardTags().contains("RK-pvpstats")) {
+							entity.remove();
 						}
-						player.sendMessage(tc2 + "Lisättiin hologrammit PvP-tilastoja varten!");
 					}
-					else if (args[0].equalsIgnoreCase("remove")) {
-						for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
-							if (entity.getScoreboardTags().contains("RK-pvpstats")) {
-								entity.remove();
-							}
+					player.sendMessage(tc2 + "Poistettiin kaikki lähistöllä olevat PvP-tilastojen hologrammit!");
+				}
+				else if (args[0].equalsIgnoreCase("update")) {
+					new BukkitRunnable() {
+						public void run() {
+							core.getStatisticsViewer().updatePvpTopCache();
+							core.getStatisticsViewer().updatePvpTopHolograms(player.getWorld());
+							player.sendMessage(tc2 + "Päivitettiin PvP-tilastojen hologrammit!");
 						}
-						player.sendMessage(tc2 + "Poistettiin kaikki lähistöllä olevat PvP-tilastojen hologrammit!");
-					}
-					else if (args[0].equalsIgnoreCase("update")) {
-						new BukkitRunnable() {
-							public void run() {
-								core.getStatisticsViewer().updatePvpTopCache();
-								core.getStatisticsViewer().updatePvpTopHolograms(player.getWorld());
-								player.sendMessage(tc2 + "Päivitettiin PvP-tilastojen hologrammit!");
-							}
-						}.runTaskAsynchronously(core);
-					}
-					else {
-						player.sendMessage(usage + "/pvpstats create/remove/update");
-					}
+					}.runTaskAsynchronously(core);
 				}
 				else {
-					player.sendMessage("Tulossa...");
-					// TODO näytä PvP-tilastot
+					player.sendMessage(usage + "/pvpstats create/remove/update");
 				}
 			}
 			else {

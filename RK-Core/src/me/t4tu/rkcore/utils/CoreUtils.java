@@ -1017,7 +1017,6 @@ public class CoreUtils {
 	@SuppressWarnings("deprecation")
 	public static ItemStack getSkull(String s, List<String> l, String p) {
 		ItemStack is = new ItemStack(Material.PLAYER_HEAD);
-			is.setDurability((short) 3);
 			SkullMeta im = (SkullMeta) is.getItemMeta();
 			im.setDisplayName(s);
 			im.setLore(l);

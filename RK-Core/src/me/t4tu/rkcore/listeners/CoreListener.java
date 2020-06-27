@@ -1804,6 +1804,7 @@ public class CoreListener implements Listener {
 													i++;
 												}
 											}.runTaskTimer(core, 0, 1);
+											// TODO palkinto
 										}
 									}
 								}.runTaskAsynchronously(core);

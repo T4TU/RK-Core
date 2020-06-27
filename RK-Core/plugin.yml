@@ -44,6 +44,8 @@ commands:
     player:
     profile:
     p:
+    tilastot:
+    stats:
     help:
     apua:
     ?:
