@@ -2,7 +2,7 @@ name: RK-Core
 author: T4TU_
 version: 2
 main: me.t4tu.rkcore.Core
-depend: [ProtocolLib, LangUtils]
+depend: [LangUtils]
 api-version: 1.13
 commands:
     reconnect:

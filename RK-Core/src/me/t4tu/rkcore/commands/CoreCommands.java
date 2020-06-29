@@ -87,6 +87,7 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 
 public class CoreCommands implements CommandExecutor {
 	
@@ -1079,7 +1080,7 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage("");
 			player.sendMessage(tc1 + "✸ §m-------------" + tc2 + " Mitä uutta? " + tc1 + "§m-------------" + tc1 + " ✸");
 			player.sendMessage("");
-			ReflectionUtils.sendChatPacket(player, core.getConfig().getString("motd.motd"), ChatMessageType.CHAT);
+			player.spigot().sendMessage(ComponentSerializer.parse(core.getConfig().getString("motd.motd")));
 			player.sendMessage("");
 			player.sendMessage(tc1 + "✸ §m------------------------------------" + tc1 + " ✸");
 			core.getConfig().set("motd.seen." + player.getName(), true);

@@ -5,20 +5,19 @@ import java.util.Arrays;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_16_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 import org.bukkit.scoreboard.Team.Option;
 import org.bukkit.scoreboard.Team.OptionStatus;
 
-import net.md_5.bungee.api.ChatMessageType;
-import net.minecraft.server.v1_15_R1.PacketPlayOutScoreboardTeam;
-import net.minecraft.server.v1_15_R1.ScoreboardTeam;
+import net.minecraft.server.v1_16_R1.PacketPlayOutScoreboardTeam;
+import net.minecraft.server.v1_16_R1.ScoreboardTeam;
 
 public class ReflectionUtils {
 	
-	private static net.minecraft.server.v1_15_R1.Scoreboard board = new net.minecraft.server.v1_15_R1.Scoreboard();
+	private static net.minecraft.server.v1_16_R1.Scoreboard board = new net.minecraft.server.v1_16_R1.Scoreboard();
 	public static ScoreboardTeam vankilassa = new ScoreboardTeam(board, "7vankilassa");
 	public static ScoreboardTeam def = new ScoreboardTeam(board, "6default");
 	public static ScoreboardTeam ritari = new ScoreboardTeam(board, "5ritari");
@@ -110,18 +109,6 @@ public class ReflectionUtils {
 			con = getNMSClass("PacketPlayOutEntityDestroy").getConstructor(int[].class);
 			int[] i = {id};
 			Object packet = con.newInstance(i);
-			sendPacket(p, packet);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public static void sendChatPacket(Player p, String s, ChatMessageType type) {
-		Constructor<?> con;
-		try {
-			Object chat = getNMSClass("IChatBaseComponent").getDeclaredClasses()[0].getMethod("a", String.class).invoke(null, s);
-			con = getNMSClass("PacketPlayOutChat").getConstructor(getNMSClass("IChatBaseComponent"), getNMSClass("ChatMessageType"));
-			Object packet = con.newInstance(chat, net.minecraft.server.v1_15_R1.ChatMessageType.valueOf(type.toString().replace("ACTION_BAR", "GAME_INFO")));
 			sendPacket(p, packet);
 		} catch (Exception e) {
 			e.printStackTrace();
