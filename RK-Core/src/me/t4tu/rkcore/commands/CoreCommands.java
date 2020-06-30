@@ -664,7 +664,7 @@ public class CoreCommands implements CommandExecutor {
 					for (String word : args) {
 						message = message + " " + word;
 					}
-					message = ChatColor.translateAlternateColorCodes('&', message.trim());
+					message = CoreUtils.translateHexColors('&', message.trim());
 					for (Player p : Bukkit.getOnlinePlayers()) {
 						if (CoreUtils.hasRank(p, "valvoja")) {
 							p.sendMessage("§7[§aHenkilökunta§7] " + player.getName() + "§a: " + message);
@@ -690,7 +690,7 @@ public class CoreCommands implements CommandExecutor {
 					for (String word : args) {
 						message = message + " " + word;
 					}
-					message = ChatColor.translateAlternateColorCodes('&', message.trim());
+					message = CoreUtils.translateHexColors('&', message.trim());
 					for (Player p : Bukkit.getOnlinePlayers()) {
 						if (CoreUtils.hasRank(p, "ylläpitäjä")) {
 							p.sendMessage("§7[§eYlläpito§7] " + player.getName() + "§e: " + message);
@@ -1085,6 +1085,39 @@ public class CoreCommands implements CommandExecutor {
 			player.sendMessage(tc1 + "✸ §m------------------------------------" + tc1 + " ✸");
 			core.getConfig().set("motd.seen." + player.getName(), true);
 			core.saveConfig();
+			return true;
+		}
+		
+		// rainbow
+		
+		if (cmd.getName().equalsIgnoreCase("rainbow")) {
+			if (CoreUtils.hasRank(player, "ylläpitäjä")) {
+				if (args.length >= 1) {
+					StringBuilder builder = new StringBuilder();
+					for (String arg : args) {
+						builder.append(arg + " ");
+					}
+					String message = builder.toString().trim();
+					StringBuilder rainbowMessage = new StringBuilder();
+					double f = 2 * Math.PI / 30;
+					double offset = Math.random() * 2 * Math.PI;
+					for (int i = 0; i < message.length(); i++) {
+						char c = message.charAt(i);
+						int r = (int) (Math.sin(f * i + (Math.PI * 2 / 3) + offset) * 127 + 128);
+						int g = (int) (Math.sin(f * i + offset) * 127 + 128);
+						int b = (int) (Math.sin(f * i + (Math.PI * 4 / 3) + offset) * 127 + 128);
+						String hex = String.format("#%02x%02x%02x", r, g, b);
+						rainbowMessage.append("&" + hex + c);
+					}
+					player.chat(rainbowMessage.toString());
+				}
+				else {
+					player.sendMessage(usage + "/rainbow <viesti>");
+				}
+			}
+			else {
+				player.sendMessage(noPermission);
+			}
 			return true;
 		}
 		
@@ -2931,7 +2964,7 @@ public class CoreCommands implements CommandExecutor {
 					for (String arg : args) {
 						name += " " + arg;
 					}
-					name = ChatColor.translateAlternateColorCodes('&', name.trim());
+					name = CoreUtils.translateHexColors('&', name.trim());
 					ItemStack item = player.getInventory().getItemInMainHand();
 					if (CoreUtils.isNotAir(item)) {
 						ItemMeta meta = item.getItemMeta();
@@ -2962,7 +2995,7 @@ public class CoreCommands implements CommandExecutor {
 					for (String arg : args) {
 						lore += " " + arg;
 					}
-					lore = ChatColor.translateAlternateColorCodes('&', lore.trim());
+					lore = CoreUtils.translateHexColors('&', lore.trim());
 					ItemStack item = player.getInventory().getItemInMainHand();
 					if (CoreUtils.isNotAir(item)) {
 						ItemMeta meta = item.getItemMeta();
@@ -4125,7 +4158,7 @@ public class CoreCommands implements CommandExecutor {
 							for (int i = 1; i < args.length; i++) {
 								text = text + " " + args[i];
 							}
-							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							text = CoreUtils.translateHexColors('&', text.trim());
 							
 							ArmorStand a = (ArmorStand) player.getWorld().spawnEntity(player.getLocation(), EntityType.ARMOR_STAND);
 							a.setCustomName(text);
@@ -4184,7 +4217,7 @@ public class CoreCommands implements CommandExecutor {
 							for (int i = 1; i < args.length; i++) {
 								text = text + " " + args[i];
 							}
-							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							text = CoreUtils.translateHexColors('&', text.trim());
 							
 							ArmorStand a = selectedHolograms.get(player.getName());
 							
@@ -4350,7 +4383,7 @@ public class CoreCommands implements CommandExecutor {
 							for (int i = 1; i < args.length; i++) {
 								text = text + " " + args[i];
 							}
-							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							text = CoreUtils.translateHexColors('&', text.trim());
 							
 							ArmorStand a = selectedArmorstands.get(player.getName());
 							
@@ -4706,7 +4739,7 @@ public class CoreCommands implements CommandExecutor {
 							for (int i = 1; i < args.length; i++) {
 								name = name + " " + args[i];
 							}
-							name = ChatColor.translateAlternateColorCodes('&', name.trim());
+							name = CoreUtils.translateHexColors('&', name.trim());
 							
 							Villager v = (Villager) player.getWorld().spawnEntity(player.getLocation(), EntityType.VILLAGER);
 							v.setCustomName(name);
@@ -4759,7 +4792,7 @@ public class CoreCommands implements CommandExecutor {
 							for (int i = 1; i < args.length; i++) {
 								text = text + " " + args[i];
 							}
-							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							text = CoreUtils.translateHexColors('&', text.trim());
 							
 							Villager v = selectedNPCs.get(player.getName());
 							
@@ -4954,7 +4987,7 @@ public class CoreCommands implements CommandExecutor {
 							for (int i = 2; i < args.length; i++) {
 								text = text + " " + args[i];
 							}
-							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							text = CoreUtils.translateHexColors('&', text.trim());
 							core.getConfig().set("tutorial." + args[1] + ".title", text);
 							core.saveConfig();
 							player.sendMessage(tc2 + "Asetettiin teksti!");
@@ -4969,7 +5002,7 @@ public class CoreCommands implements CommandExecutor {
 							for (int i = 2; i < args.length; i++) {
 								text = text + " " + args[i];
 							}
-							text = ChatColor.translateAlternateColorCodes('&', text.trim());
+							text = CoreUtils.translateHexColors('&', text.trim());
 							core.getConfig().set("tutorial." + args[1] + ".subtitle", text);
 							core.saveConfig();
 							player.sendMessage(tc2 + "Asetettiin teksti!");
@@ -5393,13 +5426,13 @@ public class CoreCommands implements CommandExecutor {
 								String npcName = core.getConfig().getString("trips." + id + ".npc-name");
 								boolean b = false;
 								for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
-									if (CoreUtils.isNPCAndNamed(entity, ChatColor.translateAlternateColorCodes('&', npcName))) {
+									if (CoreUtils.isNPCAndNamed(entity, CoreUtils.translateHexColors('&', npcName))) {
 										b = true;
 										break;
 									}
 								}
 								if (b && !travelingPlayers.contains(player.getName())) {
-									String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + id + ".confirm-message"));
+									String message = CoreUtils.translateHexColors('&', core.getConfig().getString("trips." + id + ".confirm-message"));
 									player.sendMessage("");
 									player.sendMessage(message);
 									player.sendMessage("");
@@ -5444,7 +5477,7 @@ public class CoreCommands implements CommandExecutor {
 												}
 											}
 											else if (i >= 3 + animation.getFrames().size()) {
-												String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + id + ".done-message"));
+												String message = CoreUtils.translateHexColors('&', core.getConfig().getString("trips." + id + ".done-message"));
 												player.sendMessage("");
 												player.sendMessage(message);
 												player.sendMessage("");
@@ -5477,13 +5510,13 @@ public class CoreCommands implements CommandExecutor {
 								String npcName = core.getConfig().getString("trips." + id + ".npc-name");
 								boolean b = false;
 								for (Entity entity : player.getNearbyEntities(10, 10, 10)) {
-									if (CoreUtils.isNPCAndNamed(entity, ChatColor.translateAlternateColorCodes('&', npcName))) {
+									if (CoreUtils.isNPCAndNamed(entity, CoreUtils.translateHexColors('&', npcName))) {
 										b = true;
 										break;
 									}
 								}
 								if (b) {
-									String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + id + ".deny-message"));
+									String message = CoreUtils.translateHexColors('&', core.getConfig().getString("trips." + id + ".deny-message"));
 									player.sendMessage("");
 									player.sendMessage(message);
 									player.sendMessage("");
@@ -5510,7 +5543,7 @@ public class CoreCommands implements CommandExecutor {
 						if (core.getConfig().getConfigurationSection("trips") != null && 
 								!core.getConfig().getConfigurationSection("trips").getKeys(false).isEmpty()) {
 							for (String s : core.getConfig().getConfigurationSection("trips").getKeys(false)) {
-								String npcName = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + s + ".npc-name"));
+								String npcName = CoreUtils.translateHexColors('&', core.getConfig().getString("trips." + s + ".npc-name"));
 								player.sendMessage(tc2 + " - " + tc1 + "#" + s + tc2 + " NPC: \"" + npcName + tc2 + "\"");
 							}
 							player.sendMessage("");
@@ -8326,7 +8359,7 @@ public class CoreCommands implements CommandExecutor {
 					for (String word : args) {
 						reason = reason + " " + word;
 					}
-					reason = ChatColor.translateAlternateColorCodes('&', tc3 + reason.trim());
+					reason = CoreUtils.translateHexColors('&', tc3 + reason.trim());
 					for (Player player : Bukkit.getOnlinePlayers()) {
 						if (!player.getName().equals(sender.getName())) {
 							player.kickPlayer(reason);
@@ -8375,7 +8408,7 @@ public class CoreCommands implements CommandExecutor {
 					for (String word : args) {
 						reason = reason + " " + word;
 					}
-					reason = ChatColor.translateAlternateColorCodes('&', tc3 + reason.trim());
+					reason = CoreUtils.translateHexColors('&', tc3 + reason.trim());
 					for (Player player : Bukkit.getOnlinePlayers()) {
 						player.kickPlayer(reason);
 					}
@@ -8767,7 +8800,7 @@ public class CoreCommands implements CommandExecutor {
 					for (int i = 1; i < args.length; i++) {
 						message = message + " " + args[i];
 					}
-					message = ChatColor.translateAlternateColorCodes('&', message.trim());
+					message = CoreUtils.translateHexColors('&', message.trim());
 					for (Player player : Bukkit.getOnlinePlayers()) {
 						if (args[0].equalsIgnoreCase("chat")) {
 							player.sendMessage("");
@@ -8867,10 +8900,10 @@ public class CoreCommands implements CommandExecutor {
 						if (args.length >= 2) {
 							try {
 								int i = Integer.parseInt(args[1]);
-								String prefix = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("autobroadcast.prefix", ""));
+								String prefix = CoreUtils.translateHexColors('&', core.getConfig().getString("autobroadcast.prefix", ""));
 								List<String> messages = core.getConfig().getStringList("autobroadcast.messages");
 								if (i > 0 && i <= messages.size()) {
-									String message = ChatColor.translateAlternateColorCodes('&', messages.get(i - 1));
+									String message = CoreUtils.translateHexColors('&', messages.get(i - 1));
 									for (Player player : Bukkit.getOnlinePlayers()) {
 										if (SettingsUtils.getSetting(player, "show_autobroadcast")) {
 											player.sendMessage(prefix + message);
@@ -8924,7 +8957,7 @@ public class CoreCommands implements CommandExecutor {
 							prefix = prefix.trim();
 							core.getConfig().set("autobroadcast.prefix", prefix + " ");
 							core.saveConfig();
-							sender.sendMessage(tc2 + "Asetettiin autobroadcastin prefixiksi §r" + ChatColor.translateAlternateColorCodes('&', prefix) + tc2 + "!");
+							sender.sendMessage(tc2 + "Asetettiin autobroadcastin prefixiksi §r" + CoreUtils.translateHexColors('&', prefix) + tc2 + "!");
 						}
 						else {
 							sender.sendMessage(usage + "/autobroadcast prefix <uusi prefix>");
@@ -8956,7 +8989,7 @@ public class CoreCommands implements CommandExecutor {
 						for (int i = 2; i < args.length; i++) {
 							message = message + " " + args[i];
 						}
-						message = ChatColor.translateAlternateColorCodes('&', message.trim());
+						message = CoreUtils.translateHexColors('&', message.trim());
 						
 						List<Player> players = new ArrayList<Player>();
 						if (args[0].equalsIgnoreCase("all")) {
@@ -9114,31 +9147,31 @@ public class CoreCommands implements CommandExecutor {
 								String name = infoData.getString(0, "name");
 								String prefix = args[1].replace("<=", "«").replace("=>", "»");
 								if (prefix.equals("ritari")) {
-									prefix = "&7[«&2Ritari&7»]";
+									prefix = "&7[«&#03fc8cRitari&7»]";
 								}
 								else if (prefix.equals("aatelinen")) {
-									prefix = "&7[«&6Aatelinen&7»]";
+									prefix = "&7[«&#ffcc00Aatelinen&7»]";
 								}
-								else if (prefix.equals("arkkitehti")) {
-									prefix = "&7[«&eArkkitehti&7»]";
+								else if (prefix.equals("rakentaja")) {
+									prefix = "&7[«&#ff4000Rakentaja&7»]";
 								}
 								else if (prefix.equals("valvoja")) {
-									prefix = "&7[«&cValvoja&7»]";
+									prefix = "&7[«&#ff0000Valvoja&7»]";
 								}
 								else if (prefix.equals("moderaattori")) {
-									prefix = "&7[«&cModeraattori&7»]";
+									prefix = "&7[«&#ff0000Moderaattori&7»]";
 								}
 								else if (prefix.equals("ylläpitäjä")) {
-									prefix = "&7[«&4Ylläpitäjä&7»]";
+									prefix = "&7[«&#b8001fYlläpitäjä&7»]";
 								}
 								else if (prefix.equals("pääarkkitehti")) {
-									prefix = "&7[«&4Pääarkkitehti&7»]";
+									prefix = "&7[«&#b8001fPääarkkitehti&7»]";
 								}
 								else if (prefix.equals("pääsuunnittelija")) {
-									prefix = "&7[«&4Pääsuunnittelija&7»]";
+									prefix = "&7[«&#b8001fPääsuunnittelija&7»]";
 								}
 								else if (prefix.equals("pääkehittäjä")) {
-									prefix = "&7[«&4Pääkehittäjä&7»]";
+									prefix = "&7[«&#b8001fPääkehittäjä&7»]";
 								}
 								prefix = prefix + " ";
 								if (prefix.equals("default ")) {
@@ -9160,9 +9193,9 @@ public class CoreCommands implements CommandExecutor {
 										}
 									}.runTask(core);
 								}
-								String newPrefix = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_prefix"));
-								String newColor = ChatColor.translateAlternateColorCodes('&', newInfoData.getStringNotNull(0, "chat_color"));
-								String newRank = ChatColor.translateAlternateColorCodes('&', newInfoData.getString(0, "rank"));
+								String newPrefix = CoreUtils.translateHexColors('&', newInfoData.getStringNotNull(0, "chat_prefix"));
+								String newColor = CoreUtils.translateHexColors('&', newInfoData.getStringNotNull(0, "chat_color"));
+								String newRank = CoreUtils.translateHexColors('&', newInfoData.getString(0, "rank"));
 								sender.sendMessage(tc2 + "Pelaaja " + tc1 + name + tc2 + " on nyt: §r" + newPrefix + newColor + name + tc2 
 										+ " (" + newRank + ")");
 							}
@@ -9345,7 +9378,7 @@ public class CoreCommands implements CommandExecutor {
 							
 							if (args[i].contains(":")) {
 								property = args[i].split(":")[0];
-								value = ChatColor.translateAlternateColorCodes('&', args[i].substring(property.length() + 1).replace("\\_", " "));
+								value = CoreUtils.translateHexColors('&', args[i].substring(property.length() + 1).replace("\\_", " "));
 							}
 							else {
 								sender.sendMessage(tc3 + "Virheellinen ominaisuus: \"" + args[i] + "\"");

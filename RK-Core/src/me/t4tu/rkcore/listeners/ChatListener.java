@@ -21,7 +21,6 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ClickEvent.Action;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -154,18 +153,15 @@ public class ChatListener implements Listener {
 		// etuliitteet yms.
 		
 		String chatMessage = e.getMessage();
-		String chatPrefix = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("users." + name + ".chat_prefix"));
-		String chatColor = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("users." + name + ".chat_color"));
+		String chatPrefix = CoreUtils.translateHexColors('&', core.getConfig().getString("users." + name + ".chat_prefix"));
+		String chatColor = CoreUtils.translateHexColors('&', core.getConfig().getString("users." + name + ".chat_color"));
 		String chatName = chatColor + name;
 		String chatStatus = core.getConfig().getString("users." + name + ".status");
 		if (CoreUtils.hasRank(player, "valvoja")) {
-			chatMessage = ChatColor.translateAlternateColorCodes('&', chatMessage.replace("<bold>", "§l").replace("<italics>", "§o").replace("<underline>", "§n").replace("<strikethrough>", "§m")
-					.replace("<reset>", "§r").replace("<b>", "§l").replace("<i>", "§o").replace("<u>", "§n").replace("<s>", "§m").replace("<r>", "§r"));
+			chatMessage = CoreUtils.translateHexColors('&', chatMessage);
 		}
 		else if (CoreUtils.hasRank(player, "ritari")) {
-			chatMessage = chatMessage.replace("&l", "§l").replace("&o", "§o").replace("&n", "§n").replace("&m", "§m").replace("&r", "§r")
-					.replace("<bold>", "§l").replace("<italics>", "§o").replace("<underline>", "§n").replace("<strikethrough>", "§m").replace("<reset>", "§r")
-					.replace("<b>", "§l").replace("<i>", "§o").replace("<u>", "§n").replace("<s>", "§m").replace("<r>", "§r");
+			chatMessage = CoreUtils.translateFormatCodes('&', chatMessage);
 		}
 		if (core.getConfig().contains("users." + name + ".chat_nick")) {
 			chatName = chatColor + "*" + core.getConfig().getString("users." + name + ".chat_nick");
@@ -182,56 +178,54 @@ public class ChatListener implements Listener {
 		List<String> notes = core.getConfig().getStringList("users." + name + ".notes");
 		String notesInfo = "§c§lHuomautukset:";
 		for (String note : notes) {
-			notesInfo = notesInfo + "\n§c " + ChatColor.translateAlternateColorCodes('&', note);
+			notesInfo = notesInfo + "\n§c " + CoreUtils.translateHexColors('&', note);
 		}
 		
 		HoverEvent noteHoverEvent = new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-				new ComponentBuilder(notesInfo).create());
+				TextComponent.fromLegacyText(notesInfo));
 		ClickEvent noteClickEvent = new ClickEvent(Action.RUN_COMMAND, "/huomautus " + name);
-		HoverEvent prefixHoverEvent = new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-				new ComponentBuilder(CoreUtils.getPrefixDescription(chatPrefix)).create());
+		boolean hasDescription = CoreUtils.getPrefixDescription(chatPrefix) != null;
+		HoverEvent prefixHoverEvent = null;
+		if (hasDescription) {
+			prefixHoverEvent = new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
+					TextComponent.fromLegacyText(CoreUtils.getPrefixDescription(chatPrefix)));
+		}
 		HoverEvent nameHoverEvent = new HoverEvent(net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT, 
-				new ComponentBuilder(chatColor + "§o" + chatStatus).create());
+				TextComponent.fromLegacyText(chatColor + "§o" + chatStatus));
 		ClickEvent nameClickEvent = new ClickEvent(Action.RUN_COMMAND, "/pelaaja " + name);
 		
-		TextComponent baseComponent = new TextComponent("");
-		TextComponent baseComponentWithNotes = new TextComponent("");
-		BaseComponent[] noteComponents = new ComponentBuilder("§c§l[!]§r ").event(noteHoverEvent).event(noteClickEvent).create();
-		BaseComponent[] prefixComponents = new ComponentBuilder(chatPrefix).event(prefixHoverEvent).create();
-		BaseComponent[] nameComponents = new ComponentBuilder(chatName).event(nameHoverEvent).event(nameClickEvent).create();
-		BaseComponent[] colonComponents = new ComponentBuilder(chatColor + ": ").create();
-		BaseComponent[] messageComponents = TextComponent.fromLegacyText("§f" + chatMessage);
-		
-		// ilman muistutuksia
-		
-		for (BaseComponent component : prefixComponents) {
-			baseComponent.addExtra(component);
-		}
-		for (BaseComponent component : nameComponents) {
-			baseComponent.addExtra(component);
-		}
-		for (BaseComponent component : colonComponents) {
-			baseComponent.addExtra(component);
-		}
-		for (BaseComponent component : messageComponents) {
-			baseComponent.addExtra(component);
-		}
-		
-		// muistutuksilla
+		TextComponent baseComponent = new TextComponent();
+		TextComponent baseComponentWithNotes = new TextComponent();
+		BaseComponent[] noteComponents = TextComponent.fromLegacyText("§c§l[!]§r ");
+		BaseComponent[] prefixComponents = TextComponent.fromLegacyText(chatPrefix);
+		BaseComponent[] nameComponents = TextComponent.fromLegacyText(chatName);
+		BaseComponent[] colonComponents = TextComponent.fromLegacyText(chatColor + ": ");
+		BaseComponent[] messageComponents = TextComponent.fromLegacyText(chatMessage);
 		
 		for (BaseComponent component : noteComponents) {
+			component.setHoverEvent(noteHoverEvent);
+			component.setClickEvent(noteClickEvent);
 			baseComponentWithNotes.addExtra(component);
 		}
 		for (BaseComponent component : prefixComponents) {
+			if (hasDescription) {
+				component.setHoverEvent(prefixHoverEvent);
+			}
+			baseComponent.addExtra(component);
 			baseComponentWithNotes.addExtra(component);
 		}
 		for (BaseComponent component : nameComponents) {
+			component.setHoverEvent(nameHoverEvent);
+			component.setClickEvent(nameClickEvent);
+			baseComponent.addExtra(component);
 			baseComponentWithNotes.addExtra(component);
 		}
 		for (BaseComponent component : colonComponents) {
+			baseComponent.addExtra(component);
 			baseComponentWithNotes.addExtra(component);
 		}
 		for (BaseComponent component : messageComponents) {
+			baseComponent.addExtra(component);
 			baseComponentWithNotes.addExtra(component);
 		}
 		
@@ -269,6 +263,8 @@ public class ChatListener implements Listener {
 				}
 			}
 		}
+		
+		e.setMessage(ChatColor.stripColor(chatMessage));
 		
 		Bukkit.getConsoleSender().sendMessage("CHAT > " + player.getName() + ": " + e.getMessage());
 	}

@@ -86,7 +86,6 @@ import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
 import me.t4tu.rkmobs.Mob;
 import me.t4tu.rkmobs.Mobs;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -969,10 +968,10 @@ public class CoreListener implements Listener {
 	@EventHandler
 	public void onSignChange(SignChangeEvent e) {
 		if (CoreUtils.hasRank(e.getPlayer(), "ritari")) {
-			e.setLine(0, ChatColor.translateAlternateColorCodes('&', e.getLine(0)));
-			e.setLine(1, ChatColor.translateAlternateColorCodes('&', e.getLine(1)));
-			e.setLine(2, ChatColor.translateAlternateColorCodes('&', e.getLine(2)));
-			e.setLine(3, ChatColor.translateAlternateColorCodes('&', e.getLine(3)));
+			e.setLine(0, CoreUtils.translateHexColors('&', e.getLine(0)));
+			e.setLine(1, CoreUtils.translateHexColors('&', e.getLine(1)));
+			e.setLine(2, CoreUtils.translateHexColors('&', e.getLine(2)));
+			e.setLine(3, CoreUtils.translateHexColors('&', e.getLine(3)));
 		}
 	}
 	
@@ -987,7 +986,7 @@ public class CoreListener implements Listener {
 		if (e.isSigning() && CoreUtils.hasRank(e.getPlayer(), "ritari")) {
 			BookMeta meta = e.getNewBookMeta();
 			for (int i = 1; i <= meta.getPageCount(); i++) {
-				meta.setPage(i, ChatColor.translateAlternateColorCodes('&', meta.getPage(i)));
+				meta.setPage(i, CoreUtils.translateHexColors('&', meta.getPage(i)));
 			}
 			e.setNewBookMeta(meta);
 		}
@@ -1946,9 +1945,9 @@ public class CoreListener implements Listener {
 				if (core.getConfig().getConfigurationSection("trips") != null && 
 						!core.getConfig().getConfigurationSection("trips").getKeys(false).isEmpty()) {
 					for (String s : core.getConfig().getConfigurationSection("trips").getKeys(false)) {
-						String npcName = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + s + ".npc-name"));
+						String npcName = CoreUtils.translateHexColors('&', core.getConfig().getString("trips." + s + ".npc-name"));
 						if (CoreUtils.isNPCAndNamed(clickedEntity, npcName)) {
-							String message = ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("trips." + s + ".initial-message"));
+							String message = CoreUtils.translateHexColors('&', core.getConfig().getString("trips." + s + ".initial-message"));
 							player.sendMessage("");
 							player.sendMessage(message);
 							player.sendMessage("");

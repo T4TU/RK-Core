@@ -90,6 +90,9 @@ public class CoreUtils {
 	public static final int SECONDS_TO_HOME_12 = 720000; // 200 tuntia
 	public static final int SECONDS_TO_HOME_13 = 720000; // 200 tuntia
 	public static final int SECONDS_TO_HOME_14 = 720000; // 200 tuntia
+	public static final char[] ALL_CODES = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e', 'F', 'f', 
+			'K', 'k', 'L', 'l', 'M', 'm', 'N', 'n', 'O', 'o', 'R', 'r', 'X', 'x'};
+	public static final char[] FORMAT_CODES = {'L', 'l', 'M', 'm', 'N', 'n', 'O', 'o', 'R', 'r'};
 	
 	private static Core core;
 	private static List<String> registeredCommandsNoTabComplete = new ArrayList<String>();
@@ -112,31 +115,31 @@ public class CoreUtils {
 	}
 	
 	public static String getBaseColor() {
-		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("colors.base"));
+		return translateHexColors('&', core.getConfig().getString("colors.base"));
 	}
 	
 	public static String getHighlightColor() {
-		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("colors.highlight"));
+		return translateHexColors('&', core.getConfig().getString("colors.highlight"));
 	}
 	
 	public static String getErrorBaseColor() {
-		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("colors.error-base"));
+		return translateHexColors('&', core.getConfig().getString("colors.error-base"));
 	}
 	
 	public static String getErrorHighlightColor() {
-		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("colors.error-highlight"));
+		return translateHexColors('&', core.getConfig().getString("colors.error-highlight"));
 	}
 	
 	public static String getUsageString() {
-		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("messages.usage"));
+		return translateHexColors('&', core.getConfig().getString("messages.usage"));
 	}
 	
 	public static String getNoPermissionString() {
-		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("messages.no-permission"));
+		return translateHexColors('&', core.getConfig().getString("messages.no-permission"));
 	}
 	
 	public static String getPlayersOnlyString() {
-		return ChatColor.translateAlternateColorCodes('&', core.getConfig().getString("messages.players-only"));
+		return translateHexColors('&', core.getConfig().getString("messages.players-only"));
 	}
 	
 	public static String getMySqlHost() {
@@ -701,6 +704,7 @@ public class CoreUtils {
 	}
 	
 	public static String getPrefixDescription(String prefix) {
+		// TODO
 		if (prefix.equalsIgnoreCase("§7[«§4Ylläpitäjä§7»] ") || prefix.equalsIgnoreCase("§7[«§4Pääarkkitehti§7»] ") || 
 				prefix.equalsIgnoreCase("§7[«§4Pääsuunnittelija§7»] ") || prefix.equalsIgnoreCase("§7[«§4Pääkehittäjä§7»] ")) {
 			return "§4Kuvaus tulossa";
@@ -721,7 +725,7 @@ public class CoreUtils {
 			return "§2Kuvaus tulossa";
 		}
 		else {
-			return "§7Tälle arvolle ei ole asetettu kuvausta";
+			return null;
 		}
 	}
 	
@@ -1721,6 +1725,63 @@ public class CoreUtils {
 		}
 		
 		return s;
+	}
+	
+	public static String translateHexColors(char altColorChar, String message) {
+		StringBuilder translated = new StringBuilder();
+		for (int i = 0; i < message.length(); i++) {
+			char c1 = message.charAt(i);
+			if (c1 == altColorChar) {
+				if (i == message.length() - 1) {
+					translated.append(c1);
+					break;
+				}
+				char c2 = message.charAt(++i);
+				if (c2 == '#' && i + 6 < message.length()) {
+					translated.append("§x");
+					for (int j = 1; j <= 6; j++) {
+						translated.append("§" + Character.toLowerCase(message.charAt(i + j)));
+					}
+					i += 6;
+				}
+				else if (new String(ALL_CODES).indexOf(c2) != -1) {
+					translated.append("§" + Character.toLowerCase(c2));
+				}
+				else {
+					translated.append(c1);
+					i--;
+				}
+			}
+			else {
+				translated.append(c1);
+			}
+		}
+		return translated.toString();
+	}
+	
+	public static String translateFormatCodes(char altColorChar, String message) {
+		StringBuilder translated = new StringBuilder();
+		for (int i = 0; i < message.length(); i++) {
+			char c1 = message.charAt(i);
+			if (c1 == altColorChar) {
+				if (i == message.length() - 1) {
+					translated.append(c1);
+					break;
+				}
+				char c2 = message.charAt(++i);
+				if (new String(FORMAT_CODES).indexOf(c2) != -1) {
+					translated.append("§" + Character.toLowerCase(c2));
+				}
+				else {
+					translated.append(c1);
+					i--;
+				}
+			}
+			else {
+				translated.append(c1);
+			}
+		}
+		return translated.toString();
 	}
 	
 	public static float scaleYaw(float yaw) {

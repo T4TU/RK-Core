@@ -37,6 +37,7 @@ public class ReflectionUtils {
 			t0 = scoreboard.registerNewTeam("7vankilassa");
 		}
 		t0.setPrefix("§4§l ✖ §8§m");
+		t0.setSuffix(" ");
 		t0.setColor(ChatColor.GRAY);
 		t0.setCanSeeFriendlyInvisibles(false);
 		
@@ -45,6 +46,7 @@ public class ReflectionUtils {
 			t1 = scoreboard.registerNewTeam("6default");
 		}
 		t1.setPrefix("§7 ");
+		t1.setSuffix(" ");
 		t1.setColor(ChatColor.GRAY);
 		t1.setCanSeeFriendlyInvisibles(false);
 		
@@ -52,7 +54,8 @@ public class ReflectionUtils {
 		if (t2 == null) {
 			t2 = scoreboard.registerNewTeam("5ritari");
 		}
-		t2.setPrefix("§2§l ▶ §7");
+		t2.setPrefix("§x§0§3§f§c§8§c§l ▶ §7");
+		t2.setSuffix(" ");
 		t2.setColor(ChatColor.GRAY);
 		t2.setCanSeeFriendlyInvisibles(false);
 		
@@ -60,7 +63,8 @@ public class ReflectionUtils {
 		if (t3 == null) {
 			t3 = scoreboard.registerNewTeam("4aatelinen");
 		}
-		t3.setPrefix("§6§l ▶ §7");
+		t3.setPrefix("§x§f§f§c§c§0§0§l ▶ §7");
+		t3.setSuffix(" ");
 		t3.setColor(ChatColor.GRAY);
 		t3.setCanSeeFriendlyInvisibles(false);
 		
@@ -68,7 +72,8 @@ public class ReflectionUtils {
 		if (t4 == null) {
 			t4 = scoreboard.registerNewTeam("3arkkitehti");
 		}
-		t4.setPrefix("§e ✸ §7");
+		t4.setPrefix("§x§f§f§4§0§0§0 ✸ §7");
+		t4.setSuffix(" ");
 		t4.setColor(ChatColor.GRAY);
 		t4.setCanSeeFriendlyInvisibles(false);
 		
@@ -76,7 +81,8 @@ public class ReflectionUtils {
 		if (t5 == null) {
 			t5 = scoreboard.registerNewTeam("2valvoja");
 		}
-		t5.setPrefix("§c ✸ §7");
+		t5.setPrefix("§x§f§f§0§0§0§0 ✸ §7");
+		t5.setSuffix(" ");
 		t5.setColor(ChatColor.GRAY);
 		t5.setCanSeeFriendlyInvisibles(false);
 		
@@ -84,7 +90,8 @@ public class ReflectionUtils {
 		if (t6 == null) {
 			t6 = scoreboard.registerNewTeam("1moderaattori");
 		}
-		t6.setPrefix("§c ✸ §7");
+		t6.setPrefix("§§x§f§f§0§0§0§0 ✸ §7");
+		t6.setSuffix(" ");
 		t6.setColor(ChatColor.GRAY);
 		t6.setCanSeeFriendlyInvisibles(false);
 		
@@ -92,7 +99,8 @@ public class ReflectionUtils {
 		if (t7 == null) {
 			t7 = scoreboard.registerNewTeam("0yllapitaja");
 		}
-		t7.setPrefix("§4 ✸ §7");
+		t7.setPrefix("§x§b§8§0§0§1§f ✸ §7");
+		t7.setSuffix(" ");
 		t7.setColor(ChatColor.GRAY);
 		t7.setCanSeeFriendlyInvisibles(false);
 		

@@ -40,7 +40,6 @@ import me.t4tu.rkcore.utils.MySQLResult;
 import me.t4tu.rkcore.utils.MySQLUtils;
 import me.t4tu.rkcore.utils.ReflectionUtils;
 import me.t4tu.rkcore.utils.SettingsUtils;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -305,6 +304,7 @@ public class Core extends JavaPlugin {
 		commands.registerCommand("uutiset", true);
 		commands.registerCommand("news", true);
 		commands.registerCommand("motd", true);
+		commands.registerCommand("rainbow", false);
 		commands.registerCommand("tilaviesti", true);
 		commands.registerCommand("status", true);
 		commands.registerCommand("kompassi", true);
@@ -796,11 +796,11 @@ public class Core extends JavaPlugin {
 					if (time != 0) {
 						List<String> messages = getConfig().getStringList("autobroadcast.messages");
 						if (!messages.isEmpty()) {
-							String prefix = ChatColor.translateAlternateColorCodes('&', getConfig().getString("autobroadcast.prefix", ""));
+							String prefix = CoreUtils.translateHexColors('&', getConfig().getString("autobroadcast.prefix", ""));
 							String message = null;
 							for (int c = 0; c < 10; c++) {
 								int index = random.nextInt(messages.size());
-								message = ChatColor.translateAlternateColorCodes('&', messages.get(index));
+								message = CoreUtils.translateHexColors('&', messages.get(index));
 								if ((previousMessage1 != null && message.equals(previousMessage1)) || (previousMessage2 != null && message.equals(previousMessage2))) {
 									continue;
 								}
